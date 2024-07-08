@@ -21,13 +21,19 @@
     </developers>
 
     <modules>
+        <!-- 基础架构模块：仅包含公共内容，不涉及SpringBean定义 -->
         <module>framework</module>
+        <!-- 分发模块：负责按批次分发用户优惠券，可提供应用弹框推送、站内信或短信通知等 -->
         <module>distribution</module>
+        <!-- 结算模块：负责用户下单时订单金额计算功能 -->
         <module>settlement</module>
+        <!-- 搜索模块：提供用户优惠券搜索功能 -->
         <module>search</module>
+        <!-- 引擎模块：负责优惠券单个查看、列表查看、锁定以及核销等功能 -->
+        <module>engine</module>
         <!-- 为何其他模块仅一个单词，而后管是两个？ -->
         <!-- 这是因为在企业的实际运营中，并非仅有单一的优惠券管理后台，而是普遍存在统称为“商家后台”的多功能管理平台 -->
-        <module>merchant-admin</module>
+        <module>merchant-admin</module> <!-- 后管模块：创建优惠券、店家查看以及管理优惠券、创建优惠券发放批次 -->
     </modules>
 
     <properties>
