@@ -62,6 +62,8 @@
         </dependency>
     </dependencies>
 
+    <!-- 如果你拉下来某一个分支的代码运行，结果标签下依赖爆红，请忽略改问题 -->
+    <!-- 因为 dependencyManagement 只是负责管理标签并不会真正下载依赖，只有在子 Module 中引入具体依赖才会真正去下载 -->
     <dependencyManagement>
         <dependencies>
             <dependency>
