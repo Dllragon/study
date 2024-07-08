@@ -8,7 +8,7 @@
     <packaging>pom</packaging>
 
     <description>
-        🔥热门推荐🔥牛券，优惠券平台。春招、秋招、应届、社招项目，SpringBoot3+Java17+SpringCloudAlibaba+RocketMQ+ElasticSearch等技术架构，完成优惠券秒杀+分发+结算+搜索等服务，帮助学生主打就业的项目。
+        🔥热门推荐🔥牛券系统，春招、秋招、应届、社招项目。SpringBoot3+Java17+SpringCloudAlibaba+RocketMQ+ElasticSearch等技术架构，完成优惠券秒杀+分发+结算+搜索等服务，帮助学生主打就业的项目。
     </description>
 
     <developers>
