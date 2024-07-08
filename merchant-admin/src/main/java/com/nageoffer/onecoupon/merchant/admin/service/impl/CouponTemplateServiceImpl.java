@@ -34,10 +34,14 @@
 
 package com.nageoffer.onecoupon.merchant.admin.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTemplateStatusEnum;
 import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTemplateDO;
 import com.nageoffer.onecoupon.merchant.admin.dao.mapper.CouponTemplateMapper;
+import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
@@ -48,5 +52,15 @@ import org.springframework.stereotype.Service;
  * 开发时间：2024-07-08
  */
 @Service
+@RequiredArgsConstructor
 public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper, CouponTemplateDO> implements CouponTemplateService {
+
+    private final CouponTemplateMapper couponTemplateMapper;
+
+    @Override
+    public void saveCouponTemplate(CouponTemplateSaveReqDTO requestParam) {
+        CouponTemplateDO couponTemplateDO = BeanUtil.toBean(requestParam, CouponTemplateDO.class);
+        couponTemplateDO.setStatus(CouponTemplateStatusEnum.ACTIVE.getStatus());
+        couponTemplateMapper.insert(couponTemplateDO);
+    }
 }

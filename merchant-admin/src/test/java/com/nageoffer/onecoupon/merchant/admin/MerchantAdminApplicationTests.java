@@ -36,6 +36,7 @@ package com.nageoffer.onecoupon.merchant.admin;
 
 import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson2.JSONObject;
+import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTemplateStatusEnum;
 import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTemplateDO;
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
 import org.junit.jupiter.api.Test;
@@ -74,7 +75,7 @@ class MerchantAdminApplicationTests {
                 .stock(10) // 库存
                 .receiveRule(receiveRule.toString()) // 领取规则
                 .consumeRule(consumeRule.toString()) // 消耗规则
-                .status(0) // 优惠券状态 0：生效中 1：已结束 2：待激活
+                .status(CouponTemplateStatusEnum.ACTIVE.getStatus()) // 优惠券状态 0：生效中 1：已结束
                 .build();
         boolean saved = couponTemplateService.save(couponTemplateDO);
         Assert.isTrue(saved);

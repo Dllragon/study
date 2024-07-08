@@ -32,36 +32,21 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.dao.entity;
+package com.nageoffer.onecoupon.merchant.admin.dto.req;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.Date;
 
 /**
- * 优惠券模板数据库持久层实体
+ * 优惠券模板新增接口请求参数实体
  * <p>
  * 作者：马丁
  * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-08
+ * 开发时间：2024-07-09
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@TableName("t_coupon_template")
-public class CouponTemplateDO {
-
-    /**
-     * id
-     */
-    private Long id;
+public class CouponTemplateSaveReqDTO {
 
     /**
      * 优惠券名称
@@ -112,27 +97,4 @@ public class CouponTemplateDO {
      * 消耗规则
      */
     private String consumeRule;
-
-    /**
-     * 优惠券状态 0：生效中 1：已结束
-     */
-    private Integer status;
-
-    /**
-     * 创建时间
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 修改时间
-     */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-    /**
-     * 删除标识 0：未删除 1：已删除
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Integer delFlag;
 }

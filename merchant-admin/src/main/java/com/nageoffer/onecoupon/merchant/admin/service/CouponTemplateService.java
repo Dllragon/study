@@ -36,6 +36,7 @@ package com.nageoffer.onecoupon.merchant.admin.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTemplateDO;
+import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
 
 /**
  * 优惠券模板业务逻辑层
@@ -45,4 +46,11 @@ import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTemplateDO;
  * 开发时间：2024-07-08
  */
 public interface CouponTemplateService extends IService<CouponTemplateDO> {
+
+    /**
+     * 新增商家优惠券模板
+     *
+     * @param requestParam 请求参数
+     */
+    void saveCouponTemplate(CouponTemplateSaveReqDTO requestParam);
 }
