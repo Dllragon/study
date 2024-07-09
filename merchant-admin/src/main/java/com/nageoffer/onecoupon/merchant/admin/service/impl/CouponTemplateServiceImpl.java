@@ -58,7 +58,7 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
     private final CouponTemplateMapper couponTemplateMapper;
 
     @Override
-    public void saveCouponTemplate(CouponTemplateSaveReqDTO requestParam) {
+    public void createCouponTemplate(CouponTemplateSaveReqDTO requestParam) {
         CouponTemplateDO couponTemplateDO = BeanUtil.toBean(requestParam, CouponTemplateDO.class);
         couponTemplateDO.setStatus(CouponTemplateStatusEnum.ACTIVE.getStatus());
         couponTemplateMapper.insert(couponTemplateDO);
