@@ -79,7 +79,7 @@ public class CouponTemplateDO {
     private Integer target;
 
     /**
-     * 优惠商品集合
+     * 优惠商品编码
      */
     private String goods;
 
