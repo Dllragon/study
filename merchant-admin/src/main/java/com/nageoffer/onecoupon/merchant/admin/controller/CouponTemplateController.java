@@ -34,6 +34,7 @@
 
 package com.nageoffer.onecoupon.merchant.admin.controller;
 
+import com.nageoffer.onecoupon.framework.idempotent.NoRepeatSubmit;
 import com.nageoffer.onecoupon.framework.result.Result;
 import com.nageoffer.onecoupon.framework.web.Results;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
@@ -60,6 +61,7 @@ public class CouponTemplateController {
     private final CouponTemplateService couponTemplateService;
 
     @Operation(summary = "商家创建优惠券模板")
+    @NoRepeatSubmit(message = "请勿短时间内重复提交优惠券模板")
     @PostMapping("/api/merchant-admin/coupon-template/create")
     public Result<Void> createCouponTemplate(@RequestBody CouponTemplateSaveReqDTO requestParam) {
         couponTemplateService.createCouponTemplate(requestParam);
