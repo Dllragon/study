@@ -32,42 +32,36 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.service.impl;
+package com.nageoffer.onecoupon.merchant.admin.common.enums;
 
-import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTemplateStatusEnum;
-import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTemplateDO;
-import com.nageoffer.onecoupon.merchant.admin.dao.mapper.CouponTemplateMapper;
-import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
-import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
-import com.nageoffer.onecoupon.merchant.admin.service.basics.chain.MerchantAdminChainContext;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
-import static com.nageoffer.onecoupon.merchant.admin.common.enums.ChainBizMarkEnum.MERCHANT_ADMIN_CREATE_COUPON_TEMPLATE_KEY;
 
 /**
- * 优惠券模板业务逻辑实现层
+ * 优惠券优惠类型
  * <p>
  * 作者：马丁
  * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-08
+ * 开发时间：2024-07-09
  */
-@Service
 @RequiredArgsConstructor
-public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper, CouponTemplateDO> implements CouponTemplateService {
+public enum DiscountTypeEnum {
 
-    private final CouponTemplateMapper couponTemplateMapper;
+    /**
+     * 立减券
+     */
+    FIXED_DISCOUNT(0),
 
-    private final MerchantAdminChainContext merchantAdminChainContext;
+    /**
+     * 满减券
+     */
+    THRESHOLD_DISCOUNT(1),
 
-    @Override
-    public void createCouponTemplate(CouponTemplateSaveReqDTO requestParam) {
-        // 通过责任链验证请求参数是否正确
-        merchantAdminChainContext.handler(MERCHANT_ADMIN_CREATE_COUPON_TEMPLATE_KEY.name(), requestParam);
-        CouponTemplateDO couponTemplateDO = BeanUtil.toBean(requestParam, CouponTemplateDO.class);
-        couponTemplateDO.setStatus(CouponTemplateStatusEnum.ACTIVE.getStatus());
-        couponTemplateMapper.insert(couponTemplateDO);
-    }
+    /**
+     * 折扣券
+     */
+    DISCOUNT_COUPON(2);
+
+    @Getter
+    private final int type;
 }

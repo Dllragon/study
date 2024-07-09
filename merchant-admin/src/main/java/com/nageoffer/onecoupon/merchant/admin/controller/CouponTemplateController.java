@@ -35,7 +35,7 @@
 package com.nageoffer.onecoupon.merchant.admin.controller;
 
 import com.nageoffer.onecoupon.framework.result.Result;
-import com.nageoffer.onecoupon.framework.result.Results;
+import com.nageoffer.onecoupon.framework.web.Results;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
 import io.swagger.v3.oas.annotations.Operation;

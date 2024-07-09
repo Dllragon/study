@@ -32,42 +32,73 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.service.impl;
+package com.nageoffer.onecoupon.merchant.admin.service.handler.filter;
 
-import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTemplateStatusEnum;
-import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTemplateDO;
-import com.nageoffer.onecoupon.merchant.admin.dao.mapper.CouponTemplateMapper;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.nageoffer.onecoupon.framework.exception.ClientException;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
-import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
-import com.nageoffer.onecoupon.merchant.admin.service.basics.chain.MerchantAdminChainContext;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import com.nageoffer.onecoupon.merchant.admin.service.basics.chain.MerchantAdminAbstractChainHandler;
+import org.springframework.stereotype.Component;
 
 import static com.nageoffer.onecoupon.merchant.admin.common.enums.ChainBizMarkEnum.MERCHANT_ADMIN_CREATE_COUPON_TEMPLATE_KEY;
 
 /**
- * 优惠券模板业务逻辑实现层
+ * 验证优惠券创建接口参数是否正确责任链｜验证必填参数是否为空或空的字符串
  * <p>
  * 作者：马丁
  * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-08
+ * 开发时间：2024-07-09
  */
-@Service
-@RequiredArgsConstructor
-public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper, CouponTemplateDO> implements CouponTemplateService {
-
-    private final CouponTemplateMapper couponTemplateMapper;
-
-    private final MerchantAdminChainContext merchantAdminChainContext;
+@Component
+public class CouponTemplateCreateParamNotNullChainFilter implements MerchantAdminAbstractChainHandler<CouponTemplateSaveReqDTO> {
 
     @Override
-    public void createCouponTemplate(CouponTemplateSaveReqDTO requestParam) {
-        // 通过责任链验证请求参数是否正确
-        merchantAdminChainContext.handler(MERCHANT_ADMIN_CREATE_COUPON_TEMPLATE_KEY.name(), requestParam);
-        CouponTemplateDO couponTemplateDO = BeanUtil.toBean(requestParam, CouponTemplateDO.class);
-        couponTemplateDO.setStatus(CouponTemplateStatusEnum.ACTIVE.getStatus());
-        couponTemplateMapper.insert(couponTemplateDO);
+    public void handler(CouponTemplateSaveReqDTO requestParam) {
+        if (StrUtil.isEmpty(requestParam.getName())) {
+            throw new ClientException("优惠券名称不能为空");
+        }
+
+        if (ObjectUtil.isEmpty(requestParam.getSource())) {
+            throw new ClientException("优惠券来源不能为空");
+        }
+
+        if (ObjectUtil.isEmpty(requestParam.getTarget())) {
+            throw new ClientException("优惠对象不能为空");
+        }
+
+        if (ObjectUtil.isEmpty(requestParam.getType())) {
+            throw new ClientException("优惠类型不能为空");
+        }
+
+        if (ObjectUtil.isEmpty(requestParam.getValidStartTime())) {
+            throw new ClientException("有效期开始时间不能为空");
+        }
+
+        if (ObjectUtil.isEmpty(requestParam.getValidEndTime())) {
+            throw new ClientException("有效期结束时间不能为空");
+        }
+
+        if (ObjectUtil.isEmpty(requestParam.getStock())) {
+            throw new ClientException("库存不能为空");
+        }
+
+        if (StrUtil.isEmpty(requestParam.getReceiveRule())) {
+            throw new ClientException("领取规则不能为空");
+        }
+
+        if (StrUtil.isEmpty(requestParam.getConsumeRule())) {
+            throw new ClientException("消耗规则不能为空");
+        }
+    }
+
+    @Override
+    public String mark() {
+        return MERCHANT_ADMIN_CREATE_COUPON_TEMPLATE_KEY.name();
+    }
+
+    @Override
+    public int getOrder() {
+        return 0;
     }
 }
