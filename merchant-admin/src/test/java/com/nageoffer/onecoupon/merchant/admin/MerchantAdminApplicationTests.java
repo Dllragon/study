@@ -66,6 +66,7 @@ class MerchantAdminApplicationTests {
         consumeRule.put("explanationOfUnmetConditions", "3"); // 不满足使用条件说明
         consumeRule.put("validityPeriod", new Date()); // 有效时间
         CouponTemplateDO couponTemplateDO = CouponTemplateDO.builder()
+                .shopNumber("453055583") // 店铺编号
                 .name("商品立减券") // 优惠券名称
                 .source(0) // 优惠券来源 0：店铺券 1：平台券
                 .target(1) // 优惠对象 0：商品专属 1：全店通用

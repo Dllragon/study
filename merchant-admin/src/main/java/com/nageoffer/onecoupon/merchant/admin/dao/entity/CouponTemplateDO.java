@@ -64,6 +64,11 @@ public class CouponTemplateDO {
     private Long id;
 
     /**
+     * 店铺编号
+     */
+    private String shopNumber;
+
+    /**
      * 优惠券名称
      */
     private String name;
