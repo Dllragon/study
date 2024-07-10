@@ -32,70 +32,67 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.dao.entity;
+package com.nageoffer.onecoupon.merchant.admin.dao.sharding;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import org.apache.shardingsphere.infra.util.exception.ShardingSpherePreconditions;
+import org.apache.shardingsphere.sharding.api.sharding.standard.PreciseShardingValue;
+import org.apache.shardingsphere.sharding.api.sharding.standard.RangeShardingValue;
+import org.apache.shardingsphere.sharding.api.sharding.standard.StandardShardingAlgorithm;
+import org.apache.shardingsphere.sharding.exception.algorithm.sharding.ShardingAlgorithmInitializationException;
 
-import java.util.Date;
+import java.util.Collection;
+import java.util.List;
+import java.util.Properties;
 
 /**
- * 优惠券模板操作日志数据库持久层实体
+ * 基于 HashMod 方式自定义分库算法
  * <p>
  * 作者：马丁
  * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-09
+ * 开发时间：2024-07-10
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@TableName("t_coupon_template_log")
-public class CouponTemplateLogDO {
+public final class DBHashModShardingAlgorithm implements StandardShardingAlgorithm<Long> {
 
-    /**
-     * id
-     */
-    private Long id;
+    @Getter
+    private Properties props;
 
-    /**
-     * 店铺编号
-     */
-    private Long shopNumber;
+    private int shardingCount;
+    private static final String SHARDING_COUNT_KEY = "sharding-count";
 
-    /**
-     * 优惠券模板ID
-     */
-    private String couponTemplateId;
+    @Override
+    public String doSharding(Collection<String> availableTargetNames, PreciseShardingValue<Long> shardingValue) {
+        long id = shardingValue.getValue();
+        int dbSize = availableTargetNames.size();
+        int mod = (int) hashShardingValue(id) % shardingCount / (shardingCount / dbSize);
+        int index = 0;
+        for (String targetName : availableTargetNames) {
+            if (index == mod) {
+                return targetName;
+            }
+            index++;
+        }
+        throw new IllegalArgumentException("No target found for value: " + id);
+    }
 
-    /**
-     * 操作人
-     */
-    private String operatorId;
+    @Override
+    public Collection<String> doSharding(Collection<String> availableTargetNames, RangeShardingValue<Long> shardingValue) {
+        // 暂无范围分片场景，默认返回空
+        return List.of();
+    }
 
-    /**
-     * 操作日志
-     */
-    private String operationLog;
+    @Override
+    public void init(Properties props) {
+        this.props = props;
+        shardingCount = getShardingCount(props);
+    }
 
-    /**
-     * 原始数据
-     */
-    private String originalData;
+    private int getShardingCount(final Properties props) {
+        ShardingSpherePreconditions.checkState(props.containsKey(SHARDING_COUNT_KEY), () -> new ShardingAlgorithmInitializationException(getType(), "Sharding count cannot be null."));
+        return Integer.parseInt(props.getProperty(SHARDING_COUNT_KEY));
+    }
 
-    /**
-     * 修改后数据
-     */
-    private String modifiedData;
-
-    /**
-     * 创建时间
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Date createTime;
+    private long hashShardingValue(final Comparable<?> shardingValue) {
+        return Math.abs((long) shardingValue.hashCode());
+    }
 }

@@ -65,5 +65,5 @@ public class UserInfoDTO {
     /**
      * 店铺编号
      */
-    private String shopNumber;
+    private Long shopNumber;
 }
