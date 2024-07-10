@@ -32,7 +32,7 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin;
+package com.nageoffer.onecoupon.merchant.admin.template;
 
 import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson2.JSONObject;
@@ -47,16 +47,12 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 @SpringBootTest
-class MerchantAdminApplicationTests {
+public class CouponTemplateTest {
 
     @Autowired
     private CouponTemplateService couponTemplateService;
 
-    /**
-     * 测试新增优惠券模板方法
-     */
-    @Test
-    public void testInsertCouponTemplate() {
+    public CouponTemplateDO buildCouponTemplateDO() {
         JSONObject receiveRule = new JSONObject();
         receiveRule.put("limitPerPerson", 1); // 每人限领
         receiveRule.put("usageInstructions", "3"); // 使用说明
@@ -66,7 +62,7 @@ class MerchantAdminApplicationTests {
         consumeRule.put("explanationOfUnmetConditions", "3"); // 不满足使用条件说明
         consumeRule.put("validityPeriod", new Date()); // 有效时间
         CouponTemplateDO couponTemplateDO = CouponTemplateDO.builder()
-                .shopNumber("453055583") // 店铺编号
+                .shopNumber(1810714735922956666L) // 店铺编号
                 .name("商品立减券") // 优惠券名称
                 .source(0) // 优惠券来源 0：店铺券 1：平台券
                 .target(1) // 优惠对象 0：商品专属 1：全店通用
@@ -78,7 +74,15 @@ class MerchantAdminApplicationTests {
                 .consumeRule(consumeRule.toString()) // 消耗规则
                 .status(CouponTemplateStatusEnum.ACTIVE.getStatus()) // 优惠券状态 0：生效中 1：已结束
                 .build();
-        boolean saved = couponTemplateService.save(couponTemplateDO);
+        return couponTemplateDO;
+    }
+
+    /**
+     * 测试新增优惠券模板方法
+     */
+    @Test
+    public void testInsertCouponTemplate() {
+        boolean saved = couponTemplateService.save(buildCouponTemplateDO());
         Assert.isTrue(saved);
     }
 }

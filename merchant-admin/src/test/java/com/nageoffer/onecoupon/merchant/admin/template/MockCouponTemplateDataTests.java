@@ -32,44 +32,68 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.sharding;
+package com.nageoffer.onecoupon.merchant.admin.template;
 
+import cn.hutool.core.lang.Snowflake;
+import cn.hutool.core.util.RandomUtil;
+import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTemplateDO;
+import com.nageoffer.onecoupon.merchant.admin.dao.mapper.CouponTemplateMapper;
+import jodd.util.ThreadUtil;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 创建优惠券项目中需要分片数据库表 SQL 语句
+ * Mock 优惠券模板数据，方便分库分表均衡测试
  * <p>
  * 作者：马丁
  * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-10
  */
-public class AutoCreateShardingTableTests {
+@SpringBootTest
+public class MockCouponTemplateDataTests {
 
-    private final String table = "CREATE TABLE `t_coupon_template_%d` (\n" +
-            "  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID',\n" +
-            "  `name` varchar(256) DEFAULT NULL COMMENT '优惠券名称',\n" +
-            "  `shop_number` bigint(20) DEFAULT NULL COMMENT '店铺编号',\n" +
-            "  `source` tinyint(1) DEFAULT NULL COMMENT '优惠券来源 0：店铺券 1：平台券',\n" +
-            "  `target` tinyint(1) DEFAULT NULL COMMENT '优惠对象 0：商品专属 1：全店通用',\n" +
-            "  `goods` text COMMENT '优惠商品编码',\n" +
-            "  `type` tinyint(1) DEFAULT NULL COMMENT '优惠类型 0：立减券 1：满减券 2：折扣券',\n" +
-            "  `valid_start_time` datetime DEFAULT NULL COMMENT '有效期开始时间',\n" +
-            "  `valid_end_time` datetime DEFAULT NULL COMMENT '有效期结束时间',\n" +
-            "  `stock` int(11) DEFAULT NULL COMMENT '库存',\n" +
-            "  `receive_rule` json DEFAULT NULL COMMENT '领取规则',\n" +
-            "  `consume_rule` json DEFAULT NULL COMMENT '消耗规则',\n" +
-            "  `status` tinyint(1) DEFAULT NULL COMMENT '优惠券状态 0：生效中 1：已结束',\n" +
-            "  `create_time` datetime DEFAULT NULL COMMENT '创建时间',\n" +
-            "  `update_time` datetime DEFAULT NULL COMMENT '修改时间',\n" +
-            "  `del_flag` tinyint(1) DEFAULT NULL COMMENT '删除标识 0：未删除 1：已删除',\n" +
-            "  PRIMARY KEY (`id`),\n" +
-            "  KEY `idx_shop_number` (`shop_number`) USING BTREE\n" +
-            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='优惠券模板表';";
+    @Autowired
+    private CouponTemplateMapper couponTemplateMapper;
+
+    private final CouponTemplateTest couponTemplateTest = new CouponTemplateTest();
+    private final List<Snowflake> snowflakes = new ArrayList<>();
+    private final ExecutorService executorService = new ThreadPoolExecutor(
+            10,
+            10,
+            9999,
+            TimeUnit.SECONDS,
+            new SynchronousQueue<>(),
+            new ThreadPoolExecutor.CallerRunsPolicy()
+    );
+    private final int maxNum = 500000;
+
+    public void beforeDataBuild() {
+        for (int i = 0; i < 20; i++) {
+            snowflakes.add(new Snowflake(i));
+        }
+    }
 
     @Test
-    public void autoCreateConponTemplateShardingTable() {
-        for (int i = 0; i < 16; i++) {
-            System.out.println(String.format(table, i));
+    public void mockCouponTemplateTest() {
+        beforeDataBuild();
+        AtomicInteger count = new AtomicInteger(0);
+        while (count.get() < maxNum) {
+            executorService.execute(() -> {
+                ThreadUtil.sleep(RandomUtil.randomInt(10));
+                CouponTemplateDO couponTemplateDO = couponTemplateTest.buildCouponTemplateDO();
+                couponTemplateDO.setShopNumber(snowflakes.get(RandomUtil.randomInt(20)).nextId());
+                couponTemplateMapper.insert(couponTemplateDO);
+                count.incrementAndGet();
+            });
         }
     }
 }
