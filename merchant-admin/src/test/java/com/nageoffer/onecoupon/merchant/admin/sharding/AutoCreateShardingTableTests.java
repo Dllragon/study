@@ -45,7 +45,7 @@ import org.junit.jupiter.api.Test;
  */
 public class AutoCreateShardingTableTests {
 
-    private final String table = "CREATE TABLE `t_coupon_template_%d` (\n" +
+    private final String couponTable = "CREATE TABLE `t_coupon_template_%d` (\n" +
             "  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID',\n" +
             "  `name` varchar(256) DEFAULT NULL COMMENT '优惠券名称',\n" +
             "  `shop_number` bigint(20) DEFAULT NULL COMMENT '店铺编号',\n" +
@@ -66,10 +66,30 @@ public class AutoCreateShardingTableTests {
             "  KEY `idx_shop_number` (`shop_number`) USING BTREE\n" +
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='优惠券模板表';";
 
+    private final String couponLogTable = "CREATE TABLE `t_coupon_template_log_%d` (\n" +
+            "  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID',\n" +
+            "  `shop_number` bigint(20) DEFAULT NULL COMMENT '店铺编号',\n" +
+            "  `coupon_template_id` bigint(20) DEFAULT NULL COMMENT '优惠券模板ID',\n" +
+            "  `operator_id` bigint(20) DEFAULT NULL COMMENT '操作人',\n" +
+            "  `operation_log` text COMMENT '操作日志',\n" +
+            "  `original_data` varchar(1024) DEFAULT NULL COMMENT '原始数据',\n" +
+            "  `modified_data` varchar(1024) DEFAULT NULL COMMENT '修改后数据',\n" +
+            "  `create_time` datetime DEFAULT NULL COMMENT '创建时间',\n" +
+            "  PRIMARY KEY (`id`),\n" +
+            "  KEY `idx_shop_number` (`shop_number`) USING BTREE\n" +
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='优惠券模板操作日志表';";
+
     @Test
-    public void autoCreateConponTemplateShardingTable() {
+    public void autoCreateCouponTemplateShardingTable() {
         for (int i = 0; i < 16; i++) {
-            System.out.println(String.format(table, i));
+            System.out.println(String.format(couponTable, i));
+        }
+    }
+
+    @Test
+    public void autoCreateCouponTemplateLogShardingTable() {
+        for (int i = 0; i < 16; i++) {
+            System.out.println(String.format(couponLogTable, i));
         }
     }
 }
