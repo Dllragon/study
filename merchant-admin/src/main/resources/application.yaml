@@ -48,6 +48,7 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 springdoc:
+  default-flat-param-object: true
   swagger-ui:
     path: /swagger-ui.html
     tags-sorter: alpha
