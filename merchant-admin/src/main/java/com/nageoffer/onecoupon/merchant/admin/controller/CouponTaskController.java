@@ -34,14 +34,18 @@
 
 package com.nageoffer.onecoupon.merchant.admin.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.onecoupon.framework.idempotent.NoRepeatSubmit;
 import com.nageoffer.onecoupon.framework.result.Result;
 import com.nageoffer.onecoupon.framework.web.Results;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTaskCreateReqDTO;
+import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTaskPageQueryReqDTO;
+import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTaskPageQueryRespDTO;
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTaskService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -66,5 +70,11 @@ public class CouponTaskController {
     public Result<Void> createCouponTask(@RequestBody CouponTaskCreateReqDTO requestParam) {
         couponTaskService.createCouponTask(requestParam);
         return Results.success();
+    }
+
+    @Operation(summary = "分页查询优惠券推送任务")
+    @GetMapping("/api/merchant-admin/coupon-task/page")
+    public Result<IPage<CouponTaskPageQueryRespDTO>> pageQueryCouponTask(CouponTaskPageQueryReqDTO requestParam) {
+        return Results.success(couponTaskService.pageQueryCouponTask(requestParam));
     }
 }

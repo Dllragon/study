@@ -36,13 +36,21 @@ package com.nageoffer.onecoupon.merchant.admin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson2.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.onecoupon.merchant.admin.common.context.UserContext;
+import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTaskSendTypeEnum;
+import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTaskStatus;
 import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTaskDO;
 import com.nageoffer.onecoupon.merchant.admin.dao.mapper.CouponTaskMapper;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTaskCreateReqDTO;
+import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTaskPageQueryReqDTO;
+import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTaskPageQueryRespDTO;
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTaskService;
 import com.nageoffer.onecoupon.merchant.admin.service.handler.excel.RowCountListener;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +61,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
@@ -97,6 +106,12 @@ public class CouponTaskServiceImpl extends ServiceImpl<CouponTaskMapper, CouponT
         CouponTaskDO couponTaskDO = BeanUtil.copyProperties(requestParam, CouponTaskDO.class);
         couponTaskDO.setBatchId(IdUtil.getSnowflakeNextId());
         couponTaskDO.setOperatorId(Long.parseLong(UserContext.getUserId()));
+        couponTaskDO.setShopNumber(UserContext.getShopNumber());
+        couponTaskDO.setStatus(
+                Objects.equals(requestParam.getSendType(), CouponTaskSendTypeEnum.IMMEDIATE.getType())
+                        ? CouponTaskStatus.IN_PROGRESS.getStatus()
+                        : CouponTaskStatus.PENDING.getStatus()
+        );
 
         // 保存优惠券推送任务记录到数据库
         couponTaskMapper.insert(couponTaskDO);
@@ -112,6 +127,23 @@ public class CouponTaskServiceImpl extends ServiceImpl<CouponTaskMapper, CouponT
         RDelayedQueue<Object> delayedQueue = redissonClient.getDelayedQueue(blockingDeque);
         // 这里延迟时间设置 20 秒，原因是我们笃定上面线程池 20 秒之内就能结束任务
         delayedQueue.offer(delayJsonObject, 20, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public IPage<CouponTaskPageQueryRespDTO> pageQueryCouponTask(CouponTaskPageQueryReqDTO requestParam) {
+        // 构建分页查询模板 LambdaQueryWrapper
+        LambdaQueryWrapper<CouponTaskDO> queryWrapper = Wrappers.lambdaQuery(CouponTaskDO.class)
+                .eq(CouponTaskDO::getShopNumber, UserContext.getShopNumber())
+                .eq(StrUtil.isNotBlank(requestParam.getBatchId()), CouponTaskDO::getBatchId, requestParam.getBatchId())
+                .like(StrUtil.isNotBlank(requestParam.getTaskName()), CouponTaskDO::getTaskName, requestParam.getTaskName())
+                .eq(StrUtil.isNotBlank(requestParam.getCouponTemplateId()), CouponTaskDO::getCouponTemplateId, requestParam.getCouponTemplateId())
+                .eq(Objects.nonNull(requestParam.getStatus()), CouponTaskDO::getStatus, requestParam.getStatus());
+
+        // MyBatis-Plus 分页查询优惠券推送任务信息
+        IPage<CouponTaskDO> selectPage = couponTaskMapper.selectPage(requestParam, queryWrapper);
+
+        // 转换数据库持久层对象为优惠券模板返回参数
+        return selectPage.convert(each -> BeanUtil.toBean(each, CouponTaskPageQueryRespDTO.class));
     }
 
     private void refreshCouponTaskSendNum(JSONObject delayJsonObject) {
