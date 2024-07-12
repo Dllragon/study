@@ -46,6 +46,11 @@
             <artifactId>bizlog-sdk</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>easyexcel</artifactId>
+        </dependency>
+
         <!-- 数据库持久层相关依赖 -->
         <dependency>
             <groupId>com.mysql</groupId>
