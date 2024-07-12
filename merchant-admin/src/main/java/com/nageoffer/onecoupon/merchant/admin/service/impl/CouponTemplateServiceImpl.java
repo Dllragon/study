@@ -56,6 +56,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
+import static com.nageoffer.onecoupon.merchant.admin.common.constant.CouponTemplateConstant.COUPON_TEMPLATE_LOG_CONTENT;
 import static com.nageoffer.onecoupon.merchant.admin.common.enums.ChainBizMarkEnum.MERCHANT_ADMIN_CREATE_COUPON_TEMPLATE_KEY;
 
 /**
@@ -74,15 +75,7 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
     private final MerchantAdminChainContext merchantAdminChainContext;
 
     @LogRecord(
-            success = "{CURRENT_USER{''}} 用户创建优惠券：{{#requestParam.name}}，" +
-                    "优惠对象：{COMMON_ENUM_PARSE{'DiscountTargetEnum' + '_' + #requestParam.target}}，" +
-                    "优惠类型：{COMMON_ENUM_PARSE{'DiscountTypeEnum' + '_' + #requestParam.type}}，" +
-                    "库存数量：{{#requestParam.stock}}，" +
-                    "优惠商品编码：{{#requestParam.goods}}，" +
-                    "有效期开始时间：{{#requestParam.validStartTime}}，" +
-                    "有效期结束时间：{{#requestParam.validEndTime}}，" +
-                    "领取规则：{{#requestParam.receiveRule}}，" +
-                    "消耗规则：{{#requestParam.consumeRule}}，",
+            success = COUPON_TEMPLATE_LOG_CONTENT,
             type = "CouponTemplate",
             bizNo = "{{#bizNo}}",
             extra = "{{#requestParam.toString()}}"
