@@ -86,9 +86,9 @@ public class CouponTaskServiceImpl extends ServiceImpl<CouponTaskMapper, CouponT
      * 为什么这里拒绝策略使用直接丢弃任务？因为在发送任务时如果遇到发送数量为空，会重新进行统计
      */
     private final ExecutorService executorService = new ThreadPoolExecutor(
+            Runtime.getRuntime().availableProcessors(),
             Runtime.getRuntime().availableProcessors() << 1,
-            Runtime.getRuntime().availableProcessors() << 1,
-            9999,
+            60,
             TimeUnit.SECONDS,
             new SynchronousQueue<>(),
             new ThreadPoolExecutor.DiscardPolicy()
