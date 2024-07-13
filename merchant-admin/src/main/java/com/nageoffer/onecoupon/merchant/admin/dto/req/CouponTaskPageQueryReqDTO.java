@@ -68,8 +68,8 @@ public class CouponTaskPageQueryReqDTO extends Page {
     private String couponTemplateId;
 
     /**
-     * 状态 0：待执行 1：执行中 2：执行失败 3：执行成功
+     * 状态 0：待执行 1：执行中 2：执行失败 3：执行成功 4：取消
      */
-    @Schema(description = "状态 0：待执行 1：执行中 2：执行失败 3：执行成功")
+    @Schema(description = "状态 0：待执行 1：执行中 2：执行失败 3：执行成功 4：取消")
     private Integer status;
 }

@@ -65,7 +65,12 @@ public enum CouponTaskStatusEnum {
     /**
      * 执行成功
      */
-    SUCCESS(3);
+    SUCCESS(3),
+
+    /**
+     * 取消
+     */
+    CANAL(4);
 
     @Getter
     private final int status;
