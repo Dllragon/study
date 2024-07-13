@@ -74,3 +74,11 @@ xxl-job:
     ip: 127.0.0.1
     log-retention-days: 30
     port: 19999
+
+rocketmq:
+  name-server: 127.0.0.1:9876
+  producer:
+    group: oneCoupon_merchant-admin${unique-name:}-service_common-message-execute_pg
+    send-message-timeout: 2000
+    retry-times-when-send-failed: 1
+    retry-times-when-send-async-failed: 1
