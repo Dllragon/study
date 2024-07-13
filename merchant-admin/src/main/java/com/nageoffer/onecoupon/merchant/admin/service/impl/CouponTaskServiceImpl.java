@@ -45,7 +45,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.onecoupon.merchant.admin.common.context.UserContext;
 import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTaskSendTypeEnum;
-import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTaskStatus;
+import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTaskStatusEnum;
 import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTaskDO;
 import com.nageoffer.onecoupon.merchant.admin.dao.mapper.CouponTaskMapper;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTaskCreateReqDTO;
@@ -109,8 +109,8 @@ public class CouponTaskServiceImpl extends ServiceImpl<CouponTaskMapper, CouponT
         couponTaskDO.setShopNumber(UserContext.getShopNumber());
         couponTaskDO.setStatus(
                 Objects.equals(requestParam.getSendType(), CouponTaskSendTypeEnum.IMMEDIATE.getType())
-                        ? CouponTaskStatus.IN_PROGRESS.getStatus()
-                        : CouponTaskStatus.PENDING.getStatus()
+                        ? CouponTaskStatusEnum.IN_PROGRESS.getStatus()
+                        : CouponTaskStatusEnum.PENDING.getStatus()
         );
 
         // 保存优惠券推送任务记录到数据库

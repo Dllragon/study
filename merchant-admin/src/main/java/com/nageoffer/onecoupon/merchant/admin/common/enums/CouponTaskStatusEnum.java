@@ -45,7 +45,7 @@ import lombok.RequiredArgsConstructor;
  * 开发时间：2024-07-12
  */
 @RequiredArgsConstructor
-public enum CouponTaskStatus {
+public enum CouponTaskStatusEnum {
 
     /**
      * 待执行

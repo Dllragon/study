@@ -59,7 +59,18 @@ springdoc:
     - group: 'default'
       paths-to-match: '/**'
       packages-to-scan: com.nageoffer.onecoupon
+
 knife4j:
   enable: true
   setting:
     language: zh_cn
+
+xxl-job:
+  access-token: default_token
+  admin:
+    addresses: http://localhost:8088/xxl-job-admin
+  executor:
+    application-name: one-coupon-merchant-admin
+    ip: 127.0.0.1
+    log-retention-days: 30
+    port: 19999
