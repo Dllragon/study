@@ -32,84 +32,49 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.job;
+package com.nageoffer.onecoupon.merchant.admin.mq.consumer;
 
-import cn.hutool.core.collection.CollUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTaskStatusEnum;
+import com.alibaba.fastjson2.JSON;
+import com.nageoffer.onecoupon.merchant.admin.common.constant.MerchantAdminRocketMQConstant;
 import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTaskDO;
-import com.nageoffer.onecoupon.merchant.admin.dao.mapper.CouponTaskMapper;
+import com.nageoffer.onecoupon.merchant.admin.mq.base.MessageWrapper;
 import com.nageoffer.onecoupon.merchant.admin.mq.event.CouponTaskDelayEvent;
-import com.nageoffer.onecoupon.merchant.admin.mq.producer.CouponTaskDelayExecuteProducer;
-import com.xxl.job.core.handler.IJobHandler;
-import com.xxl.job.core.handler.annotation.XxlJob;
+import com.nageoffer.onecoupon.merchant.admin.service.CouponTaskService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
-import java.util.List;
-
 /**
- * 优惠券推送任务扫描定时发送记录 XXL-Job 处理器
+ * 优惠券推送延迟执行-变更记录发送状态消费者
  * <p>
  * 作者：马丁
  * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-12
+ * 开发时间：2024-07-13
  */
 @Component
 @RequiredArgsConstructor
-public class CouponTaskJobHandler extends IJobHandler {
+@RocketMQMessageListener(
+        topic = MerchantAdminRocketMQConstant.TEMPLATE_TASK_DELAY_TOPIC_KEY,
+        consumerGroup = MerchantAdminRocketMQConstant.TEMPLATE_TASK_DELAY_STATUS_CG_KEY
+)
+@Slf4j(topic = "CouponTaskDelayExecuteStatusConsumer")
+public class CouponTaskDelayExecuteStatusConsumer implements RocketMQListener<MessageWrapper<CouponTaskDelayEvent>> {
 
-    private final CouponTaskMapper couponTaskMapper;
-    private final CouponTaskDelayExecuteProducer couponTaskDelayExecuteProducer;
+    private final CouponTaskService couponTaskService;
 
-    private static final int MAX_LIMIT = 100;
+    @Override
+    public void onMessage(MessageWrapper<CouponTaskDelayEvent> messageWrapper) {
+        // 开头打印日志，平常可 Debug 看任务参数，线上可报平安（比如消息是否消费，重新投递时获取参数等）
+        log.info("[消费者] 优惠券推送定时执行@变更记录发送状态 - 执行消费逻辑，消息体：{}", JSON.toJSONString(messageWrapper));
 
-    @XxlJob(value = "couponTemplateTask")
-    public void execute() throws Exception {
-        long initId = 0;
-        Date now = new Date();
-
-        while (true) {
-            List<CouponTaskDO> couponTaskDOList = fetchPendingTasks(initId, now);
-
-            if (CollUtil.isEmpty(couponTaskDOList)) {
-                break;
-            }
-
-            // 调用分发服务对用户发送优惠券
-            for (CouponTaskDO each : couponTaskDOList) {
-                distributeCoupon(each);
-            }
-
-            if (couponTaskDOList.size() < MAX_LIMIT) {
-                break;
-            }
-
-            // 更新 initId 为当前列表中最大 ID
-            initId = couponTaskDOList.stream()
-                    .mapToLong(CouponTaskDO::getId)
-                    .max()
-                    .orElse(initId);
-        }
-    }
-
-    private void distributeCoupon(CouponTaskDO couponTask) {
-        // 通过消息队列发送消息，修改状态记录并由分发服务消费者消费该消息
-        CouponTaskDelayEvent couponTaskDelayEvent = CouponTaskDelayEvent.builder()
-                .couponTaskId(couponTask.getId())
-                .status(CouponTaskStatusEnum.IN_PROGRESS.getStatus())
+        // 修改延时执行推送任务任务状态为执行中
+        CouponTaskDelayEvent message = messageWrapper.getMessage();
+        CouponTaskDO couponTaskDO = CouponTaskDO.builder()
+                .id(message.getCouponTaskId())
+                .status(message.getStatus())
                 .build();
-        couponTaskDelayExecuteProducer.sendMessage(couponTaskDelayEvent);
-    }
-
-    private List<CouponTaskDO> fetchPendingTasks(long initId, Date now) {
-        LambdaQueryWrapper<CouponTaskDO> queryWrapper = Wrappers.lambdaQuery(CouponTaskDO.class)
-                .eq(CouponTaskDO::getStatus, CouponTaskStatusEnum.PENDING.getStatus())
-                .le(CouponTaskDO::getSendTime, now)
-                .gt(CouponTaskDO::getId, initId)
-                .last("LIMIT " + MAX_LIMIT);
-        return couponTaskMapper.selectList(queryWrapper);
+        couponTaskService.updateById(couponTaskDO);
     }
 }
