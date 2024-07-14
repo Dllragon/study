@@ -43,7 +43,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * 商家后管服务｜创建优惠券、店家查看以及管理优惠券、创建优惠券发放批次等
  * <p>
  * 作者：马丁
- * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-08
  */
 @SpringBootApplication

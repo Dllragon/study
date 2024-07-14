@@ -72,7 +72,7 @@ import java.util.concurrent.TimeUnit;
  * 优惠券推送业务逻辑实现层
  * <p>
  * 作者：马丁
- * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-12
  */
 @Service
@@ -165,7 +165,7 @@ public class CouponTaskServiceImpl extends ServiceImpl<CouponTaskMapper, CouponT
      * 如果延迟消息没有持久化成功，或者 Redis 挂了怎么办？后续可以人工处理
      * <p>
      * 作者：马丁
-     * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+     * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
      * 开发时间：2024-07-12
      */
     @Service

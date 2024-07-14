@@ -41,7 +41,7 @@ import com.nageoffer.onecoupon.merchant.admin.dao.entity.UserDO;
  * 商家后管用户数据库持久层｜当前仅用于 Mock 数据
  * <p>
  * 作者：马丁
- * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-10
  */
 public interface UserMapper extends BaseMapper<UserDO> {

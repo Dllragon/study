@@ -40,7 +40,7 @@ import org.springframework.core.Ordered;
  * 抽象商家后管业务责任链组件
  * <p>
  * 作者：马丁
- * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-09
  */
 public interface MerchantAdminAbstractChainHandler<T> extends Ordered {
