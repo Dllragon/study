@@ -32,96 +32,117 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.dto.resp;
+package com.nageoffer.onecoupon.distribution.dao.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import io.swagger.v3.oas.annotations.media.Schema;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
 
 /**
- * 优惠券模板查询接口返回参数实体
+ * 优惠券推送任务数据库持久层实体
  * <p>
  * 作者：马丁
  * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 开发时间：2024-07-13
  */
 @Data
-@Schema(description = "优惠券模板查询返回实体")
-public class CouponTemplateQueryRespDTO {
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@TableName("t_coupon_task")
+public class CouponTaskDO {
 
     /**
-     * 优惠券id
+     * id
      */
-    @Schema(description = "优惠券id")
-    private String id;
+    private Long id;
 
     /**
-     * 优惠券名称
+     * 店铺编号
      */
-    @Schema(description = "优惠券名称")
-    private String name;
+    private Long shopNumber;
 
     /**
-     * 优惠券来源 0：店铺券 1：平台券
+     * 批次id
      */
-    @Schema(description = "优惠券来源 0：店铺券 1：平台券")
-    private Integer source;
+    private Long batchId;
 
     /**
-     * 优惠对象 0：商品专属 1：全店通用
+     * 优惠券批次任务名称
      */
-    @Schema(description = "优惠对象 0：商品专属 1：全店通用")
-    private Integer target;
+    private String taskName;
 
     /**
-     * 优惠商品编码
+     * 文件地址
      */
-    @Schema(description = "优惠商品编码")
-    private String goods;
+    private String fileAddress;
 
     /**
-     * 优惠类型 0：立减券 1：满减券 2：折扣券
+     * 发放失败用户文件地址
      */
-    @Schema(description = "优惠类型 0：立减券 1：满减券 2：折扣券")
-    private Integer type;
+    private String failFileAddress;
 
     /**
-     * 有效期开始时间
+     * 发放优惠券数量
      */
-    @Schema(description = "有效期开始时间")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date validStartTime;
+    private Integer sendNum;
 
     /**
-     * 有效期结束时间
+     * 通知方式，可组合使用 0：站内信 1：弹框推送 2：邮箱 3：短信
      */
-    @Schema(description = "有效期结束时间")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date validEndTime;
+    private String notifyType;
 
     /**
-     * 库存
+     * 优惠券模板id
      */
-    @Schema(description = "库存")
-    private Integer stock;
+    private Long couponTemplateId;
 
     /**
-     * 领取规则
+     * 发送类型 0：立即发送 1：定时发送
      */
-    @Schema(description = "领取规则")
-    private String receiveRule;
+    private Integer sendType;
 
     /**
-     * 消耗规则
+     * 发送时间
      */
-    @Schema(description = "消耗规则")
-    private String consumeRule;
+    private Date sendTime;
 
     /**
-     * 优惠券状态 0：生效中 1：已结束
+     * 状态 0：待执行 1：执行中 2：执行失败 3：执行成功 4：取消
      */
-    @Schema(description = "优惠券状态 0：生效中 1：已结束")
     private Integer status;
+
+    /**
+     * 完成时间
+     */
+    private Date completionTime;
+
+    /**
+     * 操作人
+     */
+    private Long operatorId;
+
+    /**
+     * 创建时间
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private Date createTime;
+
+    /**
+     * 修改时间
+     */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Date updateTime;
+
+    /**
+     * 删除标识 0：未删除 1：已删除
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private Integer delFlag;
 }

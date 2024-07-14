@@ -34,8 +34,10 @@
 
 package com.nageoffer.onecoupon.distribution;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 /**
  * 分发模块｜负责按批次分发用户优惠券，可提供应用弹框推送、站内信或短信通知等
@@ -45,6 +47,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * 开发时间：2024-07-08
  */
 @SpringBootApplication
+@MapperScan("com.nageoffer.onecoupon.distribution.dao.mapper")
+@EnableFeignClients("com.nageoffer.onecoupon.distribution.remote")
 public class DistributionApplication {
 
     public static void main(String[] args) {
