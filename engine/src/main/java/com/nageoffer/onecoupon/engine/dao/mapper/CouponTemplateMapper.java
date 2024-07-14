@@ -32,24 +32,17 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine;
+package com.nageoffer.onecoupon.engine.dao.mapper;
 
-import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateDO;
 
 /**
- * 引擎服务｜负责优惠券单个查看、列表查看、锁定以及核销等功能
+ * 优惠券模板数据库持久层
  * <p>
  * 作者：马丁
  * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-08
+ * 开发时间：2024-07-14
  */
-@SpringBootApplication
-@MapperScan("com.nageoffer.onecoupon.engine.dao.mapper")
-public class EngineApplication {
-
-    public static void main(String[] args) {
-        SpringApplication.run(EngineApplication.class, args);
-    }
+public interface CouponTemplateMapper extends BaseMapper<CouponTemplateDO> {
 }
