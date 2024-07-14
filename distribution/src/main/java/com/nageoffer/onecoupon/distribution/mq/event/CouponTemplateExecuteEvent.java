@@ -32,36 +32,48 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.common.constant;
+package com.nageoffer.onecoupon.distribution.mq.event;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * 分发优惠券服务 RocketMQ 常量类
+ * 优惠券模板任务执行事件
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-13
  */
-public final class DistributionRocketMQConstant {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CouponTemplateExecuteEvent {
 
     /**
-     * 优惠券模板推送执行 Topic Key
-     * 负责扫描优惠券 Excel 并将里面的记录进行推送
+     * 优惠券分发任务id
      */
-    public static final String TEMPLATE_TASK_EXECUTE_TOPIC_KEY = "one-coupon_distribution-service_coupon-task-execute_topic${unique-name:}";
+    private String couponTaskId;
 
     /**
-     * 优惠券模板推送执行-执行消费者组 Key
+     * 优惠券模板id
      */
-    public static final String TEMPLATE_TASK_EXECUTE_CG_KEY = "one-coupon_distribution-service_coupon-task-execute_cg${unique-name:}";
+    private String couponTemplateId;
 
     /**
-     * 优惠券模板推送执行 Topic Key
-     * 负责执行将优惠券发放给具体用户逻辑
+     * 用户id
      */
-    public static final String TEMPLATE_EXECUTE_DISTRIBUTION_TOPIC_KEY = "one-coupon_distribution-service_coupon-execute-distribution_topic${unique-name:}";
+    private String userId;
 
     /**
-     * 优惠券模板推送执行-执行消费者组 Key
+     * 手机号
      */
-    public static final String TEMPLATE_EXECUTE_DISTRIBUTION_CG_KEY = "one-coupon_distribution-service_coupon-execute-distribution_cg${unique-name:}";
+    private String phone;
+
+    /**
+     * 邮箱
+     */
+    private String mail;
 }

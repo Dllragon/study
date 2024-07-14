@@ -32,36 +32,49 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.common.constant;
+package com.nageoffer.onecoupon.distribution.mq.consumer;
+
+import com.alibaba.fastjson2.JSON;
+import com.nageoffer.onecoupon.distribution.common.constant.DistributionRocketMQConstant;
+import com.nageoffer.onecoupon.distribution.common.constant.EngineRedisConstant;
+import com.nageoffer.onecoupon.distribution.mq.base.MessageWrapper;
+import com.nageoffer.onecoupon.distribution.mq.event.CouponTemplateExecuteEvent;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Component;
 
 /**
- * 分发优惠券服务 RocketMQ 常量类
+ * 优惠券执行分发到用户消费者
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-13
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-14
  */
-public final class DistributionRocketMQConstant {
+@Component
+@RequiredArgsConstructor
+@RocketMQMessageListener(
+        topic = DistributionRocketMQConstant.TEMPLATE_EXECUTE_DISTRIBUTION_TOPIC_KEY,
+        consumerGroup = DistributionRocketMQConstant.TEMPLATE_EXECUTE_DISTRIBUTION_CG_KEY
+)
+@Slf4j(topic = "CouponExecuteDistributionConsumer")
+public class CouponExecuteDistributionConsumer implements RocketMQListener<MessageWrapper<CouponTemplateExecuteEvent>> {
 
-    /**
-     * 优惠券模板推送执行 Topic Key
-     * 负责扫描优惠券 Excel 并将里面的记录进行推送
-     */
-    public static final String TEMPLATE_TASK_EXECUTE_TOPIC_KEY = "one-coupon_distribution-service_coupon-task-execute_topic${unique-name:}";
+    private final StringRedisTemplate stringRedisTemplate;
 
-    /**
-     * 优惠券模板推送执行-执行消费者组 Key
-     */
-    public static final String TEMPLATE_TASK_EXECUTE_CG_KEY = "one-coupon_distribution-service_coupon-task-execute_cg${unique-name:}";
+    @Override
+    public void onMessage(MessageWrapper<CouponTemplateExecuteEvent> messageWrapper) {
+        // 开头打印日志，平常可 Debug 看任务参数，线上可报平安（比如消息是否消费，重新投递时获取参数等）
+        log.info("[消费者] 优惠券分发到用户账号 - 执行消费逻辑，消息体：{}", JSON.toJSONString(messageWrapper));
+        CouponTemplateExecuteEvent event = messageWrapper.getMessage();
 
-    /**
-     * 优惠券模板推送执行 Topic Key
-     * 负责执行将优惠券发放给具体用户逻辑
-     */
-    public static final String TEMPLATE_EXECUTE_DISTRIBUTION_TOPIC_KEY = "one-coupon_distribution-service_coupon-execute-distribution_topic${unique-name:}";
-
-    /**
-     * 优惠券模板推送执行-执行消费者组 Key
-     */
-    public static final String TEMPLATE_EXECUTE_DISTRIBUTION_CG_KEY = "one-coupon_distribution-service_coupon-execute-distribution_cg${unique-name:}";
+        // TODO 先执行自减，后续重构为 LUA 脚本
+        Long stock = stringRedisTemplate.opsForHash().increment(String.format(EngineRedisConstant.COUPON_TEMPLATE_KEY, event.getCouponTemplateId()), "stock", -1);
+        if (stock < 0) {
+            // TODO 应该添加到 t_coupon_task_fail 并标记错误原因
+            return;
+        }
+    }
 }

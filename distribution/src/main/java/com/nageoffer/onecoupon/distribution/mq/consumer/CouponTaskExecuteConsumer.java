@@ -35,6 +35,7 @@
 package com.nageoffer.onecoupon.distribution.mq.consumer;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson2.JSON;
 import com.nageoffer.onecoupon.distribution.common.constant.DistributionRocketMQConstant;
 import com.nageoffer.onecoupon.distribution.common.enums.CouponTaskStatusEnum;
@@ -42,15 +43,18 @@ import com.nageoffer.onecoupon.distribution.common.enums.CouponTemplateStatusEnu
 import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTaskMapper;
 import com.nageoffer.onecoupon.distribution.mq.base.MessageWrapper;
 import com.nageoffer.onecoupon.distribution.mq.event.CouponTaskExecuteEvent;
+import com.nageoffer.onecoupon.distribution.mq.producer.CouponTemplateExecuteProducer;
 import com.nageoffer.onecoupon.distribution.remote.CouponTemplateRemoteService;
-import com.nageoffer.onecoupon.distribution.remote.dto.req.CouponTemplateQueryRemoteReqDTO;
 import com.nageoffer.onecoupon.distribution.remote.dto.resp.CouponTemplateQueryRemoteRespDTO;
+import com.nageoffer.onecoupon.distribution.service.handler.excel.CouponTaskExcelObject;
+import com.nageoffer.onecoupon.distribution.service.handler.excel.ReadExcelDistributionListener;
 import com.nageoffer.onecoupon.framework.exception.RemoteException;
 import com.nageoffer.onecoupon.framework.result.Result;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 /**
@@ -72,6 +76,9 @@ public class CouponTaskExecuteConsumer implements RocketMQListener<MessageWrappe
     private final CouponTaskMapper couponTaskMapper;
     private final CouponTemplateRemoteService couponTemplateRemoteService;
 
+    private final StringRedisTemplate stringRedisTemplate;
+    private final CouponTemplateExecuteProducer couponTemplateExecuteProducer;
+
     @Override
     public void onMessage(MessageWrapper<CouponTaskExecuteEvent> messageWrapper) {
         // 开头打印日志，平常可 Debug 看任务参数，线上可报平安（比如消息是否消费，重新投递时获取参数等）
@@ -85,21 +92,21 @@ public class CouponTaskExecuteConsumer implements RocketMQListener<MessageWrappe
             return;
         }
 
-        // 调用引擎服务获取优惠券模板信息
-        var remoteReqDTO = CouponTemplateQueryRemoteReqDTO.builder()
-                .shopNumber(String.valueOf(couponTaskDO.getShopNumber()))
-                .couponTemplateId(String.valueOf(couponTaskDO.getCouponTemplateId()))
-                .build();
-        // var 无法推断
+        // var 无法推断没有初始化的变量
         Result<CouponTemplateQueryRemoteRespDTO> remoteCouponTemplateResult;
         try {
-            remoteCouponTemplateResult = couponTemplateRemoteService.pageQueryCouponTemplate(remoteReqDTO);
+            // 调用引擎服务获取优惠券模板信息
+            remoteCouponTemplateResult = couponTemplateRemoteService.pageQueryCouponTemplate(
+                    String.valueOf(couponTaskDO.getShopNumber()),
+                    String.valueOf(couponTaskDO.getCouponTemplateId())
+            );
 
+            // 判断远程调用优惠券模板信息数据是否为空或调用失败
             if (remoteCouponTemplateResult == null) {
                 log.warn("[消费者] 优惠券推送任务正式执行 - 调用引擎服务层失败，将会重试调用");
                 throw new RemoteException("调用引擎服务层优惠券模板返回空");
             } else if (remoteCouponTemplateResult.isFail()) {
-                log.error("[消费者] 调用引擎服务层失败，返回错误信息：{}", remoteCouponTemplateResult.getMessage());
+                log.error("[消费者] 优惠券推送任务正式执行 - 调用引擎服务层失败，返回错误信息：{}", remoteCouponTemplateResult.getMessage());
                 return;
             }
         } catch (Throwable ex) {
@@ -116,5 +123,12 @@ public class CouponTaskExecuteConsumer implements RocketMQListener<MessageWrappe
         }
 
         // 正式开始执行优惠券推送任务
+        ReadExcelDistributionListener readExcelDistributionListener = new ReadExcelDistributionListener(
+                String.valueOf(couponTaskId),
+                actualRemoteCouponTemplate.getId(),
+                stringRedisTemplate,
+                couponTemplateExecuteProducer
+        );
+        EasyExcel.read(couponTaskDO.getFileAddress(), CouponTaskExcelObject.class, readExcelDistributionListener).sheet().doRead();
     }
 }
