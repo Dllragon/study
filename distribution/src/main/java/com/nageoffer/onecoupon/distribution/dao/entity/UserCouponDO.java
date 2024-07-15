@@ -104,11 +104,6 @@ public class UserCouponDO {
     private Date useTime;
 
     /**
-     * 点击跳转地址
-     */
-    private String redirectUrl;
-
-    /**
      * 券来源 0：领券中心 1：平台发放 2：店铺领取
      */
     private Integer source;
