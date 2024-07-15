@@ -142,12 +142,12 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
                 userCouponDOList.add(userCouponDO);
             }
 
-            // 批量新增用户优惠券记录，底层通过递归方式直到全部新增成功
+            // 平台优惠券每个用户限领一次。批量新增用户优惠券记录，底层通过递归方式直到全部新增成功
             batchSaveUserCouponList(Long.parseLong(event.getCouponTemplate().getId()), userCouponDOList);
         }
     }
 
-    public void batchSaveUserCouponList(Long couponTemplateId, List<UserCouponDO> userCouponDOList) {
+    private void batchSaveUserCouponList(Long couponTemplateId, List<UserCouponDO> userCouponDOList) {
         // MyBatis-Plus 批量执行用户优惠券记录
         try {
             userCouponMapper.insert(userCouponDOList, userCouponDOList.size());
@@ -160,14 +160,14 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
                         .eq(UserCouponDO::getReceiveCount, 1);
                 List<UserCouponDO> existentuserCouponDOList = userCouponMapper.selectList(queryWrapper);
                 // 遍历已经存在的集合，获取 userId，并从需要新增的集合中移除匹配的元素
-                for (UserCouponDO a : existentuserCouponDOList) {
-                    Long userId = a.getUserId();
+                for (UserCouponDO each : existentuserCouponDOList) {
+                    Long userId = each.getUserId();
 
                     // 使用迭代器遍历需要新增的集合，安全移除元素
                     Iterator<UserCouponDO> iterator = userCouponDOList.iterator();
                     while (iterator.hasNext()) {
-                        UserCouponDO b = iterator.next();
-                        if (b.getUserId().equals(userId)) {
+                        UserCouponDO item = iterator.next();
+                        if (item.getUserId().equals(userId)) {
                             iterator.remove();
                             // TODO 应该添加到 t_coupon_task_fail 并标记错误原因
                         }
