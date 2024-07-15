@@ -32,49 +32,31 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.mq.event;
+package com.nageoffer.onecoupon.distribution.common.enums;
 
-import com.nageoffer.onecoupon.distribution.remote.dto.resp.CouponTemplateQueryRemoteRespDTO;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
- * 优惠券模板任务执行事件
+ * 优惠券使用状态枚举类
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-13
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-15
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class CouponTemplateExecuteEvent {
+@RequiredArgsConstructor
+public enum CouponStatusEnum {
 
     /**
-     * 优惠券分发任务id
+     * 生效中
      */
-    private String couponTaskId;
+    EFFECTIVE(0),
 
     /**
-     * 优惠券模板
+     * 已结束
      */
-    private CouponTemplateQueryRemoteRespDTO couponTemplate;
+    ENDED(1);
 
-    /**
-     * 用户id
-     */
-    private String userId;
-
-    /**
-     * 手机号
-     */
-    private String phone;
-
-    /**
-     * 邮箱
-     */
-    private String mail;
+    @Getter
+    private final int type;
 }

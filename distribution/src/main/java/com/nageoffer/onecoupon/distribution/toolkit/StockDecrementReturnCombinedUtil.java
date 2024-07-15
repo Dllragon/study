@@ -32,49 +32,41 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.mq.event;
-
-import com.nageoffer.onecoupon.distribution.remote.dto.resp.CouponTemplateQueryRemoteRespDTO;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+package com.nageoffer.onecoupon.distribution.toolkit;
 
 /**
- * 优惠券模板任务执行事件
+ * 用户优惠券执行 LUA 脚本返回数据｜通过位移形式提高性能，是个小优化
+ * 因为预计每 5000 条记录保存次数据库，2^12 能表示 4096，所以这里采用了 2^13
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-13
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-15
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class CouponTemplateExecuteEvent {
+public class StockDecrementReturnCombinedUtil {
 
     /**
-     * 优惠券分发任务id
+     * 2^13 > 5000, 所以用 13 位来表示第二个字段
      */
-    private String couponTaskId;
+    private static final int SECOND_FIELD_BITS = 13;
 
     /**
-     * 优惠券模板
+     * 将两个字段组合成一个int
      */
-    private CouponTemplateQueryRemoteRespDTO couponTemplate;
+    public static int combineFields(boolean decrementFlag, int userRecord) {
+        return (decrementFlag ? 1 : 0) << SECOND_FIELD_BITS | userRecord;
+    }
 
     /**
-     * 用户id
+     * 从组合的int中提取第一个字段（0或1）
      */
-    private String userId;
+    public static boolean extractFirstField(long combined) {
+        return (combined >> SECOND_FIELD_BITS) != 0;
+    }
 
     /**
-     * 手机号
+     * 从组合的int中提取第二个字段（1到5000之间的数字）
      */
-    private String phone;
-
-    /**
-     * 邮箱
-     */
-    private String mail;
+    public static long extractSecondField(long combined) {
+        return combined & ((1 << SECOND_FIELD_BITS) - 1);
+    }
 }

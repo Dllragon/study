@@ -40,6 +40,7 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.nageoffer.onecoupon.distribution.common.constant.DistributionRedisConstant;
 import com.nageoffer.onecoupon.distribution.mq.event.CouponTemplateExecuteEvent;
 import com.nageoffer.onecoupon.distribution.mq.producer.CouponTemplateExecuteProducer;
+import com.nageoffer.onecoupon.distribution.remote.dto.resp.CouponTemplateQueryRemoteRespDTO;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -55,7 +56,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 public class ReadExcelDistributionListener extends AnalysisEventListener<CouponTaskExcelObject> {
 
     private final String couponTaskId;
-    private final String couponTemplateId;
+    private final CouponTemplateQueryRemoteRespDTO couponTemplate;
 
     private final StringRedisTemplate stringRedisTemplate;
     private final CouponTemplateExecuteProducer couponTemplateExecuteProducer;
@@ -79,8 +80,8 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
                 .userId(data.getUserId())
                 .mail(data.getMail())
                 .phone(data.getPhone())
-                .couponTemplateId(couponTaskId)
-                .couponTemplateId(couponTemplateId)
+                .couponTaskId(couponTaskId)
+                .couponTemplate(couponTemplate)
                 .build();
         couponTemplateExecuteProducer.sendMessage(couponTemplateExecuteEvent);
 
