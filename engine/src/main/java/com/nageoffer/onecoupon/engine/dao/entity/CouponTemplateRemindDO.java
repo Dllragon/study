@@ -41,6 +41,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 
 /**
  * 用户预约提醒信息存储数据库持久层实体
@@ -57,18 +59,23 @@ import lombok.NoArgsConstructor;
 public class CouponTemplateRemindDO {
 
     /**
-     * 券id
-     */
-    private Long couponTemplateId;
-
-    /**
      * 用户id
      */
     private Long userId;
 
     /**
+     * 券id
+     */
+    private Long couponTemplateId;
+
+    /**
      * 用户预约信息，用位图存储信息
      */
-    private Integer information;
+    private Long information;
+
+    /**
+     * 优惠券开抢时间
+     */
+    private Date startTime;
 
 }
