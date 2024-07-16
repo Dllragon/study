@@ -37,6 +37,8 @@ package com.nageoffer.onecoupon.merchant.admin.job;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.nageoffer.onecoupon.framework.result.Result;
+import com.nageoffer.onecoupon.framework.web.Results;
 import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTaskStatusEnum;
 import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTaskDO;
 import com.nageoffer.onecoupon.merchant.admin.dao.mapper.CouponTaskMapper;
@@ -44,8 +46,13 @@ import com.nageoffer.onecoupon.merchant.admin.mq.event.CouponTaskDelayEvent;
 import com.nageoffer.onecoupon.merchant.admin.mq.producer.CouponTaskDelayExecuteProducer;
 import com.xxl.job.core.handler.IJobHandler;
 import com.xxl.job.core.handler.annotation.XxlJob;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
 import java.util.List;
@@ -59,12 +66,22 @@ import java.util.List;
  */
 @Component
 @RequiredArgsConstructor
+@RestController // 为了保障快速启动，可通过 Swagger 方式访问接口，可以减少一个中间件 XXL-Job
+@Tag(name = "优惠券定时推送任务") // 为了保障快速启动，可通过 Swagger 方式访问接口，可以减少一个中间件 XXL-Job
 public class CouponTaskJobHandler extends IJobHandler {
 
     private final CouponTaskMapper couponTaskMapper;
     private final CouponTaskDelayExecuteProducer couponTaskDelayExecuteProducer;
 
     private static final int MAX_LIMIT = 100;
+
+    @SneakyThrows
+    @Operation(summary = "执行优惠券定时推送") // 为了保障快速启动，可通过 Swagger 方式访问接口，可以减少一个中间件 XXL-Job
+    @GetMapping("/api/merchant-admin/other/coupon-task/job") // 为了保障快速启动，可通过 Swagger 方式访问接口，可以减少一个中间件 XXL-Job
+    public Result<Void> webExecute() {
+        execute();
+        return Results.success();
+    }
 
     @XxlJob(value = "couponTemplateTask")
     public void execute() throws Exception {
