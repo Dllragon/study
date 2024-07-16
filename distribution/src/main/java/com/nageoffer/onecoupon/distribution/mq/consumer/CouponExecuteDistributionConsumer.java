@@ -83,7 +83,7 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
     @Override
     public void onMessage(MessageWrapper<CouponTemplateExecuteEvent> messageWrapper) {
         // 开头打印日志，平常可 Debug 看任务参数，线上可报平安（比如消息是否消费，重新投递时获取参数等）
-        log.info("[消费者] 优惠券分发到用户账号 - 执行消费逻辑，消息体：{}", JSON.toJSONString(messageWrapper));
+        log.info("[消费者] 优惠券任务执行推送@分发到用户账号 - 执行消费逻辑，消息体：{}", JSON.toJSONString(messageWrapper));
 
         CouponTemplateExecuteEvent event = messageWrapper.getMessage();
         String couponTemplateId = event.getCouponTemplateId();

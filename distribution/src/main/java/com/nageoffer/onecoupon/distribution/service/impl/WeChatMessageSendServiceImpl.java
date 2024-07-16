@@ -32,41 +32,38 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.common.constant;
+package com.nageoffer.onecoupon.distribution.service.impl;
+
+import com.nageoffer.onecoupon.distribution.common.enums.SendMessageMarkCovertEnum;
+import com.nageoffer.onecoupon.distribution.dto.req.MessageSendReqDTO;
+import com.nageoffer.onecoupon.distribution.dto.resp.MessageSendRespDTO;
+import com.nageoffer.onecoupon.distribution.service.MessageSendService;
+import com.nageoffer.onecoupon.distribution.service.basics.DistributionExecuteStrategy;
+import org.springframework.stereotype.Service;
 
 /**
- * 分发优惠券服务 RocketMQ 常量类
+ * 微信消息发送接口实现类
+ * 正常来说这应该有个独立消息服务，因为消息通知不在牛券系统核心范畴，所以仅展示流程
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-13
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-16
  */
-public final class DistributionRocketMQConstant {
+@Service
+public class WeChatMessageSendServiceImpl implements MessageSendService, DistributionExecuteStrategy<MessageSendReqDTO, MessageSendRespDTO> {
 
-    /**
-     * 优惠券模板推送执行 Topic Key
-     * 负责扫描优惠券 Excel 并将里面的记录进行推送
-     */
-    public static final String TEMPLATE_TASK_EXECUTE_TOPIC_KEY = "one-coupon_distribution-service_coupon-task-execute_topic${unique-name:}";
+    @Override
+    public MessageSendRespDTO sendMessage(MessageSendReqDTO requestParam) {
+        return null;
+    }
 
-    /**
-     * 优惠券模板推送执行-执行消费者组 Key
-     */
-    public static final String TEMPLATE_TASK_EXECUTE_CG_KEY = "one-coupon_distribution-service_coupon-task-execute_cg${unique-name:}";
+    @Override
+    public String mark() {
+        return SendMessageMarkCovertEnum.WECHAT.name();
+    }
 
-    /**
-     * 优惠券模板推送执行 Topic Key
-     * 负责执行将优惠券发放给具体用户逻辑
-     */
-    public static final String TEMPLATE_EXECUTE_DISTRIBUTION_TOPIC_KEY = "one-coupon_distribution-service_coupon-execute-distribution_topic${unique-name:}";
-
-    /**
-     * 优惠券模板推送执行-执行消费者组 Key
-     */
-    public static final String TEMPLATE_EXECUTE_DISTRIBUTION_CG_KEY = "one-coupon_distribution-service_coupon-execute-distribution_cg${unique-name:}";
-
-    /**
-     * 优惠券模板推送用户通知-执行消费者组 Key
-     */
-    public static final String TEMPLATE_EXECUTE_SEND_MESSAGE_CG_KEY = "one-coupon_distribution-service_coupon-execute-send-message_cg${unique-name:}";
+    @Override
+    public MessageSendRespDTO executeResp(MessageSendReqDTO requestParam) {
+        return sendMessage(requestParam);
+    }
 }

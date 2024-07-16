@@ -118,6 +118,7 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
                 .mail(data.getMail())
                 .phone(data.getPhone())
                 .couponTaskId(couponTaskId)
+                .notifyType(couponTask.getNotifyType())
                 .couponTemplateId(couponTemplate.getId())
                 .couponTemplateConsumeRule(couponTemplate.getConsumeRule())
                 .batchUserSetSize(batchUserSetSize)

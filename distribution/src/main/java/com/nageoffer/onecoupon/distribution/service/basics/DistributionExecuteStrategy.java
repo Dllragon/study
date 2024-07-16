@@ -32,41 +32,41 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.common.constant;
+package com.nageoffer.onecoupon.distribution.service.basics;
 
 /**
- * 分发优惠券服务 RocketMQ 常量类
+ * 分发服务执行策略接口定义
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-13
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-16
  */
-public final class DistributionRocketMQConstant {
+public interface DistributionExecuteStrategy<REQUEST, RESPONSE> {
 
     /**
-     * 优惠券模板推送执行 Topic Key
-     * 负责扫描优惠券 Excel 并将里面的记录进行推送
+     * 执行策略标识
      */
-    public static final String TEMPLATE_TASK_EXECUTE_TOPIC_KEY = "one-coupon_distribution-service_coupon-task-execute_topic${unique-name:}";
+    default String mark() {
+        return null;
+    }
 
     /**
-     * 优惠券模板推送执行-执行消费者组 Key
+     * 执行策略
+     *
+     * @param requestParam 执行策略入参
      */
-    public static final String TEMPLATE_TASK_EXECUTE_CG_KEY = "one-coupon_distribution-service_coupon-task-execute_cg${unique-name:}";
+    default void execute(REQUEST requestParam) {
+
+    }
 
     /**
-     * 优惠券模板推送执行 Topic Key
-     * 负责执行将优惠券发放给具体用户逻辑
+     * 执行策略，带返回值
+     *
+     * @param requestParam 执行策略入参
+     * @return 执行策略后返回值
      */
-    public static final String TEMPLATE_EXECUTE_DISTRIBUTION_TOPIC_KEY = "one-coupon_distribution-service_coupon-execute-distribution_topic${unique-name:}";
-
-    /**
-     * 优惠券模板推送执行-执行消费者组 Key
-     */
-    public static final String TEMPLATE_EXECUTE_DISTRIBUTION_CG_KEY = "one-coupon_distribution-service_coupon-execute-distribution_cg${unique-name:}";
-
-    /**
-     * 优惠券模板推送用户通知-执行消费者组 Key
-     */
-    public static final String TEMPLATE_EXECUTE_SEND_MESSAGE_CG_KEY = "one-coupon_distribution-service_coupon-execute-send-message_cg${unique-name:}";
+    default RESPONSE executeResp(REQUEST requestParam) {
+        return null;
+    }
 }
+
