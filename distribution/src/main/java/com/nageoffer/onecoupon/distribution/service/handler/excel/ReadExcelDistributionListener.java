@@ -119,6 +119,7 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
                 .phone(data.getPhone())
                 .couponTaskId(couponTaskId)
                 .notifyType(couponTask.getNotifyType())
+                .shopNumber(couponTask.getShopNumber())
                 .couponTemplateId(couponTemplate.getId())
                 .couponTemplateConsumeRule(couponTemplate.getConsumeRule())
                 .batchUserSetSize(batchUserSetSize)
@@ -134,8 +135,8 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
     public void doAfterAllAnalysed(AnalysisContext context) {
         // 发送 Excel 解析完成标识，即使不满足批量保存的数量也得保存到数据库
         CouponTemplateExecuteEvent couponTemplateExecuteEvent = CouponTemplateExecuteEvent.builder()
-                .batchUserSetSize(-1L)
                 .distributionEndFlag(Boolean.TRUE) // 设置解析完成标识
+                .shopNumber(couponTask.getShopNumber())
                 .couponTemplateId(couponTemplate.getId())
                 .couponTemplateConsumeRule(couponTemplate.getConsumeRule())
                 .couponTaskId(String.valueOf(couponTask.getId()))

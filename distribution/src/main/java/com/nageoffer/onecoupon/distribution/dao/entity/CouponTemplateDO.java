@@ -32,35 +32,36 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.mq.event;
+package com.nageoffer.onecoupon.distribution.dao.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 /**
- * 优惠券模板任务执行事件
+ * 优惠券模板数据库持久层实体
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-13
+ * 开发时间：2024-07-16
  */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CouponTemplateExecuteEvent {
+@Builder
+@TableName("t_coupon_template")
+public class CouponTemplateDO {
 
     /**
-     * 优惠券分发任务id
+     * id
      */
-    private String couponTaskId;
-
-    /**
-     * 通知方式，可组合使用 0：站内信 1：弹框推送 2：邮箱 3：短信
-     */
-    private String notifyType;
+    private Long id;
 
     /**
      * 店铺编号
@@ -68,37 +69,75 @@ public class CouponTemplateExecuteEvent {
     private Long shopNumber;
 
     /**
-     * 优惠券模板id
+     * 优惠券名称
      */
-    private String couponTemplateId;
+    private String name;
+
+    /**
+     * 优惠券来源 0：店铺券 1：平台券
+     */
+    private Integer source;
+
+    /**
+     * 优惠对象 0：商品专属 1：全店通用
+     */
+    private Integer target;
+
+    /**
+     * 优惠商品编码
+     */
+    private String goods;
+
+    /**
+     * 优惠类型 0：立减券 1：满减券 2：折扣券
+     */
+    private Integer type;
+
+    /**
+     * 有效期开始时间
+     */
+    private Date validStartTime;
+
+    /**
+     * 有效期结束时间
+     */
+    private Date validEndTime;
+
+    /**
+     * 库存
+     */
+    private Integer stock;
+
+    /**
+     * 领取规则
+     */
+    private String receiveRule;
 
     /**
      * 消耗规则
      */
-    private String couponTemplateConsumeRule;
+    private String consumeRule;
 
     /**
-     * 用户id
+     * 优惠券状态 0：生效中 1：已结束
      */
-    private String userId;
+    private Integer status;
 
     /**
-     * 手机号
+     * 创建时间
      */
-    private String phone;
+    @TableField(fill = FieldFill.INSERT)
+    private Date createTime;
 
     /**
-     * 邮箱
+     * 修改时间
      */
-    private String mail;
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Date updateTime;
 
     /**
-     * 批量保存用户优惠券 Set 长度，默认满 5000 才会批量保存数据库
+     * 删除标识 0：未删除 1：已删除
      */
-    private Long batchUserSetSize;
-
-    /**
-     * 分发结束标识
-     */
-    private Boolean distributionEndFlag;
+    @TableField(fill = FieldFill.INSERT)
+    private Integer delFlag;
 }
