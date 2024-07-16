@@ -124,7 +124,7 @@ public class CouponTaskExecuteConsumer implements RocketMQListener<MessageWrappe
 
         // 正式开始执行优惠券推送任务
         ReadExcelDistributionListener readExcelDistributionListener = new ReadExcelDistributionListener(
-                String.valueOf(couponTaskId),
+                couponTaskDO,
                 actualRemoteCouponTemplate,
                 stringRedisTemplate,
                 couponTemplateExecuteProducer

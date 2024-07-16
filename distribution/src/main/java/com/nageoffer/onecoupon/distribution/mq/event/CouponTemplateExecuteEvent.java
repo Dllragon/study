@@ -34,7 +34,6 @@
 
 package com.nageoffer.onecoupon.distribution.mq.event;
 
-import com.nageoffer.onecoupon.distribution.remote.dto.resp.CouponTemplateQueryRemoteRespDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -59,9 +58,19 @@ public class CouponTemplateExecuteEvent {
     private String couponTaskId;
 
     /**
-     * 优惠券模板
+     * 通知方式，可组合使用 0：站内信 1：弹框推送 2：邮箱 3：短信
      */
-    private CouponTemplateQueryRemoteRespDTO couponTemplate;
+    private String notifyType;
+
+    /**
+     * 优惠券模板id
+     */
+    private String couponTemplateId;
+
+    /**
+     * 消耗规则
+     */
+    private String couponTemplateConsumeRule;
 
     /**
      * 用户id
@@ -77,4 +86,14 @@ public class CouponTemplateExecuteEvent {
      * 邮箱
      */
     private String mail;
+
+    /**
+     * 批量保存用户优惠券 Set 长度，默认满 5000 才会批量保存数据库
+     */
+    private Long batchUserSetSize;
+
+    /**
+     * 分发结束标识
+     */
+    private Boolean distributionEndFlag;
 }
