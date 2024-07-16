@@ -32,49 +32,113 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.controller;
+package com.nageoffer.onecoupon.engine.dto.resp;
 
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindPageQueryReqDTO;
-import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindPageQueryRespDTO;
-import com.nageoffer.onecoupon.engine.service.CouponTemplateRemindService;
-import com.nageoffer.onecoupon.framework.idempotent.NoRepeatSubmit;
-import com.nageoffer.onecoupon.framework.result.Result;
-import com.nageoffer.onecoupon.framework.web.Results;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
+import java.util.Date;
+import java.util.List;
 
 /**
- * 优惠券模板控制层
+ * 优惠券模板查询接口返回参数实体
  * <p>
  * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-16
  */
-@RestController
-@RequiredArgsConstructor
-@Tag(name = "优惠券预约提醒管理")
-public class CouponTemplateRemindController {
-
-    private final CouponTemplateRemindService couponTemplateRemindService;
+@Data
+@Schema(description = "查询优惠券预约抢券提醒返回实体")
+public class CouponTemplateRemindPageQueryRespDTO {
 
 
-    @Operation(summary = "发出优惠券预约提醒请求")
-    @NoRepeatSubmit(message = "请勿短时间内重复提交预约提醒请求")
-    @PostMapping("/api/engine/coupon-template-remind/create")
-    public Result<Boolean> createCouponRemind(CouponTemplateRemindCreateReqDTO requestParam) {
-        return Results.success(couponTemplateRemindService.createCouponRemind(requestParam));
-    }
+    /**
+     * id
+     */
+    @Schema(description = "优惠券id")
+    private Long couponTemplateId;
 
-    @Operation(summary = "查询优惠券预约提醒")
-    @NoRepeatSubmit(message = "请勿短时间内重复提交预约提醒请求")
-    @PostMapping("/api/engine/coupon-template-remind/page")
-    public Result<IPage<CouponTemplateRemindPageQueryRespDTO>> pageQueryCouponRemind(CouponTemplateRemindPageQueryReqDTO requestParam) {
-        return Results.success(couponTemplateRemindService.pageQueryCouponRemind(requestParam));
-    }
+    /**
+     * 店铺编号
+     */
+    private Long shopNumber;
+
+    /**
+     * 优惠券名称
+     */
+    @Schema(description = "优惠券名称")
+    private String name;
+
+    /**
+     * 优惠券来源 0：店铺券 1：平台券
+     */
+    @Schema(description = "优惠券来源 0：店铺券 1：平台券")
+    private Integer source;
+
+    /**
+     * 优惠对象 0：商品专属 1：全店通用
+     */
+    @Schema(description = "优惠对象 0：商品专属 1：全店通用")
+    private Integer target;
+
+    /**
+     * 优惠商品编码
+     */
+    @Schema(description = "优惠商品编码")
+    private String goods;
+
+    /**
+     * 优惠类型 0：立减券 1：满减券 2：折扣券
+     */
+    @Schema(description = "优惠类型 0：立减券 1：满减券 2：折扣券")
+    private Integer type;
+
+    /**
+     * 有效期开始时间
+     */
+    @Schema(description = "有效期开始时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date validStartTime;
+
+    /**
+     * 有效期结束时间
+     */
+    @Schema(description = "有效期结束时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date validEndTime;
+
+    /**
+     * 领取规则
+     */
+    @Schema(description = "领取规则")
+    private String receiveRule;
+
+    /**
+     * 消耗规则
+     */
+    @Schema(description = "消耗规则")
+    private String consumeRule;
+
+
+    /**
+     * 开抢时间
+     */
+    @Schema(description = "开抢时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date startTime;
+
+    /**
+     * 提醒的时间，和提醒类型按照顺序一一对应
+     */
+    @Schema(description = "预约的时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private List<Date> remindTime;
+
+    /**
+     * 提醒类型，和提醒时间按照顺序一一对应
+     */
+    @Schema(description = "提醒类型")
+    private List<String> remindType;
 }
