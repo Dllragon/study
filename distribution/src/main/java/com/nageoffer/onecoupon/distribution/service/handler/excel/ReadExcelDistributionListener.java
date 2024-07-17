@@ -71,7 +71,7 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
 
     @Getter
     private int rowCount = 0;
-    private final static String STOCK_DECREMENT_USER_RECORD_LUA_PATH = "lua/stock_decrement_user_record.lua";
+    private final static String STOCK_DECREMENT_AND_BATCH_SAVE_USER_RECORD_LUA_PATH = "lua/stock_decrement_and_batch_save_user_record.lua";
 
     @Override
     public void invoke(CouponTaskExcelObject data, AnalysisContext context) {
@@ -87,9 +87,9 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
         }
 
         // 获取 LUA 脚本，并保存到 Hutool 的单例管理容器，下次直接获取不需要加载
-        DefaultRedisScript<Long> buildLuaScript = Singleton.get(STOCK_DECREMENT_USER_RECORD_LUA_PATH, () -> {
+        DefaultRedisScript<Long> buildLuaScript = Singleton.get(STOCK_DECREMENT_AND_BATCH_SAVE_USER_RECORD_LUA_PATH, () -> {
             DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
-            redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource(STOCK_DECREMENT_USER_RECORD_LUA_PATH)));
+            redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource(STOCK_DECREMENT_AND_BATCH_SAVE_USER_RECORD_LUA_PATH)));
             redisScript.setResultType(Long.class);
             return redisScript;
         });
