@@ -32,46 +32,65 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.controller;
+package com.nageoffer.onecoupon.engine.config;
 
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateQueryReqDTO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRedeemReqDTO;
-import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
-import com.nageoffer.onecoupon.engine.service.CouponTemplateService;
-import com.nageoffer.onecoupon.framework.result.Result;
-import com.nageoffer.onecoupon.framework.web.Results;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import com.baomidou.mybatisplus.annotation.DbType;
+import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+import org.apache.ibatis.reflection.MetaObject;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.Date;
 
 /**
- * 优惠券模板控制层
+ * 数据库持久层配置类｜配置 MyBatis-Plus 相关分页插件等
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 开发时间：2024-07-17
  */
-@RestController
-@RequiredArgsConstructor
-@Tag(name = "优惠券模板管理")
-public class CouponTemplateController {
+@Configuration
+public class DataBaseConfiguration {
 
-    private final CouponTemplateService couponTemplateService;
-
-    @Operation(summary = "查询优惠券模板")
-    @GetMapping("/api/engine/coupon-template/query")
-    public Result<CouponTemplateQueryRespDTO> pageQueryCouponTemplate(CouponTemplateQueryReqDTO requestParam) {
-        return Results.success(couponTemplateService.findCouponTemplate(requestParam));
+    /**
+     * MyBatis-Plus MySQL 分页插件
+     */
+    @Bean
+    public MybatisPlusInterceptor mybatisPlusInterceptor() {
+        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
+        return interceptor;
     }
 
-    @Operation(summary = "兑换优惠券模板", description = "存在较高流量场景，可类比“秒杀”业务")
-    @PostMapping("/api/engine/coupon-template/redeem")
-    public Result<Void> redeemCouponTemplate(@RequestBody CouponTemplateRedeemReqDTO requestParam) {
-        couponTemplateService.redeemCouponTemplate(requestParam);
-        return Results.success();
+    /**
+     * MyBatis-Plus 源数据自动填充类
+     */
+    @Bean
+    public MyMetaObjectHandler myMetaObjectHandler() {
+        return new MyMetaObjectHandler();
+    }
+
+    /**
+     * MyBatis-Plus 源数据自动填充类
+     * <p>
+     * 作者：马丁
+     * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+     * 开发时间：2024-07-08
+     */
+    static class MyMetaObjectHandler implements MetaObjectHandler {
+
+        @Override
+        public void insertFill(MetaObject metaObject) {
+            strictInsertFill(metaObject, "createTime", Date::new, Date.class);
+            strictInsertFill(metaObject, "updateTime", Date::new, Date.class);
+            strictInsertFill(metaObject, "delFlag", () -> 0, Integer.class);
+        }
+
+        @Override
+        public void updateFill(MetaObject metaObject) {
+            strictInsertFill(metaObject, "updateTime", Date::new, Date.class);
+        }
     }
 }

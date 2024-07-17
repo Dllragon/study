@@ -37,6 +37,7 @@ package com.nageoffer.onecoupon.engine.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateDO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateQueryReqDTO;
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRedeemReqDTO;
 import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
 
 /**
@@ -49,9 +50,17 @@ import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
 public interface CouponTemplateService extends IService<CouponTemplateDO> {
 
     /**
-     * 创建商家优惠券模板
+     * 查询优惠券模板
+     *
+     * @param requestParam 请求参数
+     * @return 优惠券模板信息
+     */
+    CouponTemplateQueryRespDTO findCouponTemplate(CouponTemplateQueryReqDTO requestParam);
+
+    /**
+     * 用户兑换优惠券
      *
      * @param requestParam 请求参数
      */
-    CouponTemplateQueryRespDTO findCouponTemplate(CouponTemplateQueryReqDTO requestParam);
+    void redeemCouponTemplate(CouponTemplateRedeemReqDTO requestParam);
 }

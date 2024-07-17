@@ -32,46 +32,102 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.controller;
+package com.nageoffer.onecoupon.engine.dao.entity;
 
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateQueryReqDTO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRedeemReqDTO;
-import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
-import com.nageoffer.onecoupon.engine.service.CouponTemplateService;
-import com.nageoffer.onecoupon.framework.result.Result;
-import com.nageoffer.onecoupon.framework.web.Results;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.Date;
 
 /**
- * 优惠券模板控制层
+ * 用户优惠券数据库持久层实体
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-17
  */
-@RestController
-@RequiredArgsConstructor
-@Tag(name = "优惠券模板管理")
-public class CouponTemplateController {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@TableName("t_user_coupon")
+public class UserCouponDO {
 
-    private final CouponTemplateService couponTemplateService;
+    /**
+     * id
+     */
+    private Long id;
 
-    @Operation(summary = "查询优惠券模板")
-    @GetMapping("/api/engine/coupon-template/query")
-    public Result<CouponTemplateQueryRespDTO> pageQueryCouponTemplate(CouponTemplateQueryReqDTO requestParam) {
-        return Results.success(couponTemplateService.findCouponTemplate(requestParam));
-    }
+    /**
+     * 用户id
+     */
+    private Long userId;
 
-    @Operation(summary = "兑换优惠券模板", description = "存在较高流量场景，可类比“秒杀”业务")
-    @PostMapping("/api/engine/coupon-template/redeem")
-    public Result<Void> redeemCouponTemplate(@RequestBody CouponTemplateRedeemReqDTO requestParam) {
-        couponTemplateService.redeemCouponTemplate(requestParam);
-        return Results.success();
-    }
+    /**
+     * 订单号
+     */
+    private String orderSn;
+
+    /**
+     * 优惠券模板id
+     */
+    private Long couponTemplateId;
+
+    /**
+     * 领取时间
+     */
+    private Date receiveTime;
+
+    /**
+     * 领取次数
+     */
+    private Integer receiveCount;
+
+    /**
+     * 有效期开始时间
+     */
+    private Date validStartTime;
+
+    /**
+     * 有效期结束时间
+     */
+    private Date validEndTime;
+
+    /**
+     * 使用时间
+     */
+    private Date useTime;
+
+    /**
+     * 券来源 0：领券中心 1：平台发放 2：店铺领取
+     */
+    private Integer source;
+
+    /**
+     * 状态 0：未使用 1：已使用 2：已过期 3：已撤回
+     */
+    private Integer status;
+
+    /**
+     * 创建时间
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private Date createTime;
+
+    /**
+     * 修改时间
+     */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Date updateTime;
+
+    /**
+     * 删除标识 0：未删除 1：已删除
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private Integer delFlag;
 }

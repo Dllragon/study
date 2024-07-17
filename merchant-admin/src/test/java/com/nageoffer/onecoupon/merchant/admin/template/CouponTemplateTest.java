@@ -59,8 +59,8 @@ public class CouponTemplateTest {
         JSONObject consumeRule = new JSONObject();
         consumeRule.put("termsOfUse", new BigDecimal("10")); // 使用条件 满 x 元可用
         consumeRule.put("maximumDiscountAmount", new BigDecimal("3")); // 最大优惠金额
-        consumeRule.put("explanationOfUnmetConditions", "3"); // 不满足使用条件说明
-        consumeRule.put("validityPeriod", new Date()); // 有效时间
+        consumeRule.put("explanationOfUnmetC 3onditions", "3"); // 不满足使用条件说明
+        consumeRule.put("validityPeriod", 48); // 自领取优惠券后有效时间，单位小时
         CouponTemplateDO couponTemplateDO = CouponTemplateDO.builder()
                 .shopNumber(1810714735922956666L) // 店铺编号
                 .name("商品立减券") // 优惠券名称

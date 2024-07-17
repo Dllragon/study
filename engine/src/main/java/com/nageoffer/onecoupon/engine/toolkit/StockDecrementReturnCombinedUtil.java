@@ -32,46 +32,33 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.controller;
-
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateQueryReqDTO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRedeemReqDTO;
-import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
-import com.nageoffer.onecoupon.engine.service.CouponTemplateService;
-import com.nageoffer.onecoupon.framework.result.Result;
-import com.nageoffer.onecoupon.framework.web.Results;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+package com.nageoffer.onecoupon.engine.toolkit;
 
 /**
- * 优惠券模板控制层
+ * 扣减优惠券模板库存复合返回工具类
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-17
  */
-@RestController
-@RequiredArgsConstructor
-@Tag(name = "优惠券模板管理")
-public class CouponTemplateController {
+public final class StockDecrementReturnCombinedUtil {
 
-    private final CouponTemplateService couponTemplateService;
+    /**
+     * 2^14 > 9999, 所以用 14 位来表示第二个字段
+     */
+    private static final int SECOND_FIELD_BITS = 14;
 
-    @Operation(summary = "查询优惠券模板")
-    @GetMapping("/api/engine/coupon-template/query")
-    public Result<CouponTemplateQueryRespDTO> pageQueryCouponTemplate(CouponTemplateQueryReqDTO requestParam) {
-        return Results.success(couponTemplateService.findCouponTemplate(requestParam));
+    /**
+     * 从组合的 int 中提取第一个字段（0、1或2）
+     */
+    public static long extractFirstField(long combined) {
+        return (combined >> SECOND_FIELD_BITS) & 0b11; // 0b11 即二进制的 11，用于限制结果为 2 位
     }
 
-    @Operation(summary = "兑换优惠券模板", description = "存在较高流量场景，可类比“秒杀”业务")
-    @PostMapping("/api/engine/coupon-template/redeem")
-    public Result<Void> redeemCouponTemplate(@RequestBody CouponTemplateRedeemReqDTO requestParam) {
-        couponTemplateService.redeemCouponTemplate(requestParam);
-        return Results.success();
+    /**
+     * 从组合的 int 中提取第二个字段（0 到 9999 之间的数字）
+     */
+    public static long extractSecondField(long combined) {
+        return combined & ((1 << SECOND_FIELD_BITS) - 1);
     }
 }
