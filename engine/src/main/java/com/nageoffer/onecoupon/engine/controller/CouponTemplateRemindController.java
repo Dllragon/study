@@ -32,50 +32,49 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.dao.entity;
+package com.nageoffer.onecoupon.engine.controller;
 
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.Date;
-
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindPageQueryReqDTO;
+import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindPageQueryRespDTO;
+import com.nageoffer.onecoupon.engine.service.CouponTemplateRemindService;
+import com.nageoffer.onecoupon.framework.idempotent.NoRepeatSubmit;
+import com.nageoffer.onecoupon.framework.result.Result;
+import com.nageoffer.onecoupon.framework.web.Results;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 用户预约提醒信息存储数据库持久层实体
+ * 优惠券模板控制层
  * <p>
  * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-15
+ * 开发时间：2024-07-16
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@TableName("t_coupon_template_remind")
-public class CouponTemplateRemindDO {
+@RestController
+@RequiredArgsConstructor
+@Tag(name = "优惠券预约提醒管理")
+public class CouponTemplateRemindController {
 
-    /**
-     * 用户id
-     */
-    private Long userId;
+    private final CouponTemplateRemindService couponTemplateRemindService;
 
-    /**
-     * 券id
-     */
-    private Long couponTemplateId;
 
-    /**
-     * 用户预约信息，用位图存储信息
-     */
-    private Long information;
+    @Operation(summary = "发出优惠券预约提醒请求")
+    @NoRepeatSubmit(message = "请勿短时间内重复提交预约提醒请求")
+    @PostMapping("/api/engine/coupon-template-remind/create")
+    public Result<Boolean> createCouponRemind(CouponTemplateRemindCreateReqDTO requestParam) {
+        return Results.success(couponTemplateRemindService.createCouponRemind(requestParam));
+    }
 
-    /**
-     * 优惠券开抢时间
-     */
-    private Date startTime;
-
+    @Operation(summary = "查询优惠券预约提醒")
+    @NoRepeatSubmit(message = "请勿短时间内重复提交预约提醒请求")
+    @PostMapping("/api/engine/coupon-template-remind/page")
+    public Result<IPage<CouponTemplateRemindPageQueryRespDTO>> pageQueryCouponRemind(CouponTemplateRemindPageQueryReqDTO requestParam) {
+        return Results.success(couponTemplateRemindService.pageQueryCouponRemind(requestParam));
+    }
 }

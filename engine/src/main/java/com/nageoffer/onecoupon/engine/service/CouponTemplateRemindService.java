@@ -32,50 +32,35 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.dao.entity;
+package com.nageoffer.onecoupon.engine.service;
 
-
-import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.Date;
-
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateRemindDO;
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindPageQueryReqDTO;
+import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindPageQueryRespDTO;
 
 /**
- * 用户预约提醒信息存储数据库持久层实体
+ * 优惠券预约提醒业务逻辑层
  * <p>
  * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-15
+ * 开发时间：2024-07-16
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@TableName("t_coupon_template_remind")
-public class CouponTemplateRemindDO {
+public interface CouponTemplateRemindService extends IService<CouponTemplateRemindDO> {
 
     /**
-     * 用户id
+     * 创建抢券预约提醒
+     *
+     * @param requestParam 请求参数
      */
-    private Long userId;
+    boolean createCouponRemind(CouponTemplateRemindCreateReqDTO requestParam);
 
     /**
-     * 券id
+     * 分页查询抢券预约提醒
+     *
+     * @param requestParam 请求参数
      */
-    private Long couponTemplateId;
-
-    /**
-     * 用户预约信息，用位图存储信息
-     */
-    private Long information;
-
-    /**
-     * 优惠券开抢时间
-     */
-    private Date startTime;
-
+    IPage<CouponTemplateRemindPageQueryRespDTO> pageQueryCouponRemind(CouponTemplateRemindPageQueryReqDTO requestParam);
 }

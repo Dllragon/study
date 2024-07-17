@@ -32,50 +32,39 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.dao.entity;
+package com.nageoffer.onecoupon.engine.service.impl;
 
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.Date;
-
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateRemindDO;
+import com.nageoffer.onecoupon.engine.dao.mapper.CouponTemplateRemindMapper;
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindPageQueryReqDTO;
+import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindPageQueryRespDTO;
+import com.nageoffer.onecoupon.engine.service.CouponTemplateRemindService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 /**
- * 用户预约提醒信息存储数据库持久层实体
+ * 优惠券预约提醒业务逻辑实现层
  * <p>
  * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-15
+ * 开发时间：2024-07-16
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@TableName("t_coupon_template_remind")
-public class CouponTemplateRemindDO {
+@Service
+@RequiredArgsConstructor
+public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateRemindMapper, CouponTemplateRemindDO> implements CouponTemplateRemindService {
 
-    /**
-     * 用户id
-     */
-    private Long userId;
 
-    /**
-     * 券id
-     */
-    private Long couponTemplateId;
+    @Override
+    public boolean createCouponRemind(CouponTemplateRemindCreateReqDTO requestParam) {
+        return false;
+    }
 
-    /**
-     * 用户预约信息，用位图存储信息
-     */
-    private Long information;
-
-    /**
-     * 优惠券开抢时间
-     */
-    private Date startTime;
-
+    @Override
+    public IPage<CouponTemplateRemindPageQueryRespDTO> pageQueryCouponRemind(CouponTemplateRemindPageQueryReqDTO requestParam) {
+        return null;
+    }
 }
