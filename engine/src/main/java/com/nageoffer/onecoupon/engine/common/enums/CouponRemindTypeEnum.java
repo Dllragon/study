@@ -54,4 +54,13 @@ public enum CouponRemindTypeEnum {
 
     @Getter
     private final int type;
+
+    public static CouponRemindTypeEnum getByType(Integer type) {
+        for(CouponRemindTypeEnum remindEnum : values()){
+            if (remindEnum.getType() == type) {
+                return remindEnum;
+            }
+        }
+        return null;
+    }
 }

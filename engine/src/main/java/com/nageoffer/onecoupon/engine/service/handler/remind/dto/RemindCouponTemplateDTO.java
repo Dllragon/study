@@ -60,4 +60,10 @@ public class RemindCouponTemplateDTO {
     @Schema(description = "用户id", example = "1810868149847928832", required = true)
     private String userId;
 
+    /**
+     * 提醒方式
+     */
+    @Schema(description = "提醒方式", example = "0", required = true)
+    private Integer type;
+
 }

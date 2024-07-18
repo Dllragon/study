@@ -32,31 +32,45 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.service.handler.remind.impl;
+package com.nageoffer.onecoupon.engine.service.handler.remind;
 
 
-import com.nageoffer.onecoupon.engine.service.handler.remind.RemindCouponTemplate;
+import com.nageoffer.onecoupon.engine.common.enums.CouponRemindTypeEnum;
 import com.nageoffer.onecoupon.engine.service.handler.remind.dto.RemindCouponTemplateDTO;
+import com.nageoffer.onecoupon.engine.service.handler.remind.impl.SendEmailRemindCouponTemplate;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
+
+
 /**
- * 发送邮件的方式提醒用户抢券
+ * 执行相应的抢券提醒
  * <p>
  * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-18
  */
 @Component
-public class SendEmailRemindCouponTemplate implements RemindCouponTemplate {
+@AllArgsConstructor
+public class ExecuteRemindCouponTemplate {
+
+    private final SendEmailRemindCouponTemplate sendEmailRemindCouponTemplate;
 
     /**
-     * 以邮件方式提醒用户抢券
-     * @param remindCouponTemplateDTO 提醒所需要的信息
+     * 执行提醒
+     *
+     * @param remindCouponTemplateDTO 需要的信息
      */
-    @Override
-    public boolean remind(RemindCouponTemplateDTO remindCouponTemplateDTO) {
-        // 暂时空实现
-        return true;
+    public void executeRemindCouponTemplate(RemindCouponTemplateDTO remindCouponTemplateDTO) {
+        switch (Objects.requireNonNull(CouponRemindTypeEnum.getByType(remindCouponTemplateDTO.getType()))) {
+            case EMAIL:
+                sendEmailRemindCouponTemplate.remind(remindCouponTemplateDTO);
+                break;
+            default:
+                break;
+        }
+
     }
 
 }

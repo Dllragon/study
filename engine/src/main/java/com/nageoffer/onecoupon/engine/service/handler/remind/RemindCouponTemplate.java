@@ -45,5 +45,12 @@ import com.nageoffer.onecoupon.engine.service.handler.remind.dto.RemindCouponTem
  * 开发时间：2024-07-18
  */
 public interface RemindCouponTemplate {
+
+    /**
+     * 提醒用户抢券
+     *
+     * @param remindCouponTemplateDTO 提醒所需要的信息
+     */
     boolean remind(RemindCouponTemplateDTO remindCouponTemplateDTO);
+
 }
