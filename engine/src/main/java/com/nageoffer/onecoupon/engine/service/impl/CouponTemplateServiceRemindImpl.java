@@ -39,6 +39,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateRemindDO;
 import com.nageoffer.onecoupon.engine.dao.mapper.CouponTemplateRemindMapper;
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCancelReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindPageQueryReqDTO;
 import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindPageQueryRespDTO;
@@ -57,7 +58,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateRemindMapper, CouponTemplateRemindDO> implements CouponTemplateRemindService {
 
-
     @Override
     public boolean createCouponRemind(CouponTemplateRemindCreateReqDTO requestParam) {
         return false;
@@ -66,5 +66,10 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
     @Override
     public IPage<CouponTemplateRemindPageQueryRespDTO> pageQueryCouponRemind(CouponTemplateRemindPageQueryReqDTO requestParam) {
         return null;
+    }
+
+    @Override
+    public boolean cancelCouponRemind(CouponTemplateRemindCancelReqDTO requestParam) {
+        return false;
     }
 }
