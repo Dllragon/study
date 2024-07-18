@@ -32,34 +32,53 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.common.constant;
+package com.nageoffer.onecoupon.engine.mq.base;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+
+import java.io.Serializable;
+import java.util.UUID;
 
 /**
- * 分布式 Redis 缓存引擎层常量类
+ * 消息体包装器
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 开发时间：2024-07-18
  */
-public final class EngineRedisConstant {
+@Data
+@Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
+@RequiredArgsConstructor
+public final class MessageWrapper<T> implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
-     * 优惠券模板缓存 Key
+     * 消息发送 Keys
      */
-    public static final String COUPON_TEMPLATE_KEY = "one-coupon_engine:template:%s";
+    @NonNull
+    private String keys;
 
     /**
-     * 优惠券模板缓存分布式锁 Key
+     * 消息体
      */
-    public static final String LOCK_COUPON_TEMPLATE_KEY = "one-coupon_engine:lock:template:%s";
+    @NonNull
+    private T message;
 
     /**
-     * 限制用户领取优惠券模板次数缓存 Key
+     * 唯一标识，用于客户端幂等验证
      */
-    public static final String USER_COUPON_TEMPLATE_LIMIT_KEY = "one-coupon_engine:user-template-limit:%s_%s";
+    private String uuid = UUID.randomUUID().toString();
 
     /**
-     * 用户已领取优惠券列表模板 Key
+     * 消息发送时间
      */
-    public static final String USER_COUPON_TEMPLATE_LIST_KEY = "one-coupon_engine:user-template-list:%s";
+    private Long timestamp = System.currentTimeMillis();
 }

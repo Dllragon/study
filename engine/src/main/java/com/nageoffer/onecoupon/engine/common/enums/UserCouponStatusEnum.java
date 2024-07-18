@@ -32,34 +32,41 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.common.constant;
+package com.nageoffer.onecoupon.engine.common.enums;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
- * 分布式 Redis 缓存引擎层常量类
+ * 用户优惠券状态枚举
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-18
  */
-public final class EngineRedisConstant {
+@RequiredArgsConstructor
+public enum UserCouponStatusEnum {
 
     /**
-     * 优惠券模板缓存 Key
+     * 未使用
      */
-    public static final String COUPON_TEMPLATE_KEY = "one-coupon_engine:template:%s";
+    UNUSED(0),
 
     /**
-     * 优惠券模板缓存分布式锁 Key
+     * 已使用
      */
-    public static final String LOCK_COUPON_TEMPLATE_KEY = "one-coupon_engine:lock:template:%s";
+    USED(1),
 
     /**
-     * 限制用户领取优惠券模板次数缓存 Key
+     * 已过期
      */
-    public static final String USER_COUPON_TEMPLATE_LIMIT_KEY = "one-coupon_engine:user-template-limit:%s_%s";
+    EXPIRED(2),
 
     /**
-     * 用户已领取优惠券列表模板 Key
+     * 已撤回
      */
-    public static final String USER_COUPON_TEMPLATE_LIST_KEY = "one-coupon_engine:user-template-list:%s";
+    REVOKED(3);
+
+    @Getter
+    private final int code;
 }

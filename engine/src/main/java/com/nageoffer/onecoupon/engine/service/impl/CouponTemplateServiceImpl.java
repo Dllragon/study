@@ -37,9 +37,12 @@ package com.nageoffer.onecoupon.engine.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Singleton;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -56,14 +59,20 @@ import com.nageoffer.onecoupon.engine.dao.mapper.UserCouponMapper;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateQueryReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRedeemReqDTO;
 import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
+import com.nageoffer.onecoupon.engine.mq.event.UserCouponDelayCloseEvent;
+import com.nageoffer.onecoupon.engine.mq.producer.UserCouponDelayCloseProducer;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateService;
 import com.nageoffer.onecoupon.engine.toolkit.StockDecrementReturnCombinedUtil;
 import com.nageoffer.onecoupon.framework.exception.ClientException;
 import com.nageoffer.onecoupon.framework.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.producer.SendResult;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.scripting.support.ResourceScriptSource;
@@ -81,16 +90,21 @@ import java.util.stream.Collectors;
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-08
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper, CouponTemplateDO> implements CouponTemplateService {
 
     private final CouponTemplateMapper couponTemplateMapper;
     private final UserCouponMapper userCouponMapper;
+    private final UserCouponDelayCloseProducer couponDelayCloseProducer;
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedissonClient redissonClient;
     private final TransactionTemplate transactionTemplate;
+
+    @Value("${one-coupon.user-coupon-list.save-cache.type:direct}")
+    private String userCouponListSaveCacheType;
 
     private final static String STOCK_DECREMENT_AND_SAVE_USER_RECEIVE_LUA_PATH = "lua/stock_decrement_and_save_user_receive.lua";
 
@@ -179,6 +193,7 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
             throw new ServiceException(RedisStockDecrementErrorEnum.fromType(firstField));
         }
 
+        // 通过编程式事务执行优惠券库存自减以及增加用户优惠券领取记录
         long extractSecondField = StockDecrementReturnCombinedUtil.extractSecondField(stockDecrementLuaResult);
         transactionTemplate.executeWithoutResult(status -> {
             try {
@@ -189,6 +204,7 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
 
                 // 添加 Redis 用户领取的优惠券记录列表
                 Date now = new Date();
+                DateTime validEndTime = DateUtil.offsetHour(now, JSON.parseObject(couponTemplate.getConsumeRule()).getInteger("validityPeriod"));
                 UserCouponDO userCouponDO = UserCouponDO.builder()
                         .couponTemplateId(Long.parseLong(requestParam.getCouponTemplateId()))
                         .userId(Long.parseLong(UserContext.getUserId()))
@@ -197,16 +213,43 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
                         .status(0)
                         .receiveTime(now)
                         .validStartTime(now)
-                        .validEndTime(DateUtil.offsetHour(now, JSON.parseObject(couponTemplate.getConsumeRule()).getInteger("validityPeriod")))
+                        .validEndTime(validEndTime)
                         .build();
                 userCouponMapper.insert(userCouponDO);
 
-                // TODO 添加用户领取优惠券模板缓存记录
+                // 保存优惠券缓存集合有两个选项：direct 在流程里直接操作，binlog 通过解析数据库日志后操作
+                if (StrUtil.equals(userCouponListSaveCacheType, "direct")) {
+                    // 添加用户领取优惠券模板缓存记录
+                    String userCouponListCacheKey = String.format(EngineRedisConstant.USER_COUPON_TEMPLATE_LIST_KEY, UserContext.getUserId());
+                    String userCouponItemCacheKey = StrUtil.builder()
+                            .append(requestParam.getCouponTemplateId())
+                            .append("_")
+                            .append(userCouponDO.getId())
+                            .toString();
+                    stringRedisTemplate.opsForZSet().add(userCouponListCacheKey, userCouponItemCacheKey, now.getTime());
+
+                    // 发送延时消息队列，等待优惠券到期后，将优惠券信息从缓存中删除
+                    UserCouponDelayCloseEvent userCouponDelayCloseEvent = UserCouponDelayCloseEvent.builder()
+                            .couponTemplateId(requestParam.getCouponTemplateId())
+                            .userCouponId(String.valueOf(userCouponDO.getId()))
+                            .userId(UserContext.getUserId())
+                            .build();
+                    SendResult sendResult = couponDelayCloseProducer.sendMessage(userCouponDelayCloseEvent, validEndTime.getTime());
+
+                    // 发送消息失败解决方案简单且高效的逻辑之一：打印日志并报警，通过日志搜集并重新投递
+                    if (ObjectUtil.notEqual(sendResult.getSendStatus().name(), "SEND_OK")) {
+                        log.warn("发送优惠券关闭延时队列失败，消息参数：{}", JSON.toJSONString(userCouponDelayCloseEvent));
+                    }
+                }
             } catch (Exception ex) {
                 status.setRollbackOnly();
                 // 自减用户领取的优惠券记录 xxx_优惠券ID_用户ID Value 是领取次数
                 if (ex instanceof ServiceException) {
                     throw (ServiceException) ex;
+                }
+                if (ex instanceof DuplicateKeyException) {
+                    log.error("用户重复领取优惠券，用户ID：{}，优惠券模板ID：{}", UserContext.getUserId(), requestParam.getCouponTemplateId());
+                    throw new ServiceException("用户重复领取优惠券");
                 }
                 throw new ServiceException("优惠券领取异常，请稍候再试");
             }
