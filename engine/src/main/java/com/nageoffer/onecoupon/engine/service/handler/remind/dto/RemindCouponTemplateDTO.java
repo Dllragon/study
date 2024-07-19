@@ -55,6 +55,12 @@ public class RemindCouponTemplateDTO {
     private String couponTemplateId;
 
     /**
+     * 优惠券名称
+     */
+    @Schema(description = "优惠券名称")
+    private String name;
+
+    /**
      * 用户id
      */
     @Schema(description = "用户id", example = "1810868149847928832", required = true)
@@ -65,5 +71,11 @@ public class RemindCouponTemplateDTO {
      */
     @Schema(description = "提醒方式", example = "0", required = true)
     private Integer type;
+
+    /**
+     * 提醒时间，比如五分钟，十分钟，十五分钟
+     */
+    @Schema(description = "提醒时间")
+    private Integer remindTime;
 
 }
