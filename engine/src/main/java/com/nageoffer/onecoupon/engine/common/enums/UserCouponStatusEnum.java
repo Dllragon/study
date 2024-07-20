@@ -53,19 +53,24 @@ public enum UserCouponStatusEnum {
     UNUSED(0),
 
     /**
+     * 锁定
+     */
+    LOCKING(1),
+
+    /**
      * 已使用
      */
-    USED(1),
+    USED(2),
 
     /**
      * 已过期
      */
-    EXPIRED(2),
+    EXPIRED(3),
 
     /**
      * 已撤回
      */
-    REVOKED(3);
+    REVOKED(4);
 
     @Getter
     private final int code;
