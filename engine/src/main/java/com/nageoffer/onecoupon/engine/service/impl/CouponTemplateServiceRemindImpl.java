@@ -35,7 +35,11 @@
 package com.nageoffer.onecoupon.engine.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateDO;
 import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateRemindDO;
 import com.nageoffer.onecoupon.engine.dao.mapper.CouponTemplateRemindMapper;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCancelReqDTO;
@@ -44,10 +48,13 @@ import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindQueryReqDTO;
 import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindQueryRespDTO;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateRemindService;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateService;
+import com.nageoffer.onecoupon.engine.toolkit.CouponTemplateRemindUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 优惠券预约提醒业务逻辑实现层
@@ -70,7 +77,24 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
 
     @Override
     public List<CouponTemplateRemindQueryRespDTO> listCouponRemind(CouponTemplateRemindQueryReqDTO requestParam) {
-        return null;
+        LambdaQueryWrapper<CouponTemplateRemindDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateRemindDO.class)
+                .eq(CouponTemplateRemindDO::getUserId, requestParam.getUserId());
+        // 查出用户预约的信息
+        List<CouponTemplateRemindDO> couponTemplateRemindDOS = couponTemplateRemindMapper.selectList(queryWrapper);
+        if (couponTemplateRemindDOS == null || couponTemplateRemindDOS.isEmpty())
+            return new ArrayList<>();
+        // 根据优惠券id查询优惠券信息
+        List<CouponTemplateDO> couponTemplateDOS = couponTemplateService.listCouponTemplateById(couponTemplateRemindDOS.stream().map(CouponTemplateRemindDO::getCouponTemplateId).collect(Collectors.toList()));
+        List<CouponTemplateRemindQueryRespDTO> resp = BeanUtil.copyToList(couponTemplateDOS, CouponTemplateRemindQueryRespDTO.class);
+        // 填充响应结果的其它信息
+        resp.forEach(each -> {
+            // 找到当前优惠券对应的预约提醒信息
+            couponTemplateRemindDOS.stream().filter(i -> i.getCouponTemplateId().equals(each.getId())).findFirst().ifPresent(i -> {
+                // 解析并填充预约提醒信息
+                CouponTemplateRemindUtil.fillRemindInformation(each, i.getInformation());
+            });
+        });
+        return resp;
     }
 
     @Override

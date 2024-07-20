@@ -67,6 +67,12 @@ public class RemindCouponTemplateDTO {
     private String userId;
 
     /**
+     * 用户联系方式，可能是邮箱、手机号、等等
+     */
+    @Schema(description = "用户联系方式")
+    private String contact;
+
+    /**
      * 提醒方式
      */
     @Schema(description = "提醒方式", example = "0", required = true)

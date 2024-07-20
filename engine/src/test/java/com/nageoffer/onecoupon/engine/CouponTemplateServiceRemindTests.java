@@ -32,46 +32,31 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.common.enums;
+package com.nageoffer.onecoupon.engine;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindQueryReqDTO;
+import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindQueryRespDTO;
+import com.nageoffer.onecoupon.engine.service.CouponTemplateRemindService;
+import jakarta.annotation.Resource;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 
-/**
- * 预约提醒方式枚举类，值必须是0，1，2，3......
- * <p>
- * 作者：优雅
- * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-16
- */
-@RequiredArgsConstructor
-public enum CouponRemindTypeEnum {
+import java.util.List;
 
-    /**
-     * 邮件提醒
-     */
-    EMAIL(0, "邮件提醒");
+@SpringBootTest
+class CouponTemplateServiceRemindTests {
+    @Resource
+    private CouponTemplateRemindService couponTemplateRemindService;
 
-    @Getter
-    private final int type;
-    @Getter
-    private final String describe;
+    @Test
+    void testQuery() {
+        CouponTemplateRemindQueryReqDTO req = new CouponTemplateRemindQueryReqDTO();
+        req.setUserId("1810868149847928832");
 
-    public static CouponRemindTypeEnum getByType(Integer type) {
-        for(CouponRemindTypeEnum remindEnum : values()){
-            if (remindEnum.getType() == type) {
-                return remindEnum;
-            }
+        List<CouponTemplateRemindQueryRespDTO> resp = couponTemplateRemindService.listCouponRemind(req);
+        for (CouponTemplateRemindQueryRespDTO couponTemplateRemindQueryRespDTO : resp) {
+            System.out.println(couponTemplateRemindQueryRespDTO.toString());
         }
-        return null;
-    }
 
-    public static String getDescribeByType(Integer type) {
-        for(CouponRemindTypeEnum remindEnum : values()){
-            if (remindEnum.getType() == type) {
-                return remindEnum.getDescribe();
-            }
-        }
-        return null;
     }
 }

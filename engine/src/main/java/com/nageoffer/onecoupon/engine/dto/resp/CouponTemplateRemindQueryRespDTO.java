@@ -58,7 +58,7 @@ public class CouponTemplateRemindQueryRespDTO {
      * id
      */
     @Schema(description = "优惠券id")
-    private Long couponTemplateId;
+    private Long id;
 
     /**
      * 店铺编号
@@ -121,13 +121,6 @@ public class CouponTemplateRemindQueryRespDTO {
     @Schema(description = "消耗规则")
     private String consumeRule;
 
-
-    /**
-     * 开抢时间
-     */
-    @Schema(description = "开抢时间")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date startTime;
 
     /**
      * 提醒的时间，和提醒类型按照顺序一一对应

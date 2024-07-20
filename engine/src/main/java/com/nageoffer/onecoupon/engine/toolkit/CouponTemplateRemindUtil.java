@@ -32,46 +32,58 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.common.enums;
+package com.nageoffer.onecoupon.engine.toolkit;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import cn.hutool.core.date.DateUtil;
+import com.nageoffer.onecoupon.engine.common.enums.CouponRemindTypeEnum;
+import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindQueryRespDTO;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
- * 预约提醒方式枚举类，值必须是0，1，2，3......
+ * 优惠券预约提醒工具类
  * <p>
  * 作者：优雅
- * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-16
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-20
  */
-@RequiredArgsConstructor
-public enum CouponRemindTypeEnum {
+public class CouponTemplateRemindUtil {
 
     /**
-     * 邮件提醒
+     * 下一个类型的位移量，每个类型占用12个bit位，共计60分钟
      */
-    EMAIL(0, "邮件提醒");
+    private static final int NEXT_TYPE_BITS = 12;
 
-    @Getter
-    private final int type;
-    @Getter
-    private final String describe;
+    /**
+     * 5分钟为一个间隔
+     */
+    private static final int TIME_INTERVAL = 5;
 
-    public static CouponRemindTypeEnum getByType(Integer type) {
-        for(CouponRemindTypeEnum remindEnum : values()){
-            if (remindEnum.getType() == type) {
-                return remindEnum;
+    /**
+     * 提醒方式的数量
+     */
+    private static final int TYPE_COUNT = CouponRemindTypeEnum.values().length;
+
+    /**
+     * 填充预约信息
+     */
+    public static void fillRemindInformation(CouponTemplateRemindQueryRespDTO resp, Long information) {
+        List<Date> dateList = new ArrayList<>();
+        List<String> remindType = new ArrayList<>();
+        Date validStartTime = resp.getValidStartTime();
+        for (int i = 0; i < NEXT_TYPE_BITS; i++) {
+            // 按时间节点遍历
+            for (int j = 0; j < TYPE_COUNT; j++) {
+                // 对于每个时间节点，遍历所有类型
+                if (((information >> (j * NEXT_TYPE_BITS + i)) & 1) == 1) {
+                    // 该时间节点的该提醒类型用户有预约
+                    Date date = DateUtil.offsetMinute(validStartTime, -((i + 1) * TIME_INTERVAL));
+                    dateList.add(date);
+                    remindType.add(CouponRemindTypeEnum.getDescribeByType(j));
+                }
             }
         }
-        return null;
-    }
-
-    public static String getDescribeByType(Integer type) {
-        for(CouponRemindTypeEnum remindEnum : values()){
-            if (remindEnum.getType() == type) {
-                return remindEnum.getDescribe();
-            }
-        }
-        return null;
     }
 }
