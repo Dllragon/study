@@ -83,10 +83,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = {AbstractException.class})
     public Result abstractException(HttpServletRequest request, AbstractException ex) {
         if (ex.getCause() != null) {
-            log.error("[{}] {} [ex] {}", request.getMethod(), request.getRequestURL().toString(), ex.toString(), ex.getCause());
+            log.error("[{}] {} [ex] {}", request.getMethod(), request.getRequestURL().toString(), ex, ex.getCause());
             return Results.failure(ex);
         }
-        log.error("[{}] {} [ex] {}", request.getMethod(), request.getRequestURL().toString(), ex.toString());
+        StringBuilder stackTraceBuilder = new StringBuilder();
+        stackTraceBuilder.append(ex.getClass().getName()).append(": ").append(ex.getErrorMessage()).append("\n");
+        StackTraceElement[] stackTrace = ex.getStackTrace();
+        for (int i = 0; i < Math.min(5, stackTrace.length); i++) {
+            stackTraceBuilder.append("\tat ").append(stackTrace[i]).append("\n");
+        }
+        log.error("[{}] {} [ex] {} \n\n{}", request.getMethod(), request.getRequestURL().toString(), ex, stackTraceBuilder);
         return Results.failure(ex);
     }
 
