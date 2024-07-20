@@ -39,6 +39,8 @@ import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateDO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateQueryReqDTO;
 import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
 
+import java.util.List;
+
 /**
  * 优惠券模板业务逻辑层
  * <p>
@@ -54,4 +56,11 @@ public interface CouponTemplateService extends IService<CouponTemplateDO> {
      * @param requestParam 请求参数
      */
     CouponTemplateQueryRespDTO findCouponTemplate(CouponTemplateQueryReqDTO requestParam);
+
+    /**
+     * 根据优惠券id集合查询出券信息
+     *
+     * @param couponTemplateIds 优惠券id集合
+     */
+    List<CouponTemplateDO> listCouponTemplateById(List<Long> couponTemplateIds);
 }

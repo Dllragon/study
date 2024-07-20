@@ -35,17 +35,19 @@
 package com.nageoffer.onecoupon.engine.service.impl;
 
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateRemindDO;
 import com.nageoffer.onecoupon.engine.dao.mapper.CouponTemplateRemindMapper;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCancelReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindPageQueryReqDTO;
-import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindPageQueryRespDTO;
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindQueryReqDTO;
+import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindQueryRespDTO;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateRemindService;
+import com.nageoffer.onecoupon.engine.service.CouponTemplateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * 优惠券预约提醒业务逻辑实现层
@@ -58,13 +60,16 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateRemindMapper, CouponTemplateRemindDO> implements CouponTemplateRemindService {
 
+    private final CouponTemplateRemindMapper couponTemplateRemindMapper;
+    private final CouponTemplateService couponTemplateService;
+
     @Override
     public boolean createCouponRemind(CouponTemplateRemindCreateReqDTO requestParam) {
         return false;
     }
 
     @Override
-    public IPage<CouponTemplateRemindPageQueryRespDTO> pageQueryCouponRemind(CouponTemplateRemindPageQueryReqDTO requestParam) {
+    public List<CouponTemplateRemindQueryRespDTO> listCouponRemind(CouponTemplateRemindQueryReqDTO requestParam) {
         return null;
     }
 

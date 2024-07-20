@@ -52,6 +52,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -114,5 +115,12 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
         }
 
         return BeanUtil.mapToBean(couponTemplateCacheMap, CouponTemplateQueryRespDTO.class, false, CopyOptions.create());
+    }
+
+    @Override
+    public List<CouponTemplateDO> listCouponTemplateById(List<Long> couponTemplateIds) {
+        LambdaQueryWrapper<CouponTemplateDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateDO.class)
+            .in(CouponTemplateDO::getId, couponTemplateIds);
+        return couponTemplateMapper.selectList(queryWrapper);
     }
 }

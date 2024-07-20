@@ -35,11 +35,10 @@
 package com.nageoffer.onecoupon.engine.controller;
 
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCancelReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindPageQueryReqDTO;
-import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindPageQueryRespDTO;
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindQueryReqDTO;
+import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindQueryRespDTO;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateRemindService;
 import com.nageoffer.onecoupon.framework.idempotent.NoRepeatSubmit;
 import com.nageoffer.onecoupon.framework.result.Result;
@@ -50,6 +49,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * 优惠券模板控制层
@@ -74,9 +75,9 @@ public class CouponTemplateRemindController {
     }
 
     @Operation(summary = "查询优惠券预约提醒")
-    @GetMapping("/api/engine/coupon-template-remind/page")
-    public Result<IPage<CouponTemplateRemindPageQueryRespDTO>> pageQueryCouponRemind(CouponTemplateRemindPageQueryReqDTO requestParam) {
-        return Results.success(couponTemplateRemindService.pageQueryCouponRemind(requestParam));
+    @GetMapping("/api/engine/coupon-template-remind/list")
+    public Result<List<CouponTemplateRemindQueryRespDTO>> listCouponRemind(CouponTemplateRemindQueryReqDTO requestParam) {
+        return Results.success(couponTemplateRemindService.listCouponRemind(requestParam));
     }
 
     @Operation(summary = "取消优惠券预约提醒")
