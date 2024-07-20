@@ -43,7 +43,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 优惠券模板查询接口返回参数实体
+ * 查询优惠券预约抢券提醒返回实体
  * <p>
  * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
@@ -63,6 +63,7 @@ public class CouponTemplateRemindQueryRespDTO {
     /**
      * 店铺编号
      */
+    @Schema(description = "店铺编号")
     private Long shopNumber;
 
     /**
@@ -132,6 +133,5 @@ public class CouponTemplateRemindQueryRespDTO {
     /**
      * 提醒类型，和提醒时间按照顺序一一对应
      */
-    @Schema(description = "提醒类型")
     private List<String> remindType;
 }

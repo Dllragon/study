@@ -73,8 +73,8 @@ public class CouponTemplateRemindUtil {
         List<Date> dateList = new ArrayList<>();
         List<String> remindType = new ArrayList<>();
         Date validStartTime = resp.getValidStartTime();
-        for (int i = 0; i < NEXT_TYPE_BITS; i++) {
-            // 按时间节点遍历
+        for (int i = NEXT_TYPE_BITS - 1; i >= 0; i--) {
+            // 按时间节点倒叙遍历，即离开抢时间最久，离现在最近
             for (int j = 0; j < TYPE_COUNT; j++) {
                 // 对于每个时间节点，遍历所有类型
                 if (((information >> (j * NEXT_TYPE_BITS + i)) & 1) == 1) {
@@ -85,5 +85,7 @@ public class CouponTemplateRemindUtil {
                 }
             }
         }
+        resp.setRemindTime(dateList);
+        resp.setRemindType(remindType);
     }
 }

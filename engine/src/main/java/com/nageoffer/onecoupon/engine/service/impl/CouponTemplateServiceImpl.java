@@ -118,9 +118,15 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
     }
 
     @Override
-    public List<CouponTemplateDO> listCouponTemplateById(List<Long> couponTemplateIds) {
+    public List<CouponTemplateDO> listCouponTemplateById(List<Long> couponTemplateIds, List<Long> shopNumbers) {
         LambdaQueryWrapper<CouponTemplateDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateDO.class)
-            .in(CouponTemplateDO::getId, couponTemplateIds);
+                .and(wrapper -> {
+                    for (int i = 0; i < couponTemplateIds.size(); i++) {
+                        int finalI = i;
+                        wrapper.or(innerWrapper -> innerWrapper.eq(CouponTemplateDO::getShopNumber, shopNumbers.get(finalI))
+                                                               .eq(CouponTemplateDO::getId, couponTemplateIds.get(finalI)));
+                    }
+                });
         return couponTemplateMapper.selectList(queryWrapper);
     }
 }
