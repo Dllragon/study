@@ -34,8 +34,11 @@
 
 package com.nageoffer.onecoupon.engine.dto.req;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+
+import java.util.Date;
 
 /**
  * 创建抢券预约提醒接口请求参数实体
@@ -55,20 +58,46 @@ public class CouponTemplateRemindCreateReqDTO {
     private String couponTemplateId;
 
     /**
+     * 优惠券名称
+     */
+    @Schema(description = "优惠券名称")
+    private String name;
+
+    /**
+     * 店铺编号
+     */
+    @Schema(description = "店铺编号", example = "1810714735922956666", required = true)
+    private String shopNumber;
+
+    /**
      * 用户id
      */
     @Schema(description = "用户id", example = "1810868149847928832", required = true)
     private String userId;
 
     /**
-     * 预约抢券时间点，可以接受开抢前五分钟到前一小时的预约，五分钟一个维度，以位图的形式，比如预约前十五分钟，就是1 << ((15 / 5) - 1)，也就是4(二进制100)
+     * 用户联系方式，可能是邮箱、手机号、等等
      */
-    @Schema(description = "预约时间点", example = "4", required = true)
-    private Long appointmentBitMap;
+    @Schema(description = "用户联系方式")
+    private String contact;
 
     /**
      * 提醒方式
      */
     @Schema(description = "提醒方式", example = "0", required = true)
     private Integer type;
+
+    /**
+     * 提醒时间，比如五分钟，十分钟，十五分钟
+     */
+    @Schema(description = "提醒时间")
+    private Integer remindTime;
+
+    /**
+     * 开抢时间
+     */
+    @Schema(description = "开抢时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date startTime;
+
 }

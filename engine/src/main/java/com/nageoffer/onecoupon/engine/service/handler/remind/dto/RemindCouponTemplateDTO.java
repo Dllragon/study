@@ -34,8 +34,11 @@
 
 package com.nageoffer.onecoupon.engine.service.handler.remind.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+
+import java.util.Date;
 
 /**
  * 发送抢券提醒实体
@@ -51,7 +54,7 @@ public class RemindCouponTemplateDTO {
     /**
      * 优惠券模板id
      */
-    @Schema(description = "优惠券模板id", example = "1810966706881941507", required = true)
+    @Schema(description = " ", example = "1810966706881941507", required = true)
     private String couponTemplateId;
 
     /**
@@ -59,6 +62,12 @@ public class RemindCouponTemplateDTO {
      */
     @Schema(description = "优惠券名称")
     private String name;
+
+    /**
+     * 店铺编号
+     */
+    @Schema(description = "店铺编号", example = "1810714735922956666", required = true)
+    private String shopNumber;
 
     /**
      * 用户id
@@ -83,5 +92,12 @@ public class RemindCouponTemplateDTO {
      */
     @Schema(description = "提醒时间")
     private Integer remindTime;
+
+    /**
+     * 开抢时间
+     */
+    @Schema(description = "开抢时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date startTime;
 
 }
