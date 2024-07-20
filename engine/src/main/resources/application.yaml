@@ -70,3 +70,10 @@ knife4j:
   enable: true
   setting:
     language: zh_cn
+
+engine:
+  cache:
+    redis:
+      bloom-filter:
+        cancel-remind:
+          name: cancel_remind_cache_penetration_bloom_filter${unique-name:}
