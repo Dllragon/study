@@ -32,73 +32,68 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.mq.event;
+package com.nageoffer.onecoupon.engine.common.enums;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
- * 优惠券模板任务执行事件
+ * Redis 扣减优惠券库存错误枚举
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-13
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-17
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class CouponTemplateExecuteEvent {
+@RequiredArgsConstructor
+public enum RedisStockDecrementErrorEnum {
 
     /**
-     * 优惠券分发任务id
+     * 成功
      */
-    private String couponTaskId;
+    SUCCESS(0, "成功"),
 
     /**
-     * 通知方式，可组合使用 0：站内信 1：弹框推送 2：邮箱 3：短信
+     * 库存不足
      */
-    private String notifyType;
+    STOCK_INSUFFICIENT(1, "优惠券已被领取完啦"),
 
     /**
-     * 店铺编号
+     * 用户已经达到领取上限
      */
-    private Long shopNumber;
+    LIMIT_REACHED(2, "用户已经达到领取上限");
+
+    @Getter
+    private final long code;
+    @Getter
+    private final String message;
 
     /**
-     * 优惠券模板id
+     * 根据 code 找到对应的枚举实例判断是否成功标识
+     *
+     * @param code 要查找的编码
+     * @return 是否成功标识
      */
-    private String couponTemplateId;
+    public static boolean isFail(long code) {
+        for (RedisStockDecrementErrorEnum status : values()) {
+            if (status.code == code) {
+                return status != SUCCESS;
+            }
+        }
+        return false;
+    }
 
     /**
-     * 消耗规则
+     * 根据 type 找到对应的枚举实例
+     *
+     * @param code 要查找的编码
+     * @return 对应的枚举实例
      */
-    private String couponTemplateConsumeRule;
-
-    /**
-     * 用户id
-     */
-    private String userId;
-
-    /**
-     * 手机号
-     */
-    private String phone;
-
-    /**
-     * 邮箱
-     */
-    private String mail;
-
-    /**
-     * 批量保存用户优惠券 Set 长度，默认满 5000 才会批量保存数据库
-     */
-    private Long batchUserSetSize;
-
-    /**
-     * 分发结束标识
-     */
-    private Boolean distributionEndFlag;
+    public static String fromType(long code) {
+        for (RedisStockDecrementErrorEnum method : RedisStockDecrementErrorEnum.values()) {
+            if (method.getCode() == code) {
+                return method.getMessage();
+            }
+        }
+        throw new IllegalArgumentException("Invalid code: " + code);
+    }
 }

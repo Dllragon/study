@@ -32,73 +32,66 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.mq.event;
+package com.nageoffer.onecoupon.engine.config;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.nageoffer.onecoupon.engine.common.context.UserContext;
+import com.nageoffer.onecoupon.engine.common.context.UserInfoDTO;
+import jakarta.annotation.Nullable;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * 优惠券模板任务执行事件
+ * 用户相关配置类
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-13
+ * 开发时间：2024-07-17
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class CouponTemplateExecuteEvent {
+@Configuration
+public class UserConfiguration implements WebMvcConfigurer {
 
     /**
-     * 优惠券分发任务id
+     * 用户信息传输拦截器
      */
-    private String couponTaskId;
+    @Bean
+    public UserTransmitInterceptor userTransmitInterceptor() {
+        return new UserTransmitInterceptor();
+    }
 
     /**
-     * 通知方式，可组合使用 0：站内信 1：弹框推送 2：邮箱 3：短信
+     * 添加用户信息传递过滤器至相关路径拦截
      */
-    private String notifyType;
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(userTransmitInterceptor())
+                .addPathPatterns("/**");
+    }
 
     /**
-     * 店铺编号
+     * 用户信息传输拦截器
+     * <p>
+     * 作者：马丁
+     * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+     * 开发时间：2024-07-09
      */
-    private Long shopNumber;
+    static class UserTransmitInterceptor implements HandlerInterceptor {
 
-    /**
-     * 优惠券模板id
-     */
-    private String couponTemplateId;
+        @Override
+        public boolean preHandle(@Nullable HttpServletRequest request, @Nullable HttpServletResponse response, @Nullable Object handler) throws Exception {
+            // 用户属于非核心功能，这里先通过模拟的形式代替。后续如果需要后管展示，会重构该代码
+            UserInfoDTO userInfoDTO = new UserInfoDTO("1810518709471555585", "pdd45305558318", 1810714735922956666L);
+            UserContext.setUser(userInfoDTO);
+            return true;
+        }
 
-    /**
-     * 消耗规则
-     */
-    private String couponTemplateConsumeRule;
-
-    /**
-     * 用户id
-     */
-    private String userId;
-
-    /**
-     * 手机号
-     */
-    private String phone;
-
-    /**
-     * 邮箱
-     */
-    private String mail;
-
-    /**
-     * 批量保存用户优惠券 Set 长度，默认满 5000 才会批量保存数据库
-     */
-    private Long batchUserSetSize;
-
-    /**
-     * 分发结束标识
-     */
-    private Boolean distributionEndFlag;
+        @Override
+        public void afterCompletion(@Nullable HttpServletRequest request, @Nullable HttpServletResponse response, @Nullable Object handler, Exception exception) throws Exception {
+            UserContext.removeUser();
+        }
+    }
 }

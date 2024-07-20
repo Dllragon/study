@@ -32,73 +32,67 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.mq.event;
+package com.nageoffer.onecoupon.distribution.dao.sharding;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import org.apache.shardingsphere.infra.util.exception.ShardingSpherePreconditions;
+import org.apache.shardingsphere.sharding.api.sharding.standard.PreciseShardingValue;
+import org.apache.shardingsphere.sharding.api.sharding.standard.RangeShardingValue;
+import org.apache.shardingsphere.sharding.api.sharding.standard.StandardShardingAlgorithm;
+import org.apache.shardingsphere.sharding.exception.algorithm.sharding.ShardingAlgorithmInitializationException;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Properties;
 
 /**
- * 优惠券模板任务执行事件
+ * 基于 HashMod 方式自定义分库算法
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-13
+ * 开发时间：2024-07-16
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class CouponTemplateExecuteEvent {
+public final class DBHashModShardingAlgorithm implements StandardShardingAlgorithm<Long> {
 
-    /**
-     * 优惠券分发任务id
-     */
-    private String couponTaskId;
+    @Getter
+    private Properties props;
 
-    /**
-     * 通知方式，可组合使用 0：站内信 1：弹框推送 2：邮箱 3：短信
-     */
-    private String notifyType;
+    private int shardingCount;
+    private static final String SHARDING_COUNT_KEY = "sharding-count";
 
-    /**
-     * 店铺编号
-     */
-    private Long shopNumber;
+    @Override
+    public String doSharding(Collection<String> availableTargetNames, PreciseShardingValue<Long> shardingValue) {
+        long id = shardingValue.getValue();
+        int dbSize = availableTargetNames.size();
+        int mod = (int) hashShardingValue(id) % shardingCount / (shardingCount / dbSize);
+        int index = 0;
+        for (String targetName : availableTargetNames) {
+            if (index == mod) {
+                return targetName;
+            }
+            index++;
+        }
+        throw new IllegalArgumentException("No target found for value: " + id);
+    }
 
-    /**
-     * 优惠券模板id
-     */
-    private String couponTemplateId;
+    @Override
+    public Collection<String> doSharding(Collection<String> availableTargetNames, RangeShardingValue<Long> shardingValue) {
+        // 暂无范围分片场景，默认返回空
+        return List.of();
+    }
 
-    /**
-     * 消耗规则
-     */
-    private String couponTemplateConsumeRule;
+    @Override
+    public void init(Properties props) {
+        this.props = props;
+        shardingCount = getShardingCount(props);
+    }
 
-    /**
-     * 用户id
-     */
-    private String userId;
+    private int getShardingCount(final Properties props) {
+        ShardingSpherePreconditions.checkState(props.containsKey(SHARDING_COUNT_KEY), () -> new ShardingAlgorithmInitializationException(getType(), "Sharding count cannot be null."));
+        return Integer.parseInt(props.getProperty(SHARDING_COUNT_KEY));
+    }
 
-    /**
-     * 手机号
-     */
-    private String phone;
-
-    /**
-     * 邮箱
-     */
-    private String mail;
-
-    /**
-     * 批量保存用户优惠券 Set 长度，默认满 5000 才会批量保存数据库
-     */
-    private Long batchUserSetSize;
-
-    /**
-     * 分发结束标识
-     */
-    private Boolean distributionEndFlag;
+    private long hashShardingValue(final Comparable<?> shardingValue) {
+        return Math.abs((long) shardingValue.hashCode());
+    }
 }

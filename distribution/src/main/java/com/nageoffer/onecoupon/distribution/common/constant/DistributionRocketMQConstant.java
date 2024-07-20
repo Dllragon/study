@@ -64,4 +64,9 @@ public final class DistributionRocketMQConstant {
      * 优惠券模板推送执行-执行消费者组 Key
      */
     public static final String TEMPLATE_EXECUTE_DISTRIBUTION_CG_KEY = "one-coupon_distribution-service_coupon-execute-distribution_cg${unique-name:}";
+
+    /**
+     * 优惠券模板推送用户通知-执行消费者组 Key
+     */
+    public static final String TEMPLATE_EXECUTE_SEND_MESSAGE_CG_KEY = "one-coupon_distribution-service_coupon-execute-send-message_cg${unique-name:}";
 }

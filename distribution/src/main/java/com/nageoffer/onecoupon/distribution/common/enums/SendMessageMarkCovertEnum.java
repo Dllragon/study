@@ -32,73 +32,61 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.mq.event;
+package com.nageoffer.onecoupon.distribution.common.enums;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
- * 优惠券模板任务执行事件
+ * 消息发送标识转换枚举
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-13
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-16
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class CouponTemplateExecuteEvent {
+@RequiredArgsConstructor
+public enum SendMessageMarkCovertEnum {
 
     /**
-     * 优惠券分发任务id
+     * 站内信
      */
-    private String couponTaskId;
+    SITE(0),
 
     /**
-     * 通知方式，可组合使用 0：站内信 1：弹框推送 2：邮箱 3：短信
+     * 应用推送
      */
-    private String notifyType;
-
-    /**
-     * 店铺编号
-     */
-    private Long shopNumber;
-
-    /**
-     * 优惠券模板id
-     */
-    private String couponTemplateId;
-
-    /**
-     * 消耗规则
-     */
-    private String couponTemplateConsumeRule;
-
-    /**
-     * 用户id
-     */
-    private String userId;
-
-    /**
-     * 手机号
-     */
-    private String phone;
+    APPLICATION(1),
 
     /**
      * 邮箱
      */
-    private String mail;
+    EMAIL(2),
 
     /**
-     * 批量保存用户优惠券 Set 长度，默认满 5000 才会批量保存数据库
+     * 短信
      */
-    private Long batchUserSetSize;
+    SMS(3),
 
     /**
-     * 分发结束标识
+     * 微信
      */
-    private Boolean distributionEndFlag;
+    WECHAT(4);
+
+    @Getter
+    private final int type;
+
+    /**
+     * 根据 type 找到对应的枚举实例
+     *
+     * @param type 要查找的类型
+     * @return 对应的枚举实例
+     */
+    public static String fromType(int type) {
+        for (SendMessageMarkCovertEnum method : SendMessageMarkCovertEnum.values()) {
+            if (method.getType() == type) {
+                return method.name();
+            }
+        }
+        throw new IllegalArgumentException("Invalid type: " + type);
+    }
 }

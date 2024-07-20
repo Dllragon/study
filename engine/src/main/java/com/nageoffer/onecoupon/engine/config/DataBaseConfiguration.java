@@ -32,73 +32,65 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.mq.event;
+package com.nageoffer.onecoupon.engine.config;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.baomidou.mybatisplus.annotation.DbType;
+import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+import org.apache.ibatis.reflection.MetaObject;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.Date;
 
 /**
- * 优惠券模板任务执行事件
+ * 数据库持久层配置类｜配置 MyBatis-Plus 相关分页插件等
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-13
+ * 开发时间：2024-07-17
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class CouponTemplateExecuteEvent {
+@Configuration
+public class DataBaseConfiguration {
 
     /**
-     * 优惠券分发任务id
+     * MyBatis-Plus MySQL 分页插件
      */
-    private String couponTaskId;
+    @Bean
+    public MybatisPlusInterceptor mybatisPlusInterceptor() {
+        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
+        return interceptor;
+    }
 
     /**
-     * 通知方式，可组合使用 0：站内信 1：弹框推送 2：邮箱 3：短信
+     * MyBatis-Plus 源数据自动填充类
      */
-    private String notifyType;
+    @Bean
+    public MyMetaObjectHandler myMetaObjectHandler() {
+        return new MyMetaObjectHandler();
+    }
 
     /**
-     * 店铺编号
+     * MyBatis-Plus 源数据自动填充类
+     * <p>
+     * 作者：马丁
+     * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+     * 开发时间：2024-07-08
      */
-    private Long shopNumber;
+    static class MyMetaObjectHandler implements MetaObjectHandler {
 
-    /**
-     * 优惠券模板id
-     */
-    private String couponTemplateId;
+        @Override
+        public void insertFill(MetaObject metaObject) {
+            strictInsertFill(metaObject, "createTime", Date::new, Date.class);
+            strictInsertFill(metaObject, "updateTime", Date::new, Date.class);
+            strictInsertFill(metaObject, "delFlag", () -> 0, Integer.class);
+        }
 
-    /**
-     * 消耗规则
-     */
-    private String couponTemplateConsumeRule;
-
-    /**
-     * 用户id
-     */
-    private String userId;
-
-    /**
-     * 手机号
-     */
-    private String phone;
-
-    /**
-     * 邮箱
-     */
-    private String mail;
-
-    /**
-     * 批量保存用户优惠券 Set 长度，默认满 5000 才会批量保存数据库
-     */
-    private Long batchUserSetSize;
-
-    /**
-     * 分发结束标识
-     */
-    private Boolean distributionEndFlag;
+        @Override
+        public void updateFill(MetaObject metaObject) {
+            strictInsertFill(metaObject, "updateTime", Date::new, Date.class);
+        }
+    }
 }

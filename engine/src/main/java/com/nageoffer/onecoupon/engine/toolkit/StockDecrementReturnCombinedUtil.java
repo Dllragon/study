@@ -32,73 +32,33 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.mq.event;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+package com.nageoffer.onecoupon.engine.toolkit;
 
 /**
- * 优惠券模板任务执行事件
+ * 扣减优惠券模板库存复合返回工具类
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-13
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-17
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class CouponTemplateExecuteEvent {
+public final class StockDecrementReturnCombinedUtil {
 
     /**
-     * 优惠券分发任务id
+     * 2^14 > 9999, 所以用 14 位来表示第二个字段
      */
-    private String couponTaskId;
+    private static final int SECOND_FIELD_BITS = 14;
 
     /**
-     * 通知方式，可组合使用 0：站内信 1：弹框推送 2：邮箱 3：短信
+     * 从组合的 int 中提取第一个字段（0、1或2）
      */
-    private String notifyType;
+    public static long extractFirstField(long combined) {
+        return (combined >> SECOND_FIELD_BITS) & 0b11; // 0b11 即二进制的 11，用于限制结果为 2 位
+    }
 
     /**
-     * 店铺编号
+     * 从组合的 int 中提取第二个字段（0 到 9999 之间的数字）
      */
-    private Long shopNumber;
-
-    /**
-     * 优惠券模板id
-     */
-    private String couponTemplateId;
-
-    /**
-     * 消耗规则
-     */
-    private String couponTemplateConsumeRule;
-
-    /**
-     * 用户id
-     */
-    private String userId;
-
-    /**
-     * 手机号
-     */
-    private String phone;
-
-    /**
-     * 邮箱
-     */
-    private String mail;
-
-    /**
-     * 批量保存用户优惠券 Set 长度，默认满 5000 才会批量保存数据库
-     */
-    private Long batchUserSetSize;
-
-    /**
-     * 分发结束标识
-     */
-    private Boolean distributionEndFlag;
+    public static long extractSecondField(long combined) {
+        return combined & ((1 << SECOND_FIELD_BITS) - 1);
+    }
 }

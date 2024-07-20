@@ -35,6 +35,7 @@
 package com.nageoffer.onecoupon.engine.controller;
 
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateQueryReqDTO;
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRedeemReqDTO;
 import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateService;
 import com.nageoffer.onecoupon.framework.result.Result;
@@ -43,6 +44,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -63,5 +66,12 @@ public class CouponTemplateController {
     @GetMapping("/api/engine/coupon-template/query")
     public Result<CouponTemplateQueryRespDTO> pageQueryCouponTemplate(CouponTemplateQueryReqDTO requestParam) {
         return Results.success(couponTemplateService.findCouponTemplate(requestParam));
+    }
+
+    @Operation(summary = "兑换优惠券模板", description = "存在较高流量场景，可类比“秒杀”业务")
+    @PostMapping("/api/engine/coupon-template/redeem")
+    public Result<Void> redeemCouponTemplate(@RequestBody CouponTemplateRedeemReqDTO requestParam) {
+        couponTemplateService.redeemCouponTemplate(requestParam);
+        return Results.success();
     }
 }

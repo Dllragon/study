@@ -128,7 +128,7 @@ public class CouponTemplateSaveReqDTO {
      * 消耗规则
      */
     @Schema(description = "消耗规则",
-            example = "{\"termsOfUse\":10,\"maximumDiscountAmount\":3,\"explanationOfUnmetConditions\":\"3\",\"validityPeriod\":\"2024-07-09 11:37:14.92\"}",
+            example = "{\"termsOfUse\":10,\"maximumDiscountAmount\":3,\"explanationOfUnmetConditions\":\"3\",\"validityPeriod\":\"48\"}",
             required = true)
     private String consumeRule;
 

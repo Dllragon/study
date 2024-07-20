@@ -36,23 +36,41 @@ package com.nageoffer.onecoupon.engine.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
+import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.lang.Singleton;
 import cn.hutool.core.map.MapUtil;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
 import com.nageoffer.onecoupon.engine.common.constant.EngineRedisConstant;
+import com.nageoffer.onecoupon.engine.common.context.UserContext;
+import com.nageoffer.onecoupon.engine.common.enums.RedisStockDecrementErrorEnum;
 import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateDO;
+import com.nageoffer.onecoupon.engine.dao.entity.UserCouponDO;
 import com.nageoffer.onecoupon.engine.dao.mapper.CouponTemplateMapper;
+import com.nageoffer.onecoupon.engine.dao.mapper.UserCouponMapper;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateQueryReqDTO;
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRedeemReqDTO;
 import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateService;
+import com.nageoffer.onecoupon.engine.toolkit.StockDecrementReturnCombinedUtil;
+import com.nageoffer.onecoupon.framework.exception.ClientException;
+import com.nageoffer.onecoupon.framework.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.List;
+import java.util.Date;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -68,9 +86,13 @@ import java.util.stream.Collectors;
 public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper, CouponTemplateDO> implements CouponTemplateService {
 
     private final CouponTemplateMapper couponTemplateMapper;
+    private final UserCouponMapper userCouponMapper;
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedissonClient redissonClient;
+    private final TransactionTemplate transactionTemplate;
+
+    private final static String STOCK_DECREMENT_AND_SAVE_USER_RECEIVE_LUA_PATH = "lua/stock_decrement_and_save_user_receive.lua";
 
     @Override
     public CouponTemplateQueryRespDTO findCouponTemplate(CouponTemplateQueryReqDTO requestParam) {
@@ -82,6 +104,7 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
         // 如果存在直接返回，不存在需要通过双重判定锁的形式读取数据库中的记录
         if (MapUtil.isEmpty(couponTemplateCacheMap)) {
             // 获取优惠券模板分布式锁
+            // 关于缓存击穿更多注释事项，欢迎查看我的B站视频：https://www.bilibili.com/video/BV1qz421z7vC
             RLock lock = redissonClient.getLock(String.format(EngineRedisConstant.LOCK_COUPON_TEMPLATE_KEY, requestParam.getCouponTemplateId()));
             lock.lock();
 
@@ -118,15 +141,75 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
     }
 
     @Override
-    public List<CouponTemplateDO> listCouponTemplateById(List<Long> couponTemplateIds, List<Long> shopNumbers) {
-        LambdaQueryWrapper<CouponTemplateDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateDO.class)
-                .and(wrapper -> {
-                    for (int i = 0; i < couponTemplateIds.size(); i++) {
-                        int finalI = i;
-                        wrapper.or(innerWrapper -> innerWrapper.eq(CouponTemplateDO::getShopNumber, shopNumbers.get(finalI))
-                                                               .eq(CouponTemplateDO::getId, couponTemplateIds.get(finalI)));
-                    }
-                });
-        return couponTemplateMapper.selectList(queryWrapper);
+    public void redeemCouponTemplate(CouponTemplateRedeemReqDTO requestParam) {
+        // 验证缓存是否存在，保障数据存在并且缓存中存在
+        CouponTemplateQueryRespDTO couponTemplate = findCouponTemplate(BeanUtil.toBean(requestParam, CouponTemplateQueryReqDTO.class));
+
+        // 验证领取的优惠券是否在活动有效时间
+        boolean isInTime = DateUtil.isIn(new Date(), couponTemplate.getValidStartTime(), couponTemplate.getValidEndTime());
+        if (!isInTime) {
+            // 一把来说优惠券领取时间不到的时候，前端不会放开调用请求，可以理解这是用户调用接口在“攻击”
+            throw new ClientException("不满足优惠券领取时间");
+        }
+
+        // 获取 LUA 脚本，并保存到 Hutool 的单例管理容器，下次直接获取不需要加载
+        DefaultRedisScript<Long> buildLuaScript = Singleton.get(STOCK_DECREMENT_AND_SAVE_USER_RECEIVE_LUA_PATH, () -> {
+            DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
+            redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource(STOCK_DECREMENT_AND_SAVE_USER_RECEIVE_LUA_PATH)));
+            redisScript.setResultType(Long.class);
+            return redisScript;
+        });
+
+        // 验证用户是否符合优惠券领取条件
+        JSONObject receiveRule = JSON.parseObject(couponTemplate.getReceiveRule());
+        String limitPerPerson = receiveRule.getString("limitPerPerson");
+
+        // 执行 LUA 脚本进行扣减库存以及增加 Redis 用户领券记录次数
+        String couponTemplateCacheKey = String.format(EngineRedisConstant.COUPON_TEMPLATE_KEY, requestParam.getCouponTemplateId());
+        String userCouponTemplateLimitCacheKey = String.format(EngineRedisConstant.USER_COUPON_TEMPLATE_LIMIT_KEY, UserContext.getUserId(), requestParam.getCouponTemplateId());
+        Long stockDecrementLuaResult = stringRedisTemplate.execute(
+                buildLuaScript,
+                ListUtil.of(couponTemplateCacheKey, userCouponTemplateLimitCacheKey),
+                String.valueOf(couponTemplate.getValidEndTime().getTime()), limitPerPerson
+        );
+
+        // 判断 LUA 脚本执行返回类，如果失败根据类型返回报错提示
+        long firstField = StockDecrementReturnCombinedUtil.extractFirstField(stockDecrementLuaResult);
+        if (RedisStockDecrementErrorEnum.isFail(firstField)) {
+            throw new ServiceException(RedisStockDecrementErrorEnum.fromType(firstField));
+        }
+
+        long extractSecondField = StockDecrementReturnCombinedUtil.extractSecondField(stockDecrementLuaResult);
+        transactionTemplate.executeWithoutResult(status -> {
+            try {
+                int decremented = couponTemplateMapper.decrementCouponTemplateStock(Long.parseLong(requestParam.getShopNumber()), Long.parseLong(requestParam.getCouponTemplateId()), 1L);
+                if (!SqlHelper.retBool(decremented)) {
+                    throw new ServiceException("优惠券已被领取完啦");
+                }
+
+                // 添加 Redis 用户领取的优惠券记录列表
+                Date now = new Date();
+                UserCouponDO userCouponDO = UserCouponDO.builder()
+                        .couponTemplateId(Long.parseLong(requestParam.getCouponTemplateId()))
+                        .userId(Long.parseLong(UserContext.getUserId()))
+                        .source(requestParam.getSource())
+                        .receiveCount(Long.valueOf(extractSecondField).intValue())
+                        .status(0)
+                        .receiveTime(now)
+                        .validStartTime(now)
+                        .validEndTime(DateUtil.offsetHour(now, JSON.parseObject(couponTemplate.getConsumeRule()).getInteger("validityPeriod")))
+                        .build();
+                userCouponMapper.insert(userCouponDO);
+
+                // TODO 添加用户领取优惠券模板缓存记录
+            } catch (Exception ex) {
+                status.setRollbackOnly();
+                // 自减用户领取的优惠券记录 xxx_优惠券ID_用户ID Value 是领取次数
+                if (ex instanceof ServiceException) {
+                    throw (ServiceException) ex;
+                }
+                throw new ServiceException("优惠券领取异常，请稍候再试");
+            }
+        });
     }
 }

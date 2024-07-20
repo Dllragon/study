@@ -64,6 +64,12 @@ public class CouponTemplateQueryRespDTO {
     private String name;
 
     /**
+     * 店铺编号
+     */
+    @Schema(description = "店铺编号")
+    private String shopNumber;
+
+    /**
      * 优惠券来源 0：店铺券 1：平台券
      */
     @Schema(description = "优惠券来源 0：店铺券 1：平台券")
