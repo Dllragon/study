@@ -67,7 +67,7 @@ import org.springframework.stereotype.Component;
         topic = EngineRockerMQConstant.USER_COUPON_DELAY_CLOSE_TOPIC_KEY,
         consumerGroup = EngineRockerMQConstant.USER_COUPON_DELAY_CLOSE_CG_KEY
 )
-@Slf4j(topic = "CouponTaskSendExecuteConsumer")
+@Slf4j(topic = "UserCouponDelayCloseConsumer")
 public class UserCouponDelayCloseConsumer implements RocketMQListener<MessageWrapper<UserCouponDelayCloseEvent>> {
 
     private final StringRedisTemplate stringRedisTemplate;
