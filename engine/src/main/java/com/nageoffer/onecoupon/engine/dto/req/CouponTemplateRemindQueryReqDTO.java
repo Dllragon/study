@@ -32,47 +32,27 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.common.enums;
+package com.nageoffer.onecoupon.engine.dto.req;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 /**
- * 预约提醒方式枚举类，值必须是0，1，2，3......
+ * 查询抢券预约提醒接口请求参数实体
  * <p>
  * 作者：优雅
- * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-16
  */
-@RequiredArgsConstructor
-public enum CouponRemindTypeEnum {
+@Data
+@Schema(description = "查询优惠券预约抢券提醒参数实体")
+public class CouponTemplateRemindQueryReqDTO {
+
 
     /**
-     * 邮件提醒
+     * 用户id
      */
-    EMAIL(0, "邮件提醒"),
-    PHONE(1, "电话提醒");
+    @Schema(description = "用户id", example = "1810868149847928832", required = true)
+    private String userId;
 
-    @Getter
-    private final int type;
-    @Getter
-    private final String describe;
-
-    public static CouponRemindTypeEnum getByType(Integer type) {
-        for(CouponRemindTypeEnum remindEnum : values()){
-            if (remindEnum.getType() == type) {
-                return remindEnum;
-            }
-        }
-        return null;
-    }
-
-    public static String getDescribeByType(Integer type) {
-        for(CouponRemindTypeEnum remindEnum : values()){
-            if (remindEnum.getType() == type) {
-                return remindEnum.getDescribe();
-            }
-        }
-        return null;
-    }
 }

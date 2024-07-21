@@ -74,6 +74,11 @@ public class CouponTemplateRemindDO {
     private Long information;
 
     /**
+     * 店铺编号
+     */
+    private Long shopNumber;
+
+    /**
      * 优惠券开抢时间
      */
     private Date startTime;

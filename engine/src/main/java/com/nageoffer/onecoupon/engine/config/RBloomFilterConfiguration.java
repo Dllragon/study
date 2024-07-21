@@ -32,47 +32,33 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.common.enums;
+package com.nageoffer.onecoupon.engine.config;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import org.redisson.api.RBloomFilter;
+import org.redisson.api.RedissonClient;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
- * 预约提醒方式枚举类，值必须是0，1，2，3......
+ * 取消预约提醒的布隆过滤器配置
  * <p>
  * 作者：优雅
- * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-16
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-20
  */
-@RequiredArgsConstructor
-public enum CouponRemindTypeEnum {
+@Configuration
+@EnableConfigurationProperties(CancelRemindBloomFilterProperties.class)
+public class RBloomFilterConfiguration {
 
     /**
-     * 邮件提醒
+     * 防止取消提醒缓存穿透的布隆过滤器
      */
-    EMAIL(0, "邮件提醒"),
-    PHONE(1, "电话提醒");
-
-    @Getter
-    private final int type;
-    @Getter
-    private final String describe;
-
-    public static CouponRemindTypeEnum getByType(Integer type) {
-        for(CouponRemindTypeEnum remindEnum : values()){
-            if (remindEnum.getType() == type) {
-                return remindEnum;
-            }
-        }
-        return null;
+    @Bean
+    public RBloomFilter<String> userRegisterCachePenetrationBloomFilter(RedissonClient redissonClient, CancelRemindBloomFilterProperties properties) {
+        RBloomFilter<String> cachePenetrationBloomFilter = redissonClient.getBloomFilter(properties.getName());
+        cachePenetrationBloomFilter.tryInit(properties.getExpectedInsertions(), properties.getFalseProbability());
+        return cachePenetrationBloomFilter;
     }
 
-    public static String getDescribeByType(Integer type) {
-        for(CouponRemindTypeEnum remindEnum : values()){
-            if (remindEnum.getType() == type) {
-                return remindEnum.getDescribe();
-            }
-        }
-        return null;
-    }
 }
