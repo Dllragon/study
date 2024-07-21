@@ -53,7 +53,7 @@ import java.util.Date;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CouponTemplateRemindEvent {
+public class CouponRemindEvent {
 
     /**
      * 优惠券模板id

@@ -32,29 +32,72 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.common.constant;
+package com.nageoffer.onecoupon.engine;
+
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+
+import java.util.Date;
 
 /**
- * 优惠券引擎层服务 RocketMQ 常量类
+ * RocketMQ5.x 延迟生产消费者单元测试
  * <p>
- * 作者：马丁
+ * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 开发时间：2024-07-21
  */
-public final class EngineRockerMQConstant {
+@Slf4j
+@SpringBootTest
+public final class RocketMQ5xDelayProducerConsumerTests {
 
-    /**
-     * 用户优惠券到期后关闭 Topic Key
-     */
-    public static final String USER_COUPON_DELAY_CLOSE_TOPIC_KEY = "one-coupon_engine-service_user-coupon-delay-close_topic${unique-name:}";
+    @Autowired
+    private RocketMQTemplate rocketMQTemplate;
 
-    /**
-     * 用户优惠券到期后关闭消费者组 Key
-     */
-    public static final String USER_COUPON_DELAY_CLOSE_CG_KEY = "one-coupon_engine-service_user-coupon-delay-close_cg${unique-name:}";
+    @SneakyThrows
+    @Test
+    public void producerSendTest() {
+        DateTime remindTime = DateUtil.offsetSecond(new Date(), 5);
+        // 创建消息
+        Message message = new Message("TestDelayTopic", "aaa".getBytes());
+        message.setDeliverTimeMs(remindTime.getTime());
+        DefaultMQProducer defaultMQProducer = rocketMQTemplate.getProducer();
+        SendResult sendResult = defaultMQProducer.send(message);
+        log.info("延迟消息队列发送结果：{}，当前发送时间：{}", sendResult, DateUtil.formatTime(new Date()));
+        while (true);
+    }
 
-    /**
-     * 提醒用户抢券 Topic Key
-     */
-    public static final String COUPON_TEMPLATE_REMIND_TOPIC_KEY = "one-coupon_engine-service_coupon-remind-topic${unique-name:}";
+    @TestConfiguration
+    static class RocketMQ5xConfiguration {
+        @Bean
+        public RocketMQ5xConsumerTests rocketMQ5xConsumerTests() {
+            return new RocketMQ5xConsumerTests();
+        }
+    }
+
+    @RocketMQMessageListener(
+            topic = "TestDelayTopic",
+            consumerGroup = "TestDelayTopic_CG"
+    )
+    static class RocketMQ5xConsumerTests implements RocketMQListener<String> {
+
+        @Override
+        public void onMessage(String message) {
+            log.info("接收到消费消息：{}，当前接收时间：{}", message, DateUtil.formatTime(new Date()));
+        }
+    }
 }
+
+
