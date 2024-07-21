@@ -32,34 +32,59 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.common.constant;
+package com.nageoffer.onecoupon.engine.mq.producer;
+
+import cn.hutool.core.util.StrUtil;
+import com.nageoffer.onecoupon.engine.common.constant.EngineRockerMQConstant;
+import com.nageoffer.onecoupon.engine.mq.base.BaseSendExtendDTO;
+import com.nageoffer.onecoupon.engine.mq.base.MessageWrapper;
+import com.nageoffer.onecoupon.engine.mq.event.UserCouponDelayCloseEvent;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.common.message.MessageConst;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 /**
- * 分布式 Redis 缓存引擎层常量类
+ * 用户优惠券延时关闭生产者
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 开发时间：2024-07-18
  */
-public final class EngineRedisConstant {
+@Slf4j
+@Component
+public class UserCouponDelayCloseProducer extends AbstractCommonSendProduceTemplate<UserCouponDelayCloseEvent> {
 
-    /**
-     * 优惠券模板缓存 Key
-     */
-    public static final String COUPON_TEMPLATE_KEY = "one-coupon_engine:template:%s";
+    private final ConfigurableEnvironment environment;
 
-    /**
-     * 优惠券模板缓存分布式锁 Key
-     */
-    public static final String LOCK_COUPON_TEMPLATE_KEY = "one-coupon_engine:lock:template:%s";
+    public UserCouponDelayCloseProducer(@Autowired RocketMQTemplate rocketMQTemplate, @Autowired ConfigurableEnvironment environment) {
+        super(rocketMQTemplate);
+        this.environment = environment;
+    }
 
-    /**
-     * 限制用户领取优惠券模板次数缓存 Key
-     */
-    public static final String USER_COUPON_TEMPLATE_LIMIT_KEY = "one-coupon_engine:user-template-limit:%s_%s";
+    @Override
+    protected BaseSendExtendDTO buildBaseSendExtendParam(UserCouponDelayCloseEvent messageSendEvent) {
+        return BaseSendExtendDTO.builder()
+                .eventName("延迟关闭用户已领取优惠券")
+                .keys(String.valueOf(messageSendEvent.getUserCouponId()))
+                .topic(environment.resolvePlaceholders(EngineRockerMQConstant.USER_COUPON_DELAY_CLOSE_TOPIC_KEY))
+                .sentTimeout(2000L)
+                .build();
+    }
 
-    /**
-     * 用户已领取优惠券列表模板 Key
-     */
-    public static final String USER_COUPON_TEMPLATE_LIST_KEY = "one-coupon_engine:user-template-list:%s";
+    @Override
+    protected Message<?> buildMessage(UserCouponDelayCloseEvent messageSendEvent, BaseSendExtendDTO requestParam) {
+        String keys = StrUtil.isEmpty(requestParam.getKeys()) ? UUID.randomUUID().toString() : requestParam.getKeys();
+        return MessageBuilder
+                .withPayload(new MessageWrapper(requestParam.getKeys(), messageSendEvent))
+                .setHeader(MessageConst.PROPERTY_KEYS, keys)
+                .setHeader(MessageConst.PROPERTY_TAGS, requestParam.getTag())
+                .build();
+    }
 }
