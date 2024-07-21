@@ -61,10 +61,10 @@ public class CouponTemplateRemindCancelReqDTO {
     private String userId;
 
     /**
-     * 预约抢券时间点，可以接受开抢前五分钟到前一小时的预约，五分钟一个维度，以位图的形式，比如预约前十五分钟，就是1 << ((15 / 5) - 1)，也就是4(二进制100)
+     * 提醒时间，比如五分钟，十分钟，十五分钟
      */
-    @Schema(description = "预约时间点", example = "4", required = true)
-    private Long appointmentBitMap;
+    @Schema(description = "提醒时间")
+    private Integer remindTime;
 
     /**
      * 提醒方式

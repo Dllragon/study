@@ -88,4 +88,11 @@ public class CouponTemplateRemindUtil {
         resp.setRemindTime(dateList);
         resp.setRemindType(remindType);
     }
+
+    /**
+     * 根据预约时间和预约类型计算bitmap
+     */
+    public static Long calculateBitMap(Integer remindTime, Integer type) {
+        return 1L << (type + 1) * Math.max(0, remindTime / TIME_INTERVAL - 1);
+    }
 }

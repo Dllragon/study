@@ -37,6 +37,7 @@ package com.nageoffer.onecoupon.engine.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateDO;
@@ -50,10 +51,12 @@ import com.nageoffer.onecoupon.engine.service.CouponTemplateRemindService;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateService;
 import com.nageoffer.onecoupon.engine.toolkit.CouponTemplateRemindUtil;
 import lombok.RequiredArgsConstructor;
+import org.redisson.api.RBloomFilter;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -69,6 +72,7 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
 
     private final CouponTemplateRemindMapper couponTemplateRemindMapper;
     private final CouponTemplateService couponTemplateService;
+    private final RBloomFilter<String> couponTemplateCancelRemindBloomFilter;
 
     @Override
     public boolean createCouponRemind(CouponTemplateRemindCreateReqDTO requestParam) {
@@ -101,6 +105,27 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
 
     @Override
     public boolean cancelCouponRemind(CouponTemplateRemindCancelReqDTO requestParam) {
-        return false;
+        LambdaQueryWrapper<CouponTemplateRemindDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateRemindDO.class)
+                .eq(CouponTemplateRemindDO::getUserId, requestParam.getUserId())
+                .eq(CouponTemplateRemindDO::getCouponTemplateId, requestParam.getCouponTemplateId());
+        CouponTemplateRemindDO couponTemplateRemindDO = couponTemplateRemindMapper.selectOne(queryWrapper);
+        // 计算bitMap信息
+        Long bitMap = CouponTemplateRemindUtil.calculateBitMap(requestParam.getRemindTime(), requestParam.getType());
+        bitMap ^= couponTemplateRemindDO.getInformation();
+        if (bitMap.equals(0L)) {
+            // 如果新bitmap信息是0，说明已经没有预约提醒了，可以直接删除
+            couponTemplateRemindMapper.delete(queryWrapper);
+        } else {
+            // 虽然删除了这个预约提醒，但还有其它提醒，更新数据库
+            couponTemplateRemindDO.setInformation(bitMap);
+            couponTemplateRemindMapper.updateById(couponTemplateRemindDO);
+        }
+        // 取消提醒这个信息添加到布隆过滤器中
+        add2BloomFilter(requestParam.getCouponTemplateId(), requestParam.getUserId(), requestParam.getRemindTime(), requestParam.getType());
+        return true;
+    }
+
+    private void add2BloomFilter(String couponTemplateId, String userId, Integer remindTime, Integer type) {
+        couponTemplateCancelRemindBloomFilter.add(String.valueOf(Objects.hash(couponTemplateId, userId, remindTime, type)));
     }
 }
