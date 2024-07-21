@@ -37,17 +37,14 @@ package com.nageoffer.onecoupon.engine.mq.consumer;
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson2.JSON;
 import com.nageoffer.onecoupon.engine.common.constant.EngineRockerMQConstant;
-import com.nageoffer.onecoupon.engine.dao.mapper.UserCouponMapper;
 import com.nageoffer.onecoupon.engine.mq.base.MessageWrapper;
 import com.nageoffer.onecoupon.engine.mq.event.CouponRemindEvent;
-import com.nageoffer.onecoupon.engine.service.CouponTemplateRemindService;
 import com.nageoffer.onecoupon.engine.service.handler.remind.ExecuteRemindCouponTemplate;
 import com.nageoffer.onecoupon.engine.service.handler.remind.dto.RemindCouponTemplateDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 /**
@@ -67,7 +64,6 @@ import org.springframework.stereotype.Component;
 public class CouponRemindConsumer implements RocketMQListener<MessageWrapper<CouponRemindEvent>> {
 
     private final ExecuteRemindCouponTemplate executeRemindCouponTemplate;
-    private final CouponTemplateRemindService couponTemplateRemindService;
 
     @Override
     public void onMessage(MessageWrapper<CouponRemindEvent> messageWrapper) {
@@ -75,9 +71,7 @@ public class CouponRemindConsumer implements RocketMQListener<MessageWrapper<Cou
         log.info("[消费者] 提醒用户抢券 - 执行消费逻辑，消息体：{}", JSON.toJSONString(messageWrapper));
         CouponRemindEvent event = messageWrapper.getMessage();
         RemindCouponTemplateDTO remindCouponTemplateDTO = BeanUtil.toBean(event, RemindCouponTemplateDTO.class);
-        if (!couponTemplateRemindService.isCancelRemind(remindCouponTemplateDTO)) {
-            // 用户没取消预约，则发出提醒
-            executeRemindCouponTemplate.executeRemindCouponTemplate(remindCouponTemplateDTO);
-        }
+        // 提醒用户
+        executeRemindCouponTemplate.executeRemindCouponTemplate(remindCouponTemplateDTO);
     }
 }
