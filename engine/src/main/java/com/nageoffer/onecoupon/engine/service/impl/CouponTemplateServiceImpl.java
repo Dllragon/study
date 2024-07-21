@@ -80,6 +80,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -254,5 +255,18 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
                 throw new ServiceException("优惠券领取异常，请稍候再试");
             }
         });
+    }
+
+    @Override
+    public List<CouponTemplateDO> listCouponTemplateById(List<Long> couponTemplateIds, List<Long> shopNumbers) {
+        LambdaQueryWrapper<CouponTemplateDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateDO.class)
+                .and(wrapper -> {
+                    for (int i = 0; i < couponTemplateIds.size(); i++) {
+                        int finalI = i;
+                        wrapper.or(innerWrapper -> innerWrapper.eq(CouponTemplateDO::getShopNumber, shopNumbers.get(finalI))
+                                .eq(CouponTemplateDO::getId, couponTemplateIds.get(finalI)));
+                    }
+                });
+        return couponTemplateMapper.selectList(queryWrapper);
     }
 }

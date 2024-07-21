@@ -32,28 +32,37 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.dto.req;
+package com.nageoffer.onecoupon.engine.config;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * 优惠券模板查询接口请求参数实体
+ * 取消预约提醒的布隆过滤器属性配置
  * <p>
  * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-16
+ * 开发时间：2024-07-20
  */
 @Data
-@Schema(description = "分页查询优惠券预约抢券提醒参数实体")
-public class CouponTemplateRemindPageQueryReqDTO extends Page {
+@ConfigurationProperties(prefix = CancelRemindBloomFilterProperties.PREFIX)
+public class CancelRemindBloomFilterProperties {
 
+    public static final String PREFIX = "engine.cache.redis.bloom-filter.cancel-remind";
 
     /**
-     * 用户id
+     * 用户注册布隆过滤器实例名称
      */
-    @Schema(description = "用户id", example = "1810868149847928832", required = true)
-    private String userId;
+    private String name = "cancel_remind_cache_penetration_bloom_filter";
+
+    /**
+     * 预期插入量
+     */
+    private Long expectedInsertions = 6400L;
+
+    /**
+     * 预期错误概率
+     */
+    private Double falseProbability = 0.03D;
 
 }
