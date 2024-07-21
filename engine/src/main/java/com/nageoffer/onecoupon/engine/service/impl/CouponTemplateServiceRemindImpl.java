@@ -49,7 +49,9 @@ import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindQueryReqDTO;
 import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindQueryRespDTO;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateRemindService;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateService;
+import com.nageoffer.onecoupon.engine.service.handler.remind.dto.RemindCouponTemplateDTO;
 import com.nageoffer.onecoupon.engine.toolkit.CouponTemplateRemindUtil;
+import com.nageoffer.onecoupon.framework.exception.ClientException;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBloomFilter;
 import org.springframework.stereotype.Service;
@@ -111,21 +113,43 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
         CouponTemplateRemindDO couponTemplateRemindDO = couponTemplateRemindMapper.selectOne(queryWrapper);
         // 计算bitMap信息
         Long bitMap = CouponTemplateRemindUtil.calculateBitMap(requestParam.getRemindTime(), requestParam.getType());
+        if ((bitMap & couponTemplateRemindDO.getInformation()) == 0L) {
+            throw new ClientException("您没有预约该时间点下的提醒");
+        }
         bitMap ^= couponTemplateRemindDO.getInformation();
         if (bitMap.equals(0L)) {
             // 如果新bitmap信息是0，说明已经没有预约提醒了，可以直接删除
             couponTemplateRemindMapper.delete(queryWrapper);
         } else {
-            // 虽然删除了这个预约提醒，但还有其它提醒，更新数据库
+            // 虽然删除了这个预约提醒，但还有其它提醒，那就更新数据库
             couponTemplateRemindDO.setInformation(bitMap);
             couponTemplateRemindMapper.updateById(couponTemplateRemindDO);
         }
         // 取消提醒这个信息添加到布隆过滤器中
-        add2BloomFilter(requestParam.getCouponTemplateId(), requestParam.getUserId(), requestParam.getRemindTime(), requestParam.getType());
+        couponTemplateCancelRemindBloomFilter.add(String.valueOf(Objects.hash(requestParam.getCouponTemplateId(), requestParam.getUserId(), requestParam.getRemindTime(), requestParam.getType())));
         return true;
     }
 
-    private void add2BloomFilter(String couponTemplateId, String userId, Integer remindTime, Integer type) {
-        couponTemplateCancelRemindBloomFilter.add(String.valueOf(Objects.hash(couponTemplateId, userId, remindTime, type)));
+    @Override
+    public boolean isCancelRemind(RemindCouponTemplateDTO requestParam) {
+        if (!couponTemplateCancelRemindBloomFilter.contains(String.valueOf(Objects.hash(requestParam.getCouponTemplateId(), requestParam.getUserId(), requestParam.getRemindTime(), requestParam.getType())))) {
+            // 布隆过滤器中不存在，说明没取消提醒，此时已经能挡下大部分请求
+            return false;
+        }
+        // 对于少部分的“取消了预约”，可能是误判，此时需要去数据库中查找
+        LambdaQueryWrapper<CouponTemplateRemindDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateRemindDO.class)
+                .eq(CouponTemplateRemindDO::getUserId, requestParam.getUserId())
+                .eq(CouponTemplateRemindDO::getCouponTemplateId, requestParam.getCouponTemplateId());
+        CouponTemplateRemindDO couponTemplateRemindDO = couponTemplateRemindMapper.selectOne(queryWrapper);
+        if (null == couponTemplateRemindDO) {
+            // 数据库中没该条预约提醒，说明被取消
+            return true;
+        }
+        // 即使存在数据，也要检查该类型的该时间点是否有提醒
+        Long information = couponTemplateRemindDO.getInformation();
+        Long bitMap = CouponTemplateRemindUtil.calculateBitMap(requestParam.getRemindTime(), requestParam.getType());
+        // 按位与等于0说明用户取消了预约
+        return (bitMap & information) == 0L;
     }
+
 }

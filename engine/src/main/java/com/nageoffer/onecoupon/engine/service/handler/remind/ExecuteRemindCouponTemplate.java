@@ -38,6 +38,7 @@ package com.nageoffer.onecoupon.engine.service.handler.remind;
 import com.nageoffer.onecoupon.engine.common.enums.CouponRemindTypeEnum;
 import com.nageoffer.onecoupon.engine.service.handler.remind.dto.RemindCouponTemplateDTO;
 import com.nageoffer.onecoupon.engine.service.handler.remind.impl.SendEmailRemindCouponTemplate;
+import com.nageoffer.onecoupon.engine.service.handler.remind.impl.SendMessageRemindCouponTemplate;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -56,6 +57,7 @@ import java.util.Objects;
 public class ExecuteRemindCouponTemplate {
 
     private final SendEmailRemindCouponTemplate sendEmailRemindCouponTemplate;
+    private final SendMessageRemindCouponTemplate sendMessageRemindCouponTemplate;
 
     /**
      * 执行提醒
@@ -64,13 +66,11 @@ public class ExecuteRemindCouponTemplate {
      */
     public void executeRemindCouponTemplate(RemindCouponTemplateDTO remindCouponTemplateDTO) {
         switch (Objects.requireNonNull(CouponRemindTypeEnum.getByType(remindCouponTemplateDTO.getType()))) {
-            case EMAIL:
-                sendEmailRemindCouponTemplate.remind(remindCouponTemplateDTO);
-                break;
-            default:
-                break;
+            case EMAIL -> sendEmailRemindCouponTemplate.remind(remindCouponTemplateDTO);
+            case MESSAGE -> sendMessageRemindCouponTemplate.remind(remindCouponTemplateDTO);
+            default -> {
+            }
         }
-
     }
 
 }
