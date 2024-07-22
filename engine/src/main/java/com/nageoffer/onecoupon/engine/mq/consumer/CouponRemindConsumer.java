@@ -32,52 +32,46 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.service;
+package com.nageoffer.onecoupon.engine.mq.consumer;
 
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateRemindDO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCancelReqDTO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindQueryReqDTO;
-import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindQueryRespDTO;
+import cn.hutool.core.bean.BeanUtil;
+import com.alibaba.fastjson2.JSON;
+import com.nageoffer.onecoupon.engine.common.constant.EngineRockerMQConstant;
+import com.nageoffer.onecoupon.engine.mq.base.MessageWrapper;
+import com.nageoffer.onecoupon.engine.mq.event.CouponRemindEvent;
+import com.nageoffer.onecoupon.engine.service.handler.remind.ExecuteRemindCouponTemplate;
 import com.nageoffer.onecoupon.engine.service.handler.remind.dto.RemindCouponTemplateDTO;
-
-import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.springframework.stereotype.Component;
 
 /**
- * 优惠券预约提醒业务逻辑层
+ * 提醒抢券消费者
  * <p>
  * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-16
+ * 开发时间：2024-07-21
  */
-public interface CouponTemplateRemindService extends IService<CouponTemplateRemindDO> {
+@Component
+@RequiredArgsConstructor
+@RocketMQMessageListener(
+        topic = EngineRockerMQConstant.COUPON_TEMPLATE_REMIND_TOPIC_KEY,
+        consumerGroup = EngineRockerMQConstant.COUPON_TEMPLATE_REMIND_CG_KEY
+)
+@Slf4j(topic = "CouponRemindConsumer")
+public class CouponRemindConsumer implements RocketMQListener<MessageWrapper<CouponRemindEvent>> {
 
-    /**
-     * 创建抢券预约提醒
-     *
-     * @param requestParam 请求参数
-     */
-    boolean createCouponRemind(CouponTemplateRemindCreateReqDTO requestParam);
+    private final ExecuteRemindCouponTemplate executeRemindCouponTemplate;
 
-    /**
-     * 分页查询抢券预约提醒
-     *
-     * @param requestParam 请求参数
-     */
-    List<CouponTemplateRemindQueryRespDTO> listCouponRemind(CouponTemplateRemindQueryReqDTO requestParam);
-
-    /**
-     * 取消抢券预约提醒
-     *
-     * @param requestParam 请求参数
-     */
-    boolean cancelCouponRemind(CouponTemplateRemindCancelReqDTO requestParam);
-
-    /**
-     * 检查是否取消抢券预约提醒
-     *
-     * @param requestParam 请求参数
-     */
-    boolean isCancelRemind(RemindCouponTemplateDTO requestParam);
+    @Override
+    public void onMessage(MessageWrapper<CouponRemindEvent> messageWrapper) {
+        // 开头打印日志，平常可 Debug 看任务参数，线上可报平安（比如消息是否消费，重新投递时获取参数等）
+        log.info("[消费者] 提醒用户抢券 - 执行消费逻辑，消息体：{}", JSON.toJSONString(messageWrapper));
+        CouponRemindEvent event = messageWrapper.getMessage();
+        RemindCouponTemplateDTO remindCouponTemplateDTO = BeanUtil.toBean(event, RemindCouponTemplateDTO.class);
+        // 提醒用户
+        executeRemindCouponTemplate.executeRemindCouponTemplate(remindCouponTemplateDTO);
+    }
 }

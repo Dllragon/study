@@ -50,7 +50,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
-import org.springdoc.core.service.RequestBodyService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -67,7 +66,7 @@ import org.springframework.stereotype.Component;
         topic = EngineRockerMQConstant.USER_COUPON_DELAY_CLOSE_TOPIC_KEY,
         consumerGroup = EngineRockerMQConstant.USER_COUPON_DELAY_CLOSE_CG_KEY
 )
-@Slf4j(topic = "CouponTaskSendExecuteConsumer")
+@Slf4j(topic = "UserCouponDelayCloseConsumer")
 public class UserCouponDelayCloseConsumer implements RocketMQListener<MessageWrapper<UserCouponDelayCloseEvent>> {
 
     private final StringRedisTemplate stringRedisTemplate;

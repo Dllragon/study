@@ -32,52 +32,68 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.service;
+package com.nageoffer.onecoupon.engine.mq.event;
 
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateRemindDO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCancelReqDTO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindQueryReqDTO;
-import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindQueryRespDTO;
-import com.nageoffer.onecoupon.engine.service.handler.remind.dto.RemindCouponTemplateDTO;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.Date;
 
 /**
- * 优惠券预约提醒业务逻辑层
+ * 优惠券提醒抢券事件
  * <p>
  * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-16
+ * 开发时间：2024-07-21
  */
-public interface CouponTemplateRemindService extends IService<CouponTemplateRemindDO> {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CouponRemindEvent {
 
     /**
-     * 创建抢券预约提醒
-     *
-     * @param requestParam 请求参数
+     * 优惠券模板id
      */
-    boolean createCouponRemind(CouponTemplateRemindCreateReqDTO requestParam);
+    private String couponTemplateId;
 
     /**
-     * 分页查询抢券预约提醒
-     *
-     * @param requestParam 请求参数
+     * 优惠券名称
      */
-    List<CouponTemplateRemindQueryRespDTO> listCouponRemind(CouponTemplateRemindQueryReqDTO requestParam);
+    private String name;
 
     /**
-     * 取消抢券预约提醒
-     *
-     * @param requestParam 请求参数
+     * 店铺编号
      */
-    boolean cancelCouponRemind(CouponTemplateRemindCancelReqDTO requestParam);
+    private String shopNumber;
 
     /**
-     * 检查是否取消抢券预约提醒
-     *
-     * @param requestParam 请求参数
+     * 用户id
      */
-    boolean isCancelRemind(RemindCouponTemplateDTO requestParam);
+    private String userId;
+
+    /**
+     * 用户联系方式，可能是邮箱、手机号、等等
+     */
+    private String contact;
+
+    /**
+     * 提醒方式
+     */
+    private Integer type;
+
+    /**
+     * 提醒时间，比如五分钟，十分钟，十五分钟
+     */
+    private Integer remindTime;
+
+    /**
+     * 开抢时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date startTime;
+
 }

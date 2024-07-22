@@ -37,7 +37,6 @@ package com.nageoffer.onecoupon.engine.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateDO;
@@ -47,17 +46,21 @@ import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCancelReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindQueryReqDTO;
 import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindQueryRespDTO;
+import com.nageoffer.onecoupon.engine.mq.event.CouponRemindEvent;
+import com.nageoffer.onecoupon.engine.mq.producer.CouponRemindProducer;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateRemindService;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateService;
+import com.nageoffer.onecoupon.engine.service.handler.remind.dto.RemindCouponTemplateDTO;
 import com.nageoffer.onecoupon.engine.toolkit.CouponTemplateRemindUtil;
+import com.nageoffer.onecoupon.framework.exception.ClientException;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBloomFilter;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * 优惠券预约提醒业务逻辑实现层
@@ -73,10 +76,31 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
     private final CouponTemplateRemindMapper couponTemplateRemindMapper;
     private final CouponTemplateService couponTemplateService;
     private final RBloomFilter<String> couponTemplateCancelRemindBloomFilter;
+    private final CouponRemindProducer couponRemindProducer;
 
     @Override
+    @Transactional
     public boolean createCouponRemind(CouponTemplateRemindCreateReqDTO requestParam) {
-        return false;
+        LambdaQueryWrapper<CouponTemplateRemindDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateRemindDO.class)
+                .eq(CouponTemplateRemindDO::getUserId, requestParam.getUserId())
+                .eq(CouponTemplateRemindDO::getCouponTemplateId, requestParam.getCouponTemplateId());
+        CouponTemplateRemindDO couponTemplateRemindDO = couponTemplateRemindMapper.selectOne(queryWrapper);
+        if (null == couponTemplateRemindDO) {
+            // 如果没创建过提醒
+            couponTemplateRemindDO = BeanUtil.toBean(requestParam, CouponTemplateRemindDO.class);
+            couponTemplateRemindDO.setInformation(CouponTemplateRemindUtil.calculateBitMap(requestParam.getRemindTime(), requestParam.getType()));
+            couponTemplateRemindMapper.insert(couponTemplateRemindDO);
+        } else {
+            Long information = couponTemplateRemindDO.getInformation();
+            Long bitMap = CouponTemplateRemindUtil.calculateBitMap(requestParam.getRemindTime(), requestParam.getType());
+            if ((information & bitMap) != 0L) {
+                throw new ClientException("已经创建过该提醒了");
+            }
+            couponTemplateRemindDO.setInformation(information ^ bitMap);
+            couponTemplateRemindMapper.update(couponTemplateRemindDO, queryWrapper);
+        }
+        couponRemindProducer.sendMessage(BeanUtil.toBean(requestParam, CouponRemindEvent.class));
+        return true;
     }
 
     @Override
@@ -104,6 +128,7 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
     }
 
     @Override
+    @Transactional
     public boolean cancelCouponRemind(CouponTemplateRemindCancelReqDTO requestParam) {
         LambdaQueryWrapper<CouponTemplateRemindDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateRemindDO.class)
                 .eq(CouponTemplateRemindDO::getUserId, requestParam.getUserId())
@@ -111,21 +136,43 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
         CouponTemplateRemindDO couponTemplateRemindDO = couponTemplateRemindMapper.selectOne(queryWrapper);
         // 计算bitMap信息
         Long bitMap = CouponTemplateRemindUtil.calculateBitMap(requestParam.getRemindTime(), requestParam.getType());
+        if ((bitMap & couponTemplateRemindDO.getInformation()) == 0L) {
+            throw new ClientException("您没有预约该时间点下的提醒");
+        }
         bitMap ^= couponTemplateRemindDO.getInformation();
         if (bitMap.equals(0L)) {
             // 如果新bitmap信息是0，说明已经没有预约提醒了，可以直接删除
             couponTemplateRemindMapper.delete(queryWrapper);
         } else {
-            // 虽然删除了这个预约提醒，但还有其它提醒，更新数据库
+            // 虽然删除了这个预约提醒，但还有其它提醒，那就更新数据库
             couponTemplateRemindDO.setInformation(bitMap);
             couponTemplateRemindMapper.updateById(couponTemplateRemindDO);
         }
         // 取消提醒这个信息添加到布隆过滤器中
-        add2BloomFilter(requestParam.getCouponTemplateId(), requestParam.getUserId(), requestParam.getRemindTime(), requestParam.getType());
+        couponTemplateCancelRemindBloomFilter.add(String.valueOf(Objects.hash(requestParam.getCouponTemplateId(), requestParam.getUserId(), requestParam.getRemindTime(), requestParam.getType())));
         return true;
     }
 
-    private void add2BloomFilter(String couponTemplateId, String userId, Integer remindTime, Integer type) {
-        couponTemplateCancelRemindBloomFilter.add(String.valueOf(Objects.hash(couponTemplateId, userId, remindTime, type)));
+    @Override
+    public boolean isCancelRemind(RemindCouponTemplateDTO requestParam) {
+        if (!couponTemplateCancelRemindBloomFilter.contains(String.valueOf(Objects.hash(requestParam.getCouponTemplateId(), requestParam.getUserId(), requestParam.getRemindTime(), requestParam.getType())))) {
+            // 布隆过滤器中不存在，说明没取消提醒，此时已经能挡下大部分请求
+            return false;
+        }
+        // 对于少部分的“取消了预约”，可能是误判，此时需要去数据库中查找
+        LambdaQueryWrapper<CouponTemplateRemindDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateRemindDO.class)
+                .eq(CouponTemplateRemindDO::getUserId, requestParam.getUserId())
+                .eq(CouponTemplateRemindDO::getCouponTemplateId, requestParam.getCouponTemplateId());
+        CouponTemplateRemindDO couponTemplateRemindDO = couponTemplateRemindMapper.selectOne(queryWrapper);
+        if (null == couponTemplateRemindDO) {
+            // 数据库中没该条预约提醒，说明被取消
+            return true;
+        }
+        // 即使存在数据，也要检查该类型的该时间点是否有提醒
+        Long information = couponTemplateRemindDO.getInformation();
+        Long bitMap = CouponTemplateRemindUtil.calculateBitMap(requestParam.getRemindTime(), requestParam.getType());
+        // 按位与等于0说明用户取消了预约
+        return (bitMap & information) == 0L;
     }
+
 }

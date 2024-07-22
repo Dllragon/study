@@ -18,6 +18,11 @@
             <url>https://github.com/magestacks</url>
             <organization>Apache and openGoofy</organization>
         </developer>
+
+        <developer>
+            <name>优雅</name>
+            <email>elegance520@163.com</email>
+        </developer>
     </developers>
 
     <modules>

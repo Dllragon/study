@@ -32,52 +32,72 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.service;
+package com.nageoffer.onecoupon.engine;
 
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateRemindDO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCancelReqDTO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindQueryReqDTO;
-import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindQueryRespDTO;
-import com.nageoffer.onecoupon.engine.service.handler.remind.dto.RemindCouponTemplateDTO;
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 
-import java.util.List;
+import java.util.Date;
 
 /**
- * 优惠券预约提醒业务逻辑层
+ * RocketMQ5.x 延迟生产消费者单元测试
  * <p>
  * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-16
+ * 开发时间：2024-07-21
  */
-public interface CouponTemplateRemindService extends IService<CouponTemplateRemindDO> {
+@Slf4j
+@SpringBootTest
+public final class RocketMQ5xDelayProducerConsumerTests {
 
-    /**
-     * 创建抢券预约提醒
-     *
-     * @param requestParam 请求参数
-     */
-    boolean createCouponRemind(CouponTemplateRemindCreateReqDTO requestParam);
+    @Autowired
+    private RocketMQTemplate rocketMQTemplate;
 
-    /**
-     * 分页查询抢券预约提醒
-     *
-     * @param requestParam 请求参数
-     */
-    List<CouponTemplateRemindQueryRespDTO> listCouponRemind(CouponTemplateRemindQueryReqDTO requestParam);
+    @SneakyThrows
+    @Test
+    public void producerSendTest() {
+        DateTime remindTime = DateUtil.offsetSecond(new Date(), 5);
+        // 创建消息
+        Message message = new Message("TestDelayTopic", "aaa".getBytes());
+        message.setDeliverTimeMs(remindTime.getTime());
+        DefaultMQProducer defaultMQProducer = rocketMQTemplate.getProducer();
+        SendResult sendResult = defaultMQProducer.send(message);
+        log.info("延迟消息队列发送结果：{}，当前发送时间：{}", sendResult, DateUtil.formatTime(new Date()));
+        while (true);
+    }
 
-    /**
-     * 取消抢券预约提醒
-     *
-     * @param requestParam 请求参数
-     */
-    boolean cancelCouponRemind(CouponTemplateRemindCancelReqDTO requestParam);
+    @TestConfiguration
+    static class RocketMQ5xConfiguration {
+        @Bean
+        public RocketMQ5xConsumerTests rocketMQ5xConsumerTests() {
+            return new RocketMQ5xConsumerTests();
+        }
+    }
 
-    /**
-     * 检查是否取消抢券预约提醒
-     *
-     * @param requestParam 请求参数
-     */
-    boolean isCancelRemind(RemindCouponTemplateDTO requestParam);
+    @RocketMQMessageListener(
+            topic = "TestDelayTopic",
+            consumerGroup = "TestDelayTopic_CG"
+    )
+    static class RocketMQ5xConsumerTests implements RocketMQListener<String> {
+
+        @Override
+        public void onMessage(String message) {
+            log.info("接收到消费消息：{}，当前接收时间：{}", message, DateUtil.formatTime(new Date()));
+        }
+    }
 }
+
+
