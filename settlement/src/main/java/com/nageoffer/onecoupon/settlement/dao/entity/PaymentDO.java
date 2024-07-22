@@ -8,20 +8,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * <p>
- * 作者：Henry Wan
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024/7/21  13:51
- */
-
 import java.math.BigDecimal;
 import java.util.Date;
 
 /**
  * <p>
  * 作者：Henry Wan
- * 开发时间：2024/7/20  2:33
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-20 
  */
 @Data
 @NoArgsConstructor
