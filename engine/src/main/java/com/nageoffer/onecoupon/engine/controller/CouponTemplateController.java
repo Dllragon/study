@@ -64,7 +64,7 @@ public class CouponTemplateController {
 
     @Operation(summary = "查询优惠券模板")
     @GetMapping("/api/engine/coupon-template/query")
-    public Result<CouponTemplateQueryRespDTO> pageQueryCouponTemplate(CouponTemplateQueryReqDTO requestParam) {
+    public Result<CouponTemplateQueryRespDTO> findCouponTemplate(CouponTemplateQueryReqDTO requestParam) {
         return Results.success(couponTemplateService.findCouponTemplate(requestParam));
     }
 
