@@ -48,6 +48,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -70,7 +71,7 @@ public class CouponTemplateRemindController {
     @Operation(summary = "发出优惠券预约提醒请求")
     @NoRepeatSubmit(message = "请勿短时间内重复提交预约提醒请求")
     @PostMapping("/api/engine/coupon-template-remind/create")
-    public Result<Boolean> createCouponRemind(CouponTemplateRemindCreateReqDTO requestParam) {
+    public Result<Boolean> createCouponRemind(@RequestBody CouponTemplateRemindCreateReqDTO requestParam) {
         return Results.success(couponTemplateRemindService.createCouponRemind(requestParam));
     }
 
@@ -81,8 +82,9 @@ public class CouponTemplateRemindController {
     }
 
     @Operation(summary = "取消优惠券预约提醒")
+    @NoRepeatSubmit(message = "请勿短时间内重复提交取消预约提醒请求")
     @PostMapping("/api/engine/coupon-template-remind/cancel")
-    public Result<Boolean> cancelCouponRemind(CouponTemplateRemindCancelReqDTO requestParam) {
+    public Result<Boolean> cancelCouponRemind(@RequestBody CouponTemplateRemindCancelReqDTO requestParam) {
         return Results.success(couponTemplateRemindService.cancelCouponRemind(requestParam));
     }
 }
