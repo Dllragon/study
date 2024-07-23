@@ -1,4 +1,3 @@
-package com.nageoffer.onecoupon.settlement.service.strategy;
 /*
  * 牛券（oneCoupon）优惠券平台项目
  *
@@ -32,6 +31,8 @@ package com.nageoffer.onecoupon.settlement.service.strategy;
  *
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
+
+package com.nageoffer.onecoupon.settlement.service.strategy;
 
 import com.nageoffer.onecoupon.settlement.dao.entity.CouponTemplateDO;
 
