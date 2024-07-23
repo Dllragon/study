@@ -32,31 +32,54 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.service;
+package com.nageoffer.onecoupon.settlement.common.enums;
 
-import com.nageoffer.onecoupon.settlement.dao.entity.CouponTemplateDO;
-
-import java.util.List;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
+ * 优惠券优惠类型
  * <p>
- * 作者：Henry Wan
+ * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-23
+ * 开发时间：2024-07-09
  */
-public interface CouponAvailabilityService {
+@RequiredArgsConstructor
+public enum DiscountTypeEnum {
 
     /**
-     * 查询用户可用的优惠券列表
-     * @param userId 用户ID
-     * @return 可用的优惠券列表
+     * 立减券
      */
-    List<CouponTemplateDO> getAvailableCoupons(Long userId);
+    FIXED_DISCOUNT(0, "立减券"),
 
     /**
-     * 查询用户不可用的优惠券列表
-     * @param userId 用户ID
-     * @return 不可用的优惠券列表
+     * 满减券
      */
-    List<CouponTemplateDO> getUnavailableCoupons(Long userId);
+    THRESHOLD_DISCOUNT(1, "满减券"),
+
+    /**
+     * 折扣券
+     */
+    DISCOUNT_COUPON(2, "折扣券");
+
+    @Getter
+    private final int type;
+
+    @Getter
+    private final String value;
+
+    /**
+     * 根据 type 找到对应的 value
+     *
+     * @param type 要查找的类型代码
+     * @return 对应的描述值，如果没有找到抛异常
+     */
+    public static String findValueByType(int type) {
+        for (DiscountTypeEnum target : DiscountTypeEnum.values()) {
+            if (target.getType() == type) {
+                return target.getValue();
+            }
+        }
+        throw new IllegalArgumentException();
+    }
 }

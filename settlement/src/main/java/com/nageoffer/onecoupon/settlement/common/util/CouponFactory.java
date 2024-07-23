@@ -1,3 +1,4 @@
+package com.nageoffer.onecoupon.settlement.common.util;
 /*
  * 牛券（oneCoupon）优惠券平台项目
  *
@@ -32,16 +33,35 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.dao.mapper;
+import com.nageoffer.onecoupon.settlement.common.enums.DiscountTypeEnum;
+import com.nageoffer.onecoupon.settlement.dao.entity.CouponTemplateDO;
+import com.nageoffer.onecoupon.settlement.dao.entity.DiscountCouponDO;
+import com.nageoffer.onecoupon.settlement.dao.entity.FixedDiscountCouponDO;
+import com.nageoffer.onecoupon.settlement.dao.entity.ThresholdCouponDO;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.nageoffer.onecoupon.settlement.dao.entity.NoThresholdCouponDO;
+import java.util.Map;
 
 /**
  * <p>
  * 作者：Henry Wan
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-23
+ * 开发时间：2024-07-24
  */
-public interface NoThresholdCouponMapper extends BaseMapper<NoThresholdCouponDO> {
+public class CouponFactory {
+    public static CouponTemplateDO createCoupon(CouponTemplateDO coupon, Map<String, Object> additionalParams) {
+        switch (DiscountTypeEnum.values()[coupon.getType()]) {
+            case FIXED_DISCOUNT:
+                Integer fixedDiscountAmount = (Integer) additionalParams.get("discountAmount");
+                return new FixedDiscountCouponDO(coupon, fixedDiscountAmount);
+            case THRESHOLD_DISCOUNT:
+                Integer thresholdAmount = (Integer) additionalParams.get("thresholdAmount");
+                Integer thresholdDiscountAmount = (Integer) additionalParams.get("discountAmount");
+                return new ThresholdCouponDO(coupon, thresholdAmount, thresholdDiscountAmount);
+            case DISCOUNT_COUPON:
+                Double discountRate = (Double) additionalParams.get("discountRate");
+                return new DiscountCouponDO(coupon, discountRate);
+            default:
+                throw new IllegalArgumentException("Invalid coupon type");
+        }
+    }
 }

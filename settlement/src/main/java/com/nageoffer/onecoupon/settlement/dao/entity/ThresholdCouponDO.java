@@ -61,4 +61,12 @@ public class ThresholdCouponDO extends CouponTemplateDO {
      * 优惠金额
      */
     private Integer discountAmount;
+
+    public ThresholdCouponDO(CouponTemplateDO coupon, Integer thresholdAmount, Integer discountAmount) {
+        super(coupon.getId(), coupon.getShopNumber(), coupon.getName(), coupon.getSource(), coupon.getTarget(), coupon.getGoods(), coupon.getType(),
+                coupon.getValidStartTime(), coupon.getValidEndTime(), coupon.getStock(), coupon.getReceiveRule(), coupon.getConsumeRule(), coupon.getStatus(),
+                coupon.getCreateTime(), coupon.getUpdateTime(), coupon.getDelFlag());
+        setDiscountAmount(thresholdAmount);
+        setDiscountAmount(discountAmount);
+    }
 }

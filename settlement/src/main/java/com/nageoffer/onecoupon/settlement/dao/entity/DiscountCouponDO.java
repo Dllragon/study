@@ -56,4 +56,11 @@ public class DiscountCouponDO extends CouponTemplateDO{
      * 折扣比例
      */
     private Double discountRate;
+
+    public DiscountCouponDO(CouponTemplateDO coupon, Double discountRate) {
+        super(coupon.getId(), coupon.getShopNumber(), coupon.getName(), coupon.getSource(), coupon.getTarget(), coupon.getGoods(), coupon.getType(),
+                coupon.getValidStartTime(), coupon.getValidEndTime(), coupon.getStock(), coupon.getReceiveRule(), coupon.getConsumeRule(), coupon.getStatus(),
+                coupon.getCreateTime(), coupon.getUpdateTime(), coupon.getDelFlag());
+        setDiscountRate(discountRate);
+    }
 }

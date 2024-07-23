@@ -1,3 +1,4 @@
+package com.nageoffer.onecoupon.settlement.service.strategy;
 /*
  * 牛券（oneCoupon）优惠券平台项目
  *
@@ -31,28 +32,12 @@
  *
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
-package com.nageoffer.onecoupon.settlement.dao.entity;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
- * 立减券（无门槛）数据库持久层实体
  * <p>
  * 作者：Henry Wan
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-23
+ * 开发时间：2024-07-24
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class NoThresholdCouponDO extends CouponTemplateDO {
-
-    /**
-     * 优惠金额
-     */
-    private Integer discountAmount;
+public class CouponQueryStrategyImpl {
 }
