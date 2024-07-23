@@ -32,10 +32,10 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.dao.mapper;
+package com.nageoffer.onecoupon.engine.dao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.nageoffer.onecoupon.settlement.dao.entity.PaymentDO;
+import com.nageoffer.onecoupon.engine.dao.entity.PaymentDO;
 
 /**
  * <p>
