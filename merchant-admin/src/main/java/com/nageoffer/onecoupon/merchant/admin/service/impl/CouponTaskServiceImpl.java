@@ -51,6 +51,8 @@ import com.nageoffer.onecoupon.merchant.admin.dao.mapper.CouponTaskMapper;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTaskCreateReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTaskPageQueryReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTaskPageQueryRespDTO;
+import com.nageoffer.onecoupon.merchant.admin.mq.event.CouponTaskExecuteEvent;
+import com.nageoffer.onecoupon.merchant.admin.mq.producer.CouponTaskActualExecuteProducer;
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTaskService;
 import com.nageoffer.onecoupon.merchant.admin.service.handler.excel.RowCountListener;
 import lombok.RequiredArgsConstructor;
@@ -81,6 +83,7 @@ public class CouponTaskServiceImpl extends ServiceImpl<CouponTaskMapper, CouponT
 
     private final CouponTaskMapper couponTaskMapper;
     private final RedissonClient redissonClient;
+    private final CouponTaskActualExecuteProducer couponTaskActualExecuteProducer;
 
     /**
      * 为什么这里拒绝策略使用直接丢弃任务？因为在发送任务时如果遇到发送数量为空，会重新进行统计
@@ -127,6 +130,13 @@ public class CouponTaskServiceImpl extends ServiceImpl<CouponTaskMapper, CouponT
         RDelayedQueue<Object> delayedQueue = redissonClient.getDelayedQueue(blockingDeque);
         // 这里延迟时间设置 20 秒，原因是我们笃定上面线程池 20 秒之内就能结束任务
         delayedQueue.offer(delayJsonObject, 20, TimeUnit.SECONDS);
+
+        // 如果是立即发送任务，直接调用消息队列进行发送流程
+        // 执行优惠券推送业务，正式向用户发放优惠券
+        CouponTaskExecuteEvent couponTaskExecuteEvent = CouponTaskExecuteEvent.builder()
+                .couponTaskId(couponTaskDO.getId())
+                .build();
+        couponTaskActualExecuteProducer.sendMessage(couponTaskExecuteEvent);
     }
 
     @Override
