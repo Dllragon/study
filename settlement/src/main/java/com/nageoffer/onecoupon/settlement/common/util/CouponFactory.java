@@ -49,6 +49,9 @@ import java.util.Map;
  */
 public class CouponFactory {
     public static CouponTemplateDO createCoupon(CouponTemplateDO coupon, Map<String, Object> additionalParams) {
+        if (coupon.getType() == null || coupon.getType() >= DiscountTypeEnum.values().length || coupon.getType() < 0) {
+            throw new IllegalArgumentException("Invalid coupon type");
+        }
         switch (DiscountTypeEnum.values()[coupon.getType()]) {
             case FIXED_DISCOUNT:
                 Integer fixedDiscountAmount = (Integer) additionalParams.get("discountAmount");

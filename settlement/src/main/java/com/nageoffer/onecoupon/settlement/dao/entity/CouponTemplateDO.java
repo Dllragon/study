@@ -140,5 +140,4 @@ public class CouponTemplateDO {
      */
     @TableField(fill = FieldFill.INSERT)
     private Integer delFlag;
-
 }

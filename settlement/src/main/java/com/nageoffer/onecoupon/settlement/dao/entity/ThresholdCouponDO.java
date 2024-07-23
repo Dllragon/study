@@ -49,7 +49,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class ThresholdCouponDO extends CouponTemplateDO {
 
     /**
@@ -62,11 +61,41 @@ public class ThresholdCouponDO extends CouponTemplateDO {
      */
     private Integer discountAmount;
 
+    @Builder(builderMethodName = "thresholdCouponBuilder")
     public ThresholdCouponDO(CouponTemplateDO coupon, Integer thresholdAmount, Integer discountAmount) {
         super(coupon.getId(), coupon.getShopNumber(), coupon.getName(), coupon.getSource(), coupon.getTarget(), coupon.getGoods(), coupon.getType(),
                 coupon.getValidStartTime(), coupon.getValidEndTime(), coupon.getStock(), coupon.getReceiveRule(), coupon.getConsumeRule(), coupon.getStatus(),
                 coupon.getCreateTime(), coupon.getUpdateTime(), coupon.getDelFlag());
-        setDiscountAmount(thresholdAmount);
+        setThresholdAmount(thresholdAmount);
         setDiscountAmount(discountAmount);
+    }
+
+    public static ThresholdCouponDOBuilder builder() {
+        return new ThresholdCouponDOBuilder();
+    }
+
+    public static class ThresholdCouponDOBuilder extends CouponTemplateDO.CouponTemplateDOBuilder {
+        private Integer thresholdAmount;
+        private Integer discountAmount;
+
+        ThresholdCouponDOBuilder() {
+            super();
+        }
+
+        public ThresholdCouponDOBuilder thresholdAmount(Integer thresholdAmount) {
+            this.thresholdAmount = thresholdAmount;
+            return this;
+        }
+
+        public ThresholdCouponDOBuilder discountAmount(Integer discountAmount) {
+            this.discountAmount = discountAmount;
+            return this;
+        }
+
+        @Override
+        public ThresholdCouponDO build() {
+            CouponTemplateDO coupon = super.build();
+            return new ThresholdCouponDO(coupon, thresholdAmount, discountAmount);
+        }
     }
 }
