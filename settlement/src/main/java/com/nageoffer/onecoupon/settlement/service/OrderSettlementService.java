@@ -34,8 +34,6 @@
 
 package com.nageoffer.onecoupon.settlement.service;
 
-import com.nageoffer.onecoupon.settlement.dao.entity.OrderDO;
-
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -45,8 +43,20 @@ import java.util.List;
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-21 
  */
-public interface OrderService {
-    OrderDO createUserOrder(Long userId, String shopNumber, BigDecimal totalAmount, BigDecimal payableAmount, Long couponId, BigDecimal couponAmount);
-    List<OrderDO> getUserOrder(Long userId);
-    OrderDO getOrderDetail(Long orderId);
+public interface OrderSettlementService {
+
+    /**
+     * 计算订单总金额
+     * @param orderId 订单ID
+     * @return 订单总金额
+     */
+    BigDecimal calculateTotalAmount(Long orderId);
+
+    /**
+     * 应用优惠券，计算最终价格
+     * @param orderId 订单ID
+     * @param couponIds 优惠券ID列表
+     * @return 最终应付金额
+     */
+    BigDecimal applyCoupons(Long orderId, List<Long> couponIds);
 }

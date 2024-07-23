@@ -31,28 +31,28 @@
  *
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
+package com.nageoffer.onecoupon.settlement.dao.entity;
 
-package com.nageoffer.onecoupon.settlement.dao.mapper;
-
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.nageoffer.onecoupon.settlement.dao.entity.CouponTemplateDO;
-import org.apache.ibatis.annotations.Param;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * 优惠券模板数据库持久层
+ * 立减券（无门槛）数据库持久层实体
  * <p>
- * 作者：马丁
+ * 作者：Henry Wan
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 开发时间：2024-07-23
  */
-public interface CouponTemplateMapper extends BaseMapper<CouponTemplateDO> {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class NoThresholdCouponDO extends CouponTemplateDO {
 
     /**
-     * 自减优惠券模板库存
-     *
-     * @param couponTemplateId 优惠券模板 ID
-     * @return 是否发生记录变更
+     * 优惠金额
      */
-
-    int decrementCouponTemplateStock(@Param("shopNumber") Long shopNumber, @Param("couponTemplateId") Long couponTemplateId, @Param("decrementStock") Long decrementStock);
+    private Integer discountAmount;
 }
