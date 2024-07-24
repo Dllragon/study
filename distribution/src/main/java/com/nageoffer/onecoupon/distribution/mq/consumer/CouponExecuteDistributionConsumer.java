@@ -47,6 +47,7 @@ import com.nageoffer.onecoupon.distribution.dao.entity.CouponTemplateDO;
 import com.nageoffer.onecoupon.distribution.dao.entity.UserCouponDO;
 import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTemplateMapper;
 import com.nageoffer.onecoupon.distribution.dao.mapper.UserCouponMapper;
+import com.nageoffer.onecoupon.distribution.dao.sharding.DBShardingUtil;
 import com.nageoffer.onecoupon.distribution.mq.base.MessageWrapper;
 import com.nageoffer.onecoupon.distribution.mq.event.CouponTemplateExecuteEvent;
 import lombok.RequiredArgsConstructor;
@@ -60,8 +61,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 优惠券执行分发到用户消费者
@@ -172,12 +175,11 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
         } catch (Exception ex) {
             Throwable cause = ex.getCause();
             if (cause instanceof BatchExecutorException) {
-                LambdaQueryWrapper<UserCouponDO> queryWrapper = Wrappers.lambdaQuery(UserCouponDO.class)
-                        .eq(UserCouponDO::getCouponTemplateId, couponTemplateId)
-                        .in(UserCouponDO::getUserId, userCouponDOList.stream().map(UserCouponDO::getUserId).toList());
-                List<UserCouponDO> existentuserCouponDOList = userCouponMapper.selectList(queryWrapper);
+                // 查询已经存在的用户优惠券记录
+                List<Long> userIds = userCouponDOList.stream().map(UserCouponDO::getUserId).toList();
+                List<UserCouponDO> existingUserCoupons = getExistingUserCoupons(couponTemplateId, userIds);
                 // 遍历已经存在的集合，获取 userId，并从需要新增的集合中移除匹配的元素
-                for (UserCouponDO each : existentuserCouponDOList) {
+                for (UserCouponDO each : existingUserCoupons) {
                     Long userId = each.getUserId();
 
                     // 使用迭代器遍历需要新增的集合，安全移除元素
@@ -197,5 +199,59 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
                 }
             }
         }
+    }
+
+    /**
+     * 获取已经存在的用户优惠券集合
+     * 为什么不直接使用 selectList 查询而是需要进行拆分再多次查询？因为一组用户 id 中可能会牵扯多个库，这样就会出现跨库查询问题
+     * 为此我们按照不同用户 id 的数据库进行分类，比如一共有 5000 条记录，ds0 下有 2600 条记录，ds1 下有 2400 条记录，分别查询即可成功
+     *
+     * <p>
+     * 如果直接使用以下语句查询会报某个数据库下某表不存在
+     * LambdaQueryWrapper<UserCouponDO> queryWrapper = Wrappers.lambdaQuery(UserCouponDO.class)
+     * .eq(UserCouponDO::getCouponTemplateId, couponTemplateId)
+     * .in(UserCouponDO::getUserId, userCouponDOList.stream().map(UserCouponDO::getUserId).toList());
+     * List<UserCouponDO> existingUserCoupons = userCouponMapper.selectList(queryWrapper);
+     *
+     * @param couponTemplateId 优惠券模板 ID
+     * @param userIds          用户 ID 集合
+     * @return 已经存在的用户优惠券模板信息集合
+     */
+    public List<UserCouponDO> getExistingUserCoupons(Long couponTemplateId, List<Long> userIds) {
+        // 1. 将 userIds 拆分到数据库中
+        Map<Integer, List<Long>> databaseUserIdMap = splitUserIdsByDatabase(userIds);
+
+        List<UserCouponDO> result = new ArrayList<>();
+        // 2. 对每个数据库执行查询
+        for (Map.Entry<Integer, List<Long>> entry : databaseUserIdMap.entrySet()) {
+            List<Long> userIdSubset = entry.getValue();
+
+            // 执行查询
+            List<UserCouponDO> userCoupons = queryDatabase(couponTemplateId, userIdSubset);
+            result.addAll(userCoupons);
+        }
+
+        return result;
+    }
+
+    private List<UserCouponDO> queryDatabase(Long couponTemplateId, List<Long> userIds) {
+        LambdaQueryWrapper<UserCouponDO> queryWrapper = Wrappers.lambdaQuery(UserCouponDO.class)
+                .eq(UserCouponDO::getCouponTemplateId, couponTemplateId)
+                .in(UserCouponDO::getUserId, userIds);
+
+        return userCouponMapper.selectList(queryWrapper);
+    }
+
+    private Map<Integer, List<Long>> splitUserIdsByDatabase(List<Long> userIds) {
+        Map<Integer, List<Long>> databaseUserIdMap = new HashMap<>();
+
+        for (Long userId : userIds) {
+            int databaseMod = DBShardingUtil.doUserCouponSharding(userId);
+            databaseUserIdMap
+                    .computeIfAbsent(databaseMod, k -> new ArrayList<>())
+                    .add(userId);
+        }
+
+        return databaseUserIdMap;
     }
 }
