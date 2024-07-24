@@ -76,7 +76,7 @@ public final class RocketMQ5xDelayProducerConsumerTests {
         DefaultMQProducer defaultMQProducer = rocketMQTemplate.getProducer();
         SendResult sendResult = defaultMQProducer.send(message);
         log.info("延迟消息队列发送结果：{}，当前发送时间：{}", sendResult, DateUtil.formatTime(new Date()));
-        while (true);
+        Thread.sleep(10000);
     }
 
     @TestConfiguration
