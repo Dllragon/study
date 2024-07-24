@@ -140,13 +140,20 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
             throw new ClientException("您没有预约该时间点下的提醒");
         }
         bitMap ^= couponTemplateRemindDO.getInformation();
+        queryWrapper.eq(CouponTemplateRemindDO::getInformation, couponTemplateRemindDO.getInformation());
         if (bitMap.equals(0L)) {
             // 如果新bitmap信息是0，说明已经没有预约提醒了，可以直接删除
-            couponTemplateRemindMapper.delete(queryWrapper);
+            if (couponTemplateRemindMapper.delete(queryWrapper) == 0) {
+                // MySQL乐观锁进行删除，如果删除失败，说明用户可能同时正在进行删除、新增提醒操作
+                throw new ClientException("取消提醒失败，请刷新页面后重试");
+            }
         } else {
             // 虽然删除了这个预约提醒，但还有其它提醒，那就更新数据库
             couponTemplateRemindDO.setInformation(bitMap);
-            couponTemplateRemindMapper.updateById(couponTemplateRemindDO);
+            if (couponTemplateRemindMapper.update(couponTemplateRemindDO, queryWrapper) == 0) {
+                // MySQL乐观锁进行更新，如果更新失败，说明用户可能同时正在进行删除、新增提醒操作
+                throw new ClientException("取消提醒失败，请刷新页面后重试");
+            }
         }
         // 取消提醒这个信息添加到布隆过滤器中
         couponTemplateCancelRemindBloomFilter.add(String.valueOf(Objects.hash(requestParam.getCouponTemplateId(), requestParam.getUserId(), requestParam.getRemindTime(), requestParam.getType())));
