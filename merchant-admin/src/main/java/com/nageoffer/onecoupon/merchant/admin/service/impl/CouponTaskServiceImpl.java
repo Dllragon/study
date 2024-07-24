@@ -51,6 +51,7 @@ import com.nageoffer.onecoupon.merchant.admin.dao.mapper.CouponTaskMapper;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTaskCreateReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTaskPageQueryReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTaskPageQueryRespDTO;
+import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTaskQueryRespDTO;
 import com.nageoffer.onecoupon.merchant.admin.mq.event.CouponTaskExecuteEvent;
 import com.nageoffer.onecoupon.merchant.admin.mq.producer.CouponTaskActualExecuteProducer;
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTaskService;
@@ -156,6 +157,12 @@ public class CouponTaskServiceImpl extends ServiceImpl<CouponTaskMapper, CouponT
 
         // 转换数据库持久层对象为优惠券模板返回参数
         return selectPage.convert(each -> BeanUtil.toBean(each, CouponTaskPageQueryRespDTO.class));
+    }
+
+    @Override
+    public CouponTaskQueryRespDTO findCouponTaskById(String taskId) {
+        CouponTaskDO couponTaskDO = couponTaskMapper.selectById(taskId);
+        return BeanUtil.toBean(couponTaskDO, CouponTaskQueryRespDTO.class);
     }
 
     private void refreshCouponTaskSendNum(JSONObject delayJsonObject) {
