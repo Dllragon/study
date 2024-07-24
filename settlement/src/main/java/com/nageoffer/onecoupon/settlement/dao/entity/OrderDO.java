@@ -43,7 +43,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -111,9 +110,4 @@ public class OrderDO {
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
-    /**
-     * 删除标识 0：未删除 1：已删除
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Integer delFlag;
 }
