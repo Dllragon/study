@@ -23,6 +23,11 @@
             <name>优雅</name>
             <email>elegance520@163.com</email>
         </developer>
+
+        <developer>
+            <name>Henry</name>
+            <email>yzwh0102@qq.com</email>
+        </developer>
     </developers>
 
     <modules>

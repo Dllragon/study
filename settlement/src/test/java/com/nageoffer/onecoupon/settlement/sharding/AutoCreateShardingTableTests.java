@@ -1,3 +1,4 @@
+
 /*
  * 牛券（oneCoupon）优惠券平台项目
  *
@@ -32,31 +33,49 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.service;
+package com.nageoffer.onecoupon.settlement.sharding;
 
-import java.math.BigDecimal;
-import java.util.List;
+import org.junit.jupiter.api.Test;
 
 /**
  * <p>
  * 作者：Henry Wan
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-21 
+ * 开发时间：2024-07-25
  */
-public interface OrderSettlementService {
+public class AutoCreateShardingTableTests {
 
-    /**
-     * 计算订单总金额
-     * @param orderId 订单ID
-     * @return 订单总金额
-     */
-    BigDecimal calculateTotalAmount(Long orderId);
+    private final String settlementTableTemplate = "CREATE TABLE `t_coupon_settlement_%d` (\n" +
+            "  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID',\n" +
+            "  `shop_number` varchar(64) DEFAULT NULL COMMENT '店铺编号',\n" +
+            "  `user_id` bigint(20) DEFAULT NULL COMMENT '用户ID',\n" +
+            "  `coupon_id` bigint(20) DEFAULT NULL COMMENT '优惠券ID',\n" +
+            "  `total_amount` decimal(10,2) DEFAULT NULL COMMENT '结算单总金额',\n" +
+            "  `payable_amount` decimal(10,2) DEFAULT NULL COMMENT '应付金额',\n" +
+            "  `coupon_amount` decimal(10,2) DEFAULT NULL COMMENT '券金额',\n" +
+            "  `status` int(11) DEFAULT NULL COMMENT '结算单状态',\n" +
+            "  `create_time` datetime DEFAULT NULL COMMENT '创建时间',\n" +
+            "  `update_time` datetime DEFAULT NULL COMMENT '修改时间',\n" +
+            "  PRIMARY KEY (`id`),\n" +
+            "  KEY `idx_userid` (`user_id`)\n" +
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='优惠券结算单表';";
 
-    /**
-     * 应用优惠券，计算最终价格
-     * @param orderId 订单ID
-     * @param couponIds 优惠券ID列表
-     * @return 最终应付金额
-     */
-    BigDecimal applyCoupons(Long orderId, List<Long> couponIds);
+    @Test
+    public void generateSettlementTables() {
+        int numberOfDatabases = 2;
+        int tablesPerDatabase = 8;
+
+        for (int db = 0; db < numberOfDatabases; db++) {
+            System.out.println("-- Database: onecoupon_" + db);
+            for (int i = 0; i < tablesPerDatabase; i++) {
+                int tableIndex = db * tablesPerDatabase + i;
+                System.out.println(String.format(settlementTableTemplate, tableIndex));
+                System.out.println();
+            }
+            System.out.println();
+        }
+    }
+
+
+
 }
