@@ -43,8 +43,11 @@ import com.nageoffer.onecoupon.distribution.common.constant.DistributionRedisCon
 import com.nageoffer.onecoupon.distribution.common.constant.DistributionRocketMQConstant;
 import com.nageoffer.onecoupon.distribution.common.enums.CouponSourceEnum;
 import com.nageoffer.onecoupon.distribution.common.enums.CouponStatusEnum;
+import com.nageoffer.onecoupon.distribution.common.enums.CouponTaskStatusEnum;
+import com.nageoffer.onecoupon.distribution.dao.entity.CouponTaskDO;
 import com.nageoffer.onecoupon.distribution.dao.entity.CouponTemplateDO;
 import com.nageoffer.onecoupon.distribution.dao.entity.UserCouponDO;
+import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTaskMapper;
 import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTemplateMapper;
 import com.nageoffer.onecoupon.distribution.dao.mapper.UserCouponMapper;
 import com.nageoffer.onecoupon.distribution.dao.sharding.DBShardingUtil;
@@ -84,6 +87,7 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
 
     private final UserCouponMapper userCouponMapper;
     private final CouponTemplateMapper couponTemplateMapper;
+    private final CouponTaskMapper couponTaskMapper;
     private final StringRedisTemplate stringRedisTemplate;
 
     private final static int BATCH_USER_COUPON_SIZE = 5000;
@@ -111,6 +115,14 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
             if (CollUtil.isNotEmpty(batchUserIds)) {
                 // TODO 应该添加到 t_coupon_task_fail 并标记错误原因
             }
+
+            // 确保所有用户都已经接到优惠券后，设置优惠券推送任务完成时间
+            CouponTaskDO couponTaskDO = CouponTaskDO.builder()
+                    .id(Long.parseLong(event.getCouponTaskId()))
+                    .status(CouponTaskStatusEnum.SUCCESS.getStatus())
+                    .completionTime(new Date())
+                    .build();
+            couponTaskMapper.updateById(couponTaskDO);
         }
     }
 
