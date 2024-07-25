@@ -93,6 +93,8 @@ public class CouponTemplateRemindUtil {
      * 根据预约时间和预约类型计算bitmap
      */
     public static Long calculateBitMap(Integer remindTime, Integer type) {
-        return 1L << (type + 1) * Math.max(0, remindTime / TIME_INTERVAL - 1);
+        if (remindTime > TIME_INTERVAL * NEXT_TYPE_BITS)
+            throw new ClientException("预约时间不能大于" + TIME_INTERVAL * NEXT_TYPE_BITS + "分钟");
+        return 1L << (type * NEXT_TYPE_BITS + Math.max(0, remindTime / TIME_INTERVAL - 1));
     }
 }
