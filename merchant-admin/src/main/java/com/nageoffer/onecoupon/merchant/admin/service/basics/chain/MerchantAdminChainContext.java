@@ -50,7 +50,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * 商家后管责任链上下文容器
@@ -108,8 +107,8 @@ public final class MerchantAdminChainContext<T> implements ApplicationContextAwa
             abstractChainHandlers.add(bean);
             abstractChainHandlerContainer.put(bean.mark(), abstractChainHandlers);
         });
-        // 对每个 Mark 对应的责任链实现类集合进行排序，优先级小的在前
         abstractChainHandlerContainer.forEach((mark, unsortedChainHandlers) -> {
+            // 对每个 Mark 对应的责任链实现类集合进行排序，优先级小的在前
             unsortedChainHandlers.sort(Comparator.comparing(Ordered::getOrder));
         });
     }
