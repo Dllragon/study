@@ -88,11 +88,6 @@ public final class DBHashModShardingAlgorithm implements StandardShardingAlgorit
     }
 
     public int getShardingMod(long id, int availableTargetSize) {
-        try {
-            return (int) hashShardingValue(id) % shardingCount / (shardingCount / availableTargetSize);
-        } catch (Throwable ex) {
-            System.out.println();
-        }
         return (int) hashShardingValue(id) % shardingCount / (shardingCount / availableTargetSize);
     }
 
