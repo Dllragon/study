@@ -37,6 +37,7 @@ package com.nageoffer.onecoupon.engine.toolkit;
 import cn.hutool.core.date.DateUtil;
 import com.nageoffer.onecoupon.engine.common.enums.CouponRemindTypeEnum;
 import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindQueryRespDTO;
+import com.nageoffer.onecoupon.framework.exception.ClientException;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -93,8 +94,9 @@ public class CouponTemplateRemindUtil {
      * 根据预约时间和预约类型计算bitmap
      */
     public static Long calculateBitMap(Integer remindTime, Integer type) {
-        if (remindTime > TIME_INTERVAL * NEXT_TYPE_BITS)
-            throw new ClientException("预约时间不能大于" + TIME_INTERVAL * NEXT_TYPE_BITS + "分钟");
+        if (remindTime > TIME_INTERVAL * NEXT_TYPE_BITS) {
+            throw new ClientException("预约提醒的时间不能早于开票前" + TIME_INTERVAL * NEXT_TYPE_BITS + "分钟");
+        }
         return 1L << (type * NEXT_TYPE_BITS + Math.max(0, remindTime / TIME_INTERVAL - 1));
     }
 }
