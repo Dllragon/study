@@ -32,44 +32,87 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.common.constant;
+package com.nageoffer.onecoupon.engine.mq.event;
+
+import lombok.Data;
+
+import java.util.List;
+import java.util.Map;
 
 /**
- * 优惠券引擎层服务 RocketMQ 常量类
+ * Canal Binlog 监听触发事件
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-25
  */
-public final class EngineRockerMQConstant {
+@Data
+public class CanalBinlogEvent {
 
     /**
-     * 用户优惠券到期后关闭 Topic Key
+     * 变更数据
      */
-    public static final String USER_COUPON_DELAY_CLOSE_TOPIC_KEY = "one-coupon_engine-service_user-coupon-delay-close_topic${unique-name:}";
+    private List<Map<String, Object>> data;
 
     /**
-     * 用户优惠券到期后关闭消费者组 Key
+     * 数据库名称
      */
-    public static final String USER_COUPON_DELAY_CLOSE_CG_KEY = "one-coupon_engine-service_user-coupon-delay-close_cg${unique-name:}";
+    private String database;
 
     /**
-     * 提醒用户抢券 Topic Key
+     * es 是指 Mysql Binlog 里原始的时间戳，也就是数据原始变更的时间
+     * Canal 的消费延迟 = ts - es
      */
-    public static final String COUPON_TEMPLATE_REMIND_TOPIC_KEY = "one-coupon_engine-service_coupon-remind_topic${unique-name:}";
+    private Long es;
 
     /**
-     * 提醒用户抢券消费者组 Key
+     * 递增 ID，从 1 开始
      */
-    public static final String COUPON_TEMPLATE_REMIND_CG_KEY = "one-coupon_engine-service_coupon-remind_cg${unique-name:}";
+    private Long id;
 
     /**
-     * Canal 监听用户优惠券表 Binlog Topic Key
+     * 当前变更是否是 DDL 语句
      */
-    public static final String USER_COUPON_BINLOG_SYNC_TOPIC_KEY = "one-coupon_canal_engine-service_common-sync_topic${unique-name:}";
+    private Boolean isDdl;
 
     /**
-     * Canal 监听用户优惠券表 Binlog 消费者组 Key
+     * 表结构字段类型
      */
-    public static final String USER_COUPON_BINLOG_SYNC_CG_KEY = "one-coupon_canal_engine-service_common-sync_cg${unique-name:}";
+    private Map<String, Object> mysqlType;
+
+    /**
+     * UPDATE 模式下旧数据
+     */
+    private List<Map<String, Object>> old;
+
+    /**
+     * 主键名称
+     */
+    private List<String> pkNames;
+
+    /**
+     * SQL 语句
+     */
+    private String sql;
+
+    /**
+     * SQL 类型
+     */
+    private Map<String, Object> sqlType;
+
+    /**
+     * 表名
+     */
+    private String table;
+
+    /**
+     * ts 是指 Canal 收到这个 Binlog，构造为自己协议对象的时间
+     * 应用消费的延迟 = now - ts
+     */
+    private Long ts;
+
+    /**
+     * INSERT（新增）、UPDATE（更新）、DELETE（删除）等等
+     */
+    private String type;
 }
