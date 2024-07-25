@@ -138,7 +138,7 @@
 
 代码入口：
 
-- com.nageoffer.onecoupon.engine.controller.CouponTemplateController#redeemCouponTemplate
+- com.nageoffer.onecoupon.engine.controller.UserCouponController#redeemUserCoupon
 
 业务亮点：
 
