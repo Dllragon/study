@@ -104,16 +104,13 @@ public final class MerchantAdminChainContext<T> implements ApplicationContextAwa
         Map<String, MerchantAdminAbstractChainHandler> chainFilterMap = applicationContext.getBeansOfType(MerchantAdminAbstractChainHandler.class);
         chainFilterMap.forEach((beanName, bean) -> {
             // 判断 mark 是否已经存在抽象责任链容器中，如果已经存在直接向集合新增；如果不存在，创建 Mark 和对应的集合
-            List<MerchantAdminAbstractChainHandler> abstractChainHandlers = abstractChainHandlerContainer.get(bean.mark());
-            if (CollectionUtils.isEmpty(abstractChainHandlers)) {
-                abstractChainHandlers = new ArrayList();
-            }
+            List<MerchantAdminAbstractChainHandler> abstractChainHandlers = abstractChainHandlerContainer.getOrDefault(bean.mark(), new ArrayList<>());
             abstractChainHandlers.add(bean);
-            // 对 Mark 下责任链实现的处理类排序，性能执行小的在前
-            List<MerchantAdminAbstractChainHandler> actualAbstractChainHandlers = abstractChainHandlers.stream()
-                    .sorted(Comparator.comparing(Ordered::getOrder))
-                    .collect(Collectors.toList());
-            abstractChainHandlerContainer.put(bean.mark(), actualAbstractChainHandlers);
+            abstractChainHandlerContainer.put(bean.mark(), abstractChainHandlers);
+        });
+        // 对 Mark 下责任链实现的处理类排序，性能执行小的在前
+        abstractChainHandlerContainer.forEach((mark, unsortedChainHandlers) -> {
+            unsortedChainHandlers.sort(Comparator.comparing(Ordered::getOrder));
         });
     }
 
