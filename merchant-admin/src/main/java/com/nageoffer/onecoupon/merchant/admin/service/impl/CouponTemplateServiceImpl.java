@@ -49,6 +49,7 @@ import com.nageoffer.onecoupon.merchant.admin.dao.mapper.CouponTemplateMapper;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplatePageQueryReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTemplatePageQueryRespDTO;
+import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTemplateQueryRespDTO;
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
 import com.nageoffer.onecoupon.merchant.admin.service.basics.chain.MerchantAdminChainContext;
 import lombok.RequiredArgsConstructor;
@@ -110,5 +111,15 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
 
         // 转换数据库持久层对象为优惠券模板返回参数
         return selectPage.convert(each -> BeanUtil.toBean(each, CouponTemplatePageQueryRespDTO.class));
+    }
+
+    @Override
+    public CouponTemplateQueryRespDTO findCouponTemplateById(String couponTemplateId) {
+        LambdaQueryWrapper<CouponTemplateDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateDO.class)
+                .eq(CouponTemplateDO::getShopNumber, UserContext.getShopNumber())
+                .eq(CouponTemplateDO::getId, couponTemplateId);
+
+        CouponTemplateDO couponTemplateDO = couponTemplateMapper.selectOne(queryWrapper);
+        return BeanUtil.toBean(couponTemplateDO, CouponTemplateQueryRespDTO.class);
     }
 }

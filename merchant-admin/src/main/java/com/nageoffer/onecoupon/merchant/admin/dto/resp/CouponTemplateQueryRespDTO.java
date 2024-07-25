@@ -32,56 +32,84 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.controller;
+package com.nageoffer.onecoupon.merchant.admin.dto.resp;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.nageoffer.onecoupon.framework.idempotent.NoRepeatSubmit;
-import com.nageoffer.onecoupon.framework.result.Result;
-import com.nageoffer.onecoupon.framework.web.Results;
-import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplatePageQueryReqDTO;
-import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
-import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTemplatePageQueryRespDTO;
-import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTemplateQueryRespDTO;
-import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
+import java.util.Date;
 
 /**
- * 优惠券模板控制层
+ * 优惠券模板详情查询接口返回参数实体
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-09
+ * 开发时间：2024-07-26
  */
-@RestController
-@RequiredArgsConstructor
-@Tag(name = "优惠券模板管理")
-public class CouponTemplateController {
+@Data
+@Schema(description = "优惠券模板详情查询返回实体")
+public class CouponTemplateQueryRespDTO {
 
-    private final CouponTemplateService couponTemplateService;
+    /**
+     * 优惠券名称
+     */
+    @Schema(description = "优惠券名称")
+    private String name;
 
-    @Operation(summary = "商家创建优惠券模板")
-    @NoRepeatSubmit(message = "请勿短时间内重复提交优惠券模板")
-    @PostMapping("/api/merchant-admin/coupon-template/create")
-    public Result<Void> createCouponTemplate(@RequestBody CouponTemplateSaveReqDTO requestParam) {
-        couponTemplateService.createCouponTemplate(requestParam);
-        return Results.success();
-    }
+    /**
+     * 优惠券来源 0：店铺券 1：平台券
+     */
+    @Schema(description = "优惠券来源 0：店铺券 1：平台券")
+    private Integer source;
 
-    @Operation(summary = "分页查询优惠券模板")
-    @GetMapping("/api/merchant-admin/coupon-template/page")
-    public Result<IPage<CouponTemplatePageQueryRespDTO>> pageQueryCouponTemplate(CouponTemplatePageQueryReqDTO requestParam) {
-        return Results.success(couponTemplateService.pageQueryCouponTemplate(requestParam));
-    }
+    /**
+     * 优惠对象 0：商品专属 1：全店通用
+     */
+    @Schema(description = "优惠对象 0：商品专属 1：全店通用")
+    private Integer target;
 
-    @Operation(summary = "查询优惠券模板详情")
-    @GetMapping("/api/merchant-admin/coupon-template/find")
-    public Result<CouponTemplateQueryRespDTO> findCouponTemplate(String couponTemplateId) {
-        return Results.success(couponTemplateService.findCouponTemplateById(couponTemplateId));
-    }
+    /**
+     * 优惠商品编码
+     */
+    @Schema(description = "优惠商品编码")
+    private String goods;
+
+    /**
+     * 优惠类型 0：立减券 1：满减券 2：折扣券
+     */
+    @Schema(description = "优惠类型 0：立减券 1：满减券 2：折扣券")
+    private Integer type;
+
+    /**
+     * 有效期开始时间
+     */
+    @Schema(description = "有效期开始时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date validStartTime;
+
+    /**
+     * 有效期结束时间
+     */
+    @Schema(description = "有效期结束时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date validEndTime;
+
+    /**
+     * 库存
+     */
+    @Schema(description = "库存")
+    private Integer stock;
+
+    /**
+     * 领取规则
+     */
+    @Schema(description = "领取规则")
+    private String receiveRule;
+
+    /**
+     * 消耗规则
+     */
+    @Schema(description = "消耗规则")
+    private String consumeRule;
 }
