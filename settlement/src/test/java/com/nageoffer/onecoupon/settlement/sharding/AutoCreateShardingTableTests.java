@@ -74,7 +74,4 @@ public class AutoCreateShardingTableTests {
             System.out.println();
         }
     }
-
-
-
 }
