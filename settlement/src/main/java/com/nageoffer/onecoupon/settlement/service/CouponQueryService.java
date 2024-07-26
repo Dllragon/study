@@ -34,9 +34,9 @@
 
 package com.nageoffer.onecoupon.settlement.service;
 
-import com.nageoffer.onecoupon.settlement.dao.entity.CouponTemplateDO;
-
-import java.util.List;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
+import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
 
 /**
  * <p>
@@ -48,16 +48,16 @@ public interface CouponQueryService {
 
     /**
      * 查询用户可用的优惠券列表
-     * @param userId 用户ID
+     * @param  requestParam
      * @return 可用的优惠券列表
      */
-    List<CouponTemplateDO> queryAvailableCoupons(Long userId);
+    IPage<QueryCouponsRespDTO> pageQueryAvailableCoupons(QueryCouponsReqDTO requestParam);
 
     /**
      * 查询用户不可用的优惠券列表
-     * @param userId 用户ID
+     * @param requestParam
      * @return 不可用的优惠券列表
      */
-    List<CouponTemplateDO> queryUnavailableCoupons(Long userId);
+    IPage<QueryCouponsRespDTO> pageQueryUnavailableCoupons(QueryCouponsReqDTO requestParam);
 }
 

@@ -34,6 +34,8 @@
 
 package com.nageoffer.onecoupon.settlement;
 
+import org.apache.ibatis.annotations.Mapper;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -45,6 +47,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * 开发时间：2024-07-08
  */
 @SpringBootApplication
+@MapperScan("com.nageoffer.onecoupon.settlement.dao.mapper")
 public class SettlementApplication {
 
     public static void main(String[] args) {

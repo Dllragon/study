@@ -35,7 +35,6 @@
 package com.nageoffer.onecoupon.engine.service;
 
 import com.nageoffer.onecoupon.engine.dao.entity.PaymentDO;
-import com.nageoffer.onecoupon.engine.gateway.PaymentGateway;
 
 import java.math.BigDecimal;
 
@@ -48,5 +47,6 @@ import java.math.BigDecimal;
 public interface CouponPayService {
     PaymentDO createPaymentRecord(Long orderId, Long userId, BigDecimal paymentAmount, String paymentMethod);
 
-    boolean processPayment(Long paymentId, PaymentGateway paymentGateway);
+    // TODO   PaymentGateway paymentGateway
+    boolean processPayment(Long paymentId);
 }

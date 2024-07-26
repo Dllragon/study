@@ -43,6 +43,11 @@ spring:
       port: 6379
       password: 123456
 
+mybatis:
+  config-location: classpath:mybatis/mybatis-config.xml
+  mapper-locations: classpath:mybatis/mapper/*.xml
+  type-aliases-package: com.nageoffer.onecoupon.settlement.dao.entity
+
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

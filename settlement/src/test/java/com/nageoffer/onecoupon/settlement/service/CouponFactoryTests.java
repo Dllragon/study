@@ -34,7 +34,7 @@
 
 package com.nageoffer.onecoupon.settlement.service;
 
-import com.nageoffer.onecoupon.settlement.common.util.CouponFactory;
+import com.nageoffer.onecoupon.settlement.toolkit.CouponFactory;
 import com.nageoffer.onecoupon.settlement.dao.entity.CouponTemplateDO;
 import com.nageoffer.onecoupon.settlement.dao.entity.DiscountCouponDO;
 import com.nageoffer.onecoupon.settlement.dao.entity.FixedDiscountCouponDO;
