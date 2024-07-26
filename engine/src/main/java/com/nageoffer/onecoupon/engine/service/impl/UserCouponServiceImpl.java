@@ -107,7 +107,7 @@ public class UserCouponServiceImpl implements UserCouponService {
         // 验证领取的优惠券是否在活动有效时间
         boolean isInTime = DateUtil.isIn(new Date(), couponTemplate.getValidStartTime(), couponTemplate.getValidEndTime());
         if (!isInTime) {
-            // 一把来说优惠券领取时间不到的时候，前端不会放开调用请求，可以理解这是用户调用接口在“攻击”
+            // 一般来说优惠券领取时间不到的时候，前端不会放开调用请求，可以理解这是用户调用接口在“攻击”
             throw new ClientException("不满足优惠券领取时间");
         }
 
