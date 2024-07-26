@@ -72,7 +72,7 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
     @Getter
     private int rowCount = 0;
     private final static String STOCK_DECREMENT_AND_BATCH_SAVE_USER_RECORD_LUA_PATH = "lua/stock_decrement_and_batch_save_user_record.lua";
-
+    private final static int BATCH_USER_COUPON_SIZE = 5000;
     @Override
     public void invoke(CouponTaskExcelObject data, AnalysisContext context) {
         ++rowCount;
@@ -113,6 +113,12 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
         long batchUserSetSize = StockDecrementReturnCombinedUtil.extractSecondField(combinedFiled);
 
         // 为了避免数据库压力过大，这里通过消息队列进行削峰
+        // 若满足这两个条件，没有消费者可以消费，所以记录执行进度即可
+        if(batchUserSetSize < BATCH_USER_COUPON_SIZE && StrUtil.isBlank(couponTask.getNotifyType())){
+            // 同步当前执行进度到缓存
+            stringRedisTemplate.opsForValue().set(templateTaskExecuteProgressKey, String.valueOf(rowCount));
+            return;
+        }
         CouponTemplateExecuteEvent couponTemplateExecuteEvent = CouponTemplateExecuteEvent.builder()
                 .userId(data.getUserId())
                 .mail(data.getMail())
