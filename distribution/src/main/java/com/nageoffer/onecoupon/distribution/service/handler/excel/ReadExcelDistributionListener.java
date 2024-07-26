@@ -73,6 +73,7 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
     private int rowCount = 0;
     private final static String STOCK_DECREMENT_AND_BATCH_SAVE_USER_RECORD_LUA_PATH = "lua/stock_decrement_and_batch_save_user_record.lua";
     private final static int BATCH_USER_COUPON_SIZE = 5000;
+
     @Override
     public void invoke(CouponTaskExcelObject data, AnalysisContext context) {
         ++rowCount;
@@ -108,17 +109,16 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
             return;
         }
 
-        // 为什么是 >= 而不是 = BATCH_USER_COUPON_SIZE？
-        // 考虑到有可能执行到这一步应用会宕机。假设当 batchUserSet 已经 5000 条了，消费者消费到这里宕机，当再执行 LUA 脚本到这一步时，BATCH_USER_COUPON_SIZE 已经 5001
+        // 获取用户领券集合长度
         long batchUserSetSize = StockDecrementReturnCombinedUtil.extractSecondField(combinedFiled);
 
-        // 为了避免数据库压力过大，这里通过消息队列进行削峰
-        // 若满足这两个条件，没有消费者可以消费，所以记录执行进度即可
-        if(batchUserSetSize < BATCH_USER_COUPON_SIZE && StrUtil.isBlank(couponTask.getNotifyType())){
-            // 同步当前执行进度到缓存
+        // 如果没有消息通知需求，仅在 batchUserSetSize = BATCH_USER_COUPON_SIZE 时发送消息消费。不满足条件仅记录执行进度即可
+        if (batchUserSetSize < BATCH_USER_COUPON_SIZE && StrUtil.isBlank(couponTask.getNotifyType())) {
+            // 同步当前 Excel 执行进度到缓存
             stringRedisTemplate.opsForValue().set(templateTaskExecuteProgressKey, String.valueOf(rowCount));
             return;
         }
+
         CouponTemplateExecuteEvent couponTemplateExecuteEvent = CouponTemplateExecuteEvent.builder()
                 .userId(data.getUserId())
                 .mail(data.getMail())
