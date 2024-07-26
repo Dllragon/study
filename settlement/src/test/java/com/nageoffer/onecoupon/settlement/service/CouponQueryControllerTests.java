@@ -65,6 +65,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/*
+* 因db里生成的数据结束时间 早于 起始时间
+* 故生成新数据并测试，
+* 插入语句
+* INSERT INTO t_user_coupon (
+    id, user_id, order_sn, coupon_template_id, receive_time,
+    receive_count, valid_start_time, valid_end_time, use_time,
+    source, status, create_time, update_time, del_flag
+) VALUES (
+    1812833908648099852, 1812833908648099852, NULL, 1810966706881941507, '2024-07-15 16:46:05',
+    NULL, '2024-07-20 16:46:05', '2024-07-25 17:18:04', NULL,
+    NULL, NULL, NULL, NULL, NULL
+);
+**/
 public class CouponQueryControllerTests {
 
     private MockMvc mockMvc;

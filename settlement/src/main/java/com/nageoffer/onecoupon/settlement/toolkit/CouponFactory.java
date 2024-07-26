@@ -49,22 +49,41 @@ import java.util.Map;
  * 开发时间：2024-07-24
  */
 public class CouponFactory {
+
+    /**
+     * 创建优惠券对象，根据传入的 CouponTemplateDO 对象和附加参数生成具体的优惠券实例。
+     *
+     * @param coupon            基础优惠券模板对象
+     * @param additionalParams  附加参数，包含优惠券类型所需的额外信息
+     * @return                  具体的优惠券实例
+     * @throws IllegalArgumentException 如果优惠券类型无效或不支持
+     */
     public static CouponTemplateDO createCoupon(CouponTemplateDO coupon, Map<String, Object> additionalParams) {
+        // 检查优惠券类型是否有效
         if (coupon.getType() == null || coupon.getType() >= DiscountTypeEnum.values().length || coupon.getType() < 0) {
             throw new IllegalArgumentException("Invalid coupon type");
         }
+
+        // 根据优惠券类型创建具体的优惠券实例
         switch (DiscountTypeEnum.values()[coupon.getType()]) {
             case FIXED_DISCOUNT:
+                // 固定折扣类型优惠券
                 Integer fixedDiscountAmount = (Integer) additionalParams.get("discountAmount");
                 return new FixedDiscountCouponDO(coupon, fixedDiscountAmount);
+
             case THRESHOLD_DISCOUNT:
+                // 阈值折扣类型优惠券
                 Integer thresholdAmount = (Integer) additionalParams.get("thresholdAmount");
                 Integer thresholdDiscountAmount = (Integer) additionalParams.get("discountAmount");
                 return new ThresholdCouponDO(coupon, thresholdAmount, thresholdDiscountAmount);
+
             case DISCOUNT_COUPON:
+                // 折扣券类型优惠券
                 Double discountRate = (Double) additionalParams.get("discountRate");
                 return new DiscountCouponDO(coupon, discountRate);
+
             default:
+                // 如果类型无效，抛出异常
                 throw new IllegalArgumentException("Invalid coupon type");
         }
     }
