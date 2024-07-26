@@ -34,7 +34,6 @@
 
 package com.nageoffer.onecoupon.engine.service.impl;
 
-
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -111,7 +110,7 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
         List<CouponTemplateRemindDO> couponTemplateRemindDOS = couponTemplateRemindMapper.selectList(queryWrapper);
         if (couponTemplateRemindDOS == null || couponTemplateRemindDOS.isEmpty())
             return new ArrayList<>();
-        // 根据优惠券id查询优惠券信息
+        // 根据优惠券 ID 查询优惠券信息
         List<Long> couponIds = couponTemplateRemindDOS.stream().map(CouponTemplateRemindDO::getCouponTemplateId).toList();
         List<Long> shopNumbers = couponTemplateRemindDOS.stream().map(CouponTemplateRemindDO::getShopNumber).toList();
         List<CouponTemplateDO> couponTemplateDOS = couponTemplateService.listCouponTemplateById(couponIds, shopNumbers);
@@ -134,7 +133,7 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
                 .eq(CouponTemplateRemindDO::getUserId, requestParam.getUserId())
                 .eq(CouponTemplateRemindDO::getCouponTemplateId, requestParam.getCouponTemplateId());
         CouponTemplateRemindDO couponTemplateRemindDO = couponTemplateRemindMapper.selectOne(queryWrapper);
-        // 计算bitMap信息
+        // 计算 BitMap 信息
         Long bitMap = CouponTemplateRemindUtil.calculateBitMap(requestParam.getRemindTime(), requestParam.getType());
         if ((bitMap & couponTemplateRemindDO.getInformation()) == 0L) {
             throw new ClientException("您没有预约该时间点下的提醒");
@@ -142,16 +141,16 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
         bitMap ^= couponTemplateRemindDO.getInformation();
         queryWrapper.eq(CouponTemplateRemindDO::getInformation, couponTemplateRemindDO.getInformation());
         if (bitMap.equals(0L)) {
-            // 如果新bitmap信息是0，说明已经没有预约提醒了，可以直接删除
+            // 如果新 BitMap 信息是 0，说明已经没有预约提醒了，可以直接删除
             if (couponTemplateRemindMapper.delete(queryWrapper) == 0) {
-                // MySQL乐观锁进行删除，如果删除失败，说明用户可能同时正在进行删除、新增提醒操作
+                // MySQL 乐观锁进行删除，如果删除失败，说明用户可能同时正在进行删除、新增提醒操作
                 throw new ClientException("取消提醒失败，请刷新页面后重试");
             }
         } else {
             // 虽然删除了这个预约提醒，但还有其它提醒，那就更新数据库
             couponTemplateRemindDO.setInformation(bitMap);
             if (couponTemplateRemindMapper.update(couponTemplateRemindDO, queryWrapper) == 0) {
-                // MySQL乐观锁进行更新，如果更新失败，说明用户可能同时正在进行删除、新增提醒操作
+                // MySQL 乐观锁进行更新，如果更新失败，说明用户可能同时正在进行删除、新增提醒操作
                 throw new ClientException("取消提醒失败，请刷新页面后重试");
             }
         }
@@ -178,8 +177,7 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
         // 即使存在数据，也要检查该类型的该时间点是否有提醒
         Long information = couponTemplateRemindDO.getInformation();
         Long bitMap = CouponTemplateRemindUtil.calculateBitMap(requestParam.getRemindTime(), requestParam.getType());
-        // 按位与等于0说明用户取消了预约
+        // 按位与等于 0 说明用户取消了预约
         return (bitMap & information) == 0L;
     }
-
 }

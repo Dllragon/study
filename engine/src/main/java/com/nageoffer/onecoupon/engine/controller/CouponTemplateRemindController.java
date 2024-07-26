@@ -34,7 +34,6 @@
 
 package com.nageoffer.onecoupon.engine.controller;
 
-
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCancelReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindQueryReqDTO;
@@ -66,7 +65,6 @@ import java.util.List;
 public class CouponTemplateRemindController {
 
     private final CouponTemplateRemindService couponTemplateRemindService;
-
 
     @Operation(summary = "发出优惠券预约提醒请求")
     @NoRepeatSubmit(message = "请勿短时间内重复提交预约提醒请求")

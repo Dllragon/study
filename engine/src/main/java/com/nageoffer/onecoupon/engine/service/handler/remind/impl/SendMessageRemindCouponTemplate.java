@@ -34,7 +34,6 @@
 
 package com.nageoffer.onecoupon.engine.service.handler.remind.impl;
 
-
 import com.nageoffer.onecoupon.engine.service.handler.remind.RemindCouponTemplate;
 import com.nageoffer.onecoupon.engine.service.handler.remind.dto.RemindCouponTemplateDTO;
 import org.springframework.stereotype.Component;
@@ -51,6 +50,7 @@ public class SendMessageRemindCouponTemplate implements RemindCouponTemplate {
 
     /**
      * 以短信方式提醒用户抢券
+     *
      * @param remindCouponTemplateDTO 提醒所需要的信息
      */
     @Override
@@ -58,5 +58,4 @@ public class SendMessageRemindCouponTemplate implements RemindCouponTemplate {
         // 暂时空实现
         return true;
     }
-
 }
