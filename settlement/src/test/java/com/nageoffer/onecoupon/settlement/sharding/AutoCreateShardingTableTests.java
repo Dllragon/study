@@ -37,41 +37,42 @@ package com.nageoffer.onecoupon.settlement.sharding;
 import org.junit.jupiter.api.Test;
 
 /**
+ * 创建优惠券项目中需要分片数据库表 SQL 语句
  * <p>
- * 作者：Henry Wan
+ * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-25
+ * 开发时间：2024-07-10
  */
 public class AutoCreateShardingTableTests {
 
-    private final String settlementTableTemplate = "CREATE TABLE `t_coupon_settlement_%d` (\n" +
-            "  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID',\n" +
-            "  `shop_number` varchar(64) DEFAULT NULL COMMENT '店铺编号',\n" +
-            "  `user_id` bigint(20) DEFAULT NULL COMMENT '用户ID',\n" +
-            "  `coupon_id` bigint(20) DEFAULT NULL COMMENT '优惠券ID',\n" +
-            "  `total_amount` decimal(10,2) DEFAULT NULL COMMENT '结算单总金额',\n" +
-            "  `payable_amount` decimal(10,2) DEFAULT NULL COMMENT '应付金额',\n" +
-            "  `coupon_amount` decimal(10,2) DEFAULT NULL COMMENT '券金额',\n" +
-            "  `status` int(11) DEFAULT NULL COMMENT '结算单状态',\n" +
-            "  `create_time` datetime DEFAULT NULL COMMENT '创建时间',\n" +
-            "  `update_time` datetime DEFAULT NULL COMMENT '修改时间',\n" +
-            "  PRIMARY KEY (`id`),\n" +
-            "  KEY `idx_userid` (`user_id`)\n" +
-            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='优惠券结算单表';";
+    public static final String SQL = """
+            CREATE TABLE `t_coupon_settlement_%d` (
+              `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID',
+              `shop_number` varchar(64) DEFAULT NULL COMMENT '店铺编号',
+              `user_id` bigint(20) DEFAULT NULL COMMENT '用户ID',
+              `coupon_id` bigint(20) DEFAULT NULL COMMENT '优惠券ID',
+              `total_amount` decimal(10,2) DEFAULT NULL COMMENT '结算单总金额',
+              `payable_amount` decimal(10,2) DEFAULT NULL COMMENT '应付金额',
+              `coupon_amount` decimal(10,2) DEFAULT NULL COMMENT '券金额',
+              `status` int(11) DEFAULT NULL COMMENT '结算单状态',
+              `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+              `update_time` datetime DEFAULT NULL COMMENT '修改时间',
+              PRIMARY KEY (`id`),
+              KEY `idx_userid` (`user_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='优惠券结算单表';
+            """;
 
     @Test
-    public void generateSettlementTables() {
-        int numberOfDatabases = 2;
-        int tablesPerDatabase = 8;
+    public void sharding0Test() {
+        for (int i = 0; i < 8; i++) {
+            System.out.println(String.format(SQL, i));
+        }
+    }
 
-        for (int db = 0; db < numberOfDatabases; db++) {
-            System.out.println("-- Database: onecoupon_" + db);
-            for (int i = 0; i < tablesPerDatabase; i++) {
-                int tableIndex = db * tablesPerDatabase + i;
-                System.out.println(String.format(settlementTableTemplate, tableIndex));
-                System.out.println();
-            }
-            System.out.println();
+    @Test
+    public void sharding1Test() {
+        for (int i = 8; i < 16; i++) {
+            System.out.println(String.format(SQL, i));
         }
     }
 }
