@@ -70,12 +70,11 @@ public class CouponQueryServiceImpl implements CouponQueryService {
         // 分页对象
         Page<UserCouponDO> page = new Page<>(requestParam.getPageNum(), requestParam.getPageSize());
 
-        // TODO 可用使用ID排序，比时间效率更高
         // 查询条件
         QueryWrapper<UserCouponDO> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", requestParam.getUserId())
                 .eq("status", 0)  // 状态为0，表示未使用的优惠券
-                .orderByDesc("receive_time");
+                .orderByDesc("id");
 
         // 执行分页查询
         IPage<UserCouponDO> couponPage = userCouponMapper.selectPage(page, queryWrapper);
@@ -108,7 +107,7 @@ public class CouponQueryServiceImpl implements CouponQueryService {
         QueryWrapper<UserCouponDO> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", requestParam.getUserId())
                 .ne("status", 0)  // 状态不为0，表示不可用的优惠券
-                .orderByDesc("receive_time");
+                .orderByDesc("id");
 
         // 执行分页查询
         IPage<UserCouponDO> couponPage = userCouponMapper.selectPage(page, queryWrapper);
