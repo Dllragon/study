@@ -32,14 +32,6 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-/**
- *
- * <p>
- * 作者：Henry Wan
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-27
- */
-
 package com.nageoffer.onecoupon.settlement.config;
 
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -50,9 +42,23 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
 
+/**
+ * MyBatis 配置类
+ * <p>
+ * 作者：Henry Wan
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-27
+ */
 @Configuration
 @MapperScan("com.nageoffer.onecoupon.settlement.dao.mapper")
 public class MyBatisConfig {
+
+    /**
+     * 创建并配置 SqlSessionFactory 实例
+     *
+     * @param dataSource 数据源
+     * @return 配置好的 SqlSessionFactory 实例
+     */
     @Bean
     public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
         SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();

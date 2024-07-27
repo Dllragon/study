@@ -70,6 +70,7 @@ public class CouponQueryServiceImpl implements CouponQueryService {
         // 分页对象
         Page<UserCouponDO> page = new Page<>(requestParam.getPageNum(), requestParam.getPageSize());
 
+        // TODO 可用使用ID排序，比时间效率更高
         // 查询条件
         QueryWrapper<UserCouponDO> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", requestParam.getUserId())

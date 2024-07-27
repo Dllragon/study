@@ -49,15 +49,18 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
+ * CouponFactoryTests：用于测试 CouponFactory 工厂类中优惠券创建逻辑
  * <p>
  * 作者：Henry Wan
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-24
  */
-
 @SpringBootTest
 public class CouponFactoryTests {
 
+    /**
+     * 测试创建立减类型优惠券
+     */
     @Test
     public void testCreateFixedDiscountCoupon() {
         CouponTemplateDO baseCoupon = createBaseCoupon(0);
@@ -72,6 +75,9 @@ public class CouponFactoryTests {
         assertEquals(baseCoupon.getShopNumber(), fixedDiscountCoupon.getShopNumber());
     }
 
+    /**
+     * 测试创建满减类型优惠券
+     */
     @Test
     public void testCreateThresholdDiscountCoupon() {
         CouponTemplateDO baseCoupon = createBaseCoupon(1);
@@ -88,6 +94,9 @@ public class CouponFactoryTests {
         assertEquals(baseCoupon.getShopNumber(), thresholdDiscountCoupon.getShopNumber());
     }
 
+    /**
+     * 测试创建折扣类型优惠券
+     */
     @Test
     public void testCreateDiscountCoupon() {
         CouponTemplateDO baseCoupon = createBaseCoupon(2);
@@ -112,24 +121,14 @@ public class CouponFactoryTests {
         });
     }
 
+    /**
+     * 创建优惠券模板对象
+     *
+     * @param type 优惠券类型
+     * @return 优惠券模板对象
+     */
     private CouponTemplateDO createBaseCoupon(int type) {
-        return CouponTemplateDO.builder()
-                .id(1L)
-                .shopNumber(101L)
-                .name("Test Coupon")
-                .source(0)
-                .target(0)
-                .goods("Test Goods")
-                .type(type)
-                .validStartTime(new Date())
-                .validEndTime(new Date(System.currentTimeMillis() + 86400000L)) // 1 day later
-                .stock(100)
-                .receiveRule("{}")
-                .consumeRule("{}")
-                .status(0)
-                .createTime(new Date())
-                .updateTime(new Date())
-                .delFlag(0)
-                .build();
+        return CouponTemplateDO.builder().id(1L).shopNumber(101L).name("Test Coupon").source(0).target(0).goods("Test Goods").type(type).validStartTime(new Date()).validEndTime(new Date(System.currentTimeMillis() + 86400000L)) // 1 day later
+                .stock(100).receiveRule("{}").consumeRule("{}").status(0).createTime(new Date()).updateTime(new Date()).delFlag(0).build();
     }
 }

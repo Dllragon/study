@@ -52,6 +52,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DiscountCouponDO extends CouponTemplateDO {
+
     private Double discountRate;
 
     @Builder(builderMethodName = "discountCouponBuilder")

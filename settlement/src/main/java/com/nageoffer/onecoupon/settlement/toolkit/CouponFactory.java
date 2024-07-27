@@ -43,6 +43,7 @@ import com.nageoffer.onecoupon.settlement.dao.entity.ThresholdCouponDO;
 import java.util.Map;
 
 /**
+ * 优惠券工厂类，用于创建不同类型的优惠券实例
  * <p>
  * 作者：Henry Wan
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
@@ -56,7 +57,6 @@ public class CouponFactory {
      * @param coupon            基础优惠券模板对象
      * @param additionalParams  附加参数，包含优惠券类型所需的额外信息
      * @return                  具体的优惠券实例
-     * @throws IllegalArgumentException 如果优惠券类型无效或不支持
      */
     public static CouponTemplateDO createCoupon(CouponTemplateDO coupon, Map<String, Object> additionalParams) {
         // 检查优惠券类型是否有效
