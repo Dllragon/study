@@ -44,6 +44,7 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 
 /**
+ * 查询用户优惠券响应参数
  * <p>
  * 作者：Henry Wan
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
