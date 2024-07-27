@@ -62,7 +62,8 @@ public class CouponQueryServiceImpl implements CouponQueryService {
 
     /**
      * 查询用户可用的优惠券列表
-     * @param  requestParam
+     *
+     * @param requestParam
      * @return 可用的优惠券列表
      */
     @Override
@@ -96,6 +97,7 @@ public class CouponQueryServiceImpl implements CouponQueryService {
 
     /**
      * 查询用户不可用的优惠券列表
+     *
      * @param requestParam
      * @return 不可用的优惠券列表
      */
