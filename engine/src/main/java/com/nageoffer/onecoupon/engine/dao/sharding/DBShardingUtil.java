@@ -32,44 +32,41 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.common.constant;
+package com.nageoffer.onecoupon.engine.dao.sharding;
+
+import cn.hutool.core.lang.Singleton;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
- * 分布式 Redis 缓存引擎层常量类
+ * 针对项目中 IN 操作跨数据库场景进行拆分数据源
  * <p>
- * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 作者：优雅
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-27
  */
-public final class EngineRedisConstant {
+public final class DBShardingUtil {
 
     /**
-     * 优惠券模板缓存 Key
+     * 获取数据库分片算法类，在该类初始化时向 Singleton 放入实例
      */
-    public static final String COUPON_TEMPLATE_KEY = "one-coupon_engine:template:%s";
+    private static final DBHashModShardingAlgorithm dbShardingAlgorithm = Singleton.get(DBHashModShardingAlgorithm.class);
 
     /**
-     * 优惠券模板缓存分布式锁 Key
+     * 解决查询商家优惠券 IN 场景跨库表不存在问题
+     *
+     * @param shopNumber 分片键 shopNumber
+     * @return 返回 shopNumber 所在的数据源
      */
-    public static final String LOCK_COUPON_TEMPLATE_KEY = "one-coupon_engine:lock:template:%s";
+    public static int doCouponCouponSharding(Long shopNumber) {
+        return dbShardingAlgorithm.getShardingMod(shopNumber, getAvailableDatabases().size());
+    }
 
     /**
-     * 限制用户领取优惠券模板次数缓存 Key
+     * 获取可用的数据源列表
      */
-    public static final String USER_COUPON_TEMPLATE_LIMIT_KEY = "one-coupon_engine:user-template-limit:%s_%s";
-
-    /**
-     * 用户已领取优惠券列表模板 Key
-     */
-    public static final String USER_COUPON_TEMPLATE_LIST_KEY = "one-coupon_engine:user-template-list:%s";
-
-    /**
-     * 检查用户是否已提醒 Key
-     */
-    public static final String COUPON_REMIND_CHECK_KEY = "one-coupon_engine:coupon-remind-check:%s_%s_%d_%d";
-
-    /**
-     * 用户预约提醒信息 Key
-     */
-    public static final String USER_COUPON_TEMPLATE_REMIND_INFORMATION = "one-coupon_engine:coupon-remind-information:%s";
+    private static Collection<String> getAvailableDatabases() {
+        return List.of("ds0", "ds1");
+    }
 }

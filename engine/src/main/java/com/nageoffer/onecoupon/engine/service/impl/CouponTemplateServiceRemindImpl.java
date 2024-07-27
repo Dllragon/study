@@ -35,6 +35,7 @@
 package com.nageoffer.onecoupon.engine.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -54,12 +55,16 @@ import com.nageoffer.onecoupon.engine.toolkit.CouponTemplateRemindUtil;
 import com.nageoffer.onecoupon.framework.exception.ClientException;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBloomFilter;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+
+import static com.nageoffer.onecoupon.engine.common.constant.EngineRedisConstant.USER_COUPON_TEMPLATE_REMIND_INFORMATION;
 
 /**
  * 优惠券预约提醒业务逻辑实现层
@@ -76,6 +81,7 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
     private final CouponTemplateService couponTemplateService;
     private final RBloomFilter<String> couponTemplateCancelRemindBloomFilter;
     private final CouponRemindProducer couponRemindProducer;
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Override
     @Transactional
@@ -104,6 +110,10 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
 
     @Override
     public List<CouponTemplateRemindQueryRespDTO> listCouponRemind(CouponTemplateRemindQueryReqDTO requestParam) {
+        String value = stringRedisTemplate.opsForValue().get(String.format(USER_COUPON_TEMPLATE_REMIND_INFORMATION, requestParam.getUserId()));
+        if (value != null) {
+            return JSON.parseArray(value, CouponTemplateRemindQueryRespDTO.class);
+        }
         LambdaQueryWrapper<CouponTemplateRemindDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateRemindDO.class)
                 .eq(CouponTemplateRemindDO::getUserId, requestParam.getUserId());
         // 查出用户预约的信息
@@ -123,6 +133,7 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
                 CouponTemplateRemindUtil.fillRemindInformation(each, i.getInformation());
             });
         });
+        stringRedisTemplate.opsForValue().set(String.format(USER_COUPON_TEMPLATE_REMIND_INFORMATION, requestParam.getUserId()), JSON.toJSONString(resp), 1, TimeUnit.MINUTES);
         return resp;
     }
 

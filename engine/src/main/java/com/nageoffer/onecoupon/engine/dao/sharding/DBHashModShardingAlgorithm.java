@@ -34,6 +34,7 @@
 
 package com.nageoffer.onecoupon.engine.dao.sharding;
 
+import cn.hutool.core.lang.Singleton;
 import lombok.Getter;
 import org.apache.shardingsphere.infra.util.exception.ShardingSpherePreconditions;
 import org.apache.shardingsphere.sharding.api.sharding.standard.PreciseShardingValue;
@@ -85,11 +86,16 @@ public final class DBHashModShardingAlgorithm implements StandardShardingAlgorit
     public void init(Properties props) {
         this.props = props;
         shardingCount = getShardingCount(props);
+        Singleton.put(this);
     }
 
     private int getShardingCount(final Properties props) {
         ShardingSpherePreconditions.checkState(props.containsKey(SHARDING_COUNT_KEY), () -> new ShardingAlgorithmInitializationException(getType(), "Sharding count cannot be null."));
         return Integer.parseInt(props.getProperty(SHARDING_COUNT_KEY));
+    }
+
+    public int getShardingMod(long id, int availableTargetSize) {
+        return (int) hashShardingValue(id) % shardingCount / (shardingCount / availableTargetSize);
     }
 
     private long hashShardingValue(final Comparable<?> shardingValue) {
