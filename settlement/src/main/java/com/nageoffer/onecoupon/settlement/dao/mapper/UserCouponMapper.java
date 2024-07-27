@@ -55,6 +55,7 @@ import java.util.List;
 public interface UserCouponMapper extends BaseMapper<UserCouponDO> {
 
     IPage<QueryCouponsRespDTO> pageQueryAvailableCoupons(@Param("requestParam") QueryCouponsReqDTO requestParam);
+    
     IPage<QueryCouponsRespDTO> pageQueryUnavailableCoupons(@Param("requestParam") QueryCouponsReqDTO requestParam);
 
 }
