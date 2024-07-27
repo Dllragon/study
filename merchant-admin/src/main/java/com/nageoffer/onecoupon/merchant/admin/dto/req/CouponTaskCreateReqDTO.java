@@ -82,7 +82,7 @@ public class CouponTaskCreateReqDTO {
     @Schema(description = "优惠券模板id",
             example = "1810966706881941507",
             required = true)
-    private Long couponTemplateId;
+    private String couponTemplateId;
 
     /**
      * 发送类型 0：立即发送 1：定时发送

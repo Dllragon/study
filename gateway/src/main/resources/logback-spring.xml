@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false">
+
+    <!-- 禁用 Logback 在项目启动时的调试参数 -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+
+    <!-- 本地环境 INFO 及以上级别日志 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %level ${PID} --- [%thread] %logger : %msg%n
+            </pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>./.log/gateway/%d{yyyy-MM-dd}/%d{HH}.log</fileNamePattern>
+        </rollingPolicy>
+    </appender>
+
+    <!-- 本地环境 ERROR 级别日志 -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %level ${PID} --- [open8gu-service] [%thread] %logger : %msg%n
+            </pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>./.log/gateway/%d{yyyy-MM-dd}/error_%d{HH}.log</fileNamePattern>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+    </appender>
+
+    <!-- 本地开发环境日志配置 -->
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="FILE"/>
+            <appender-ref ref="ERROR_FILE"/>
+        </root>
+    </springProfile>
+</configuration>

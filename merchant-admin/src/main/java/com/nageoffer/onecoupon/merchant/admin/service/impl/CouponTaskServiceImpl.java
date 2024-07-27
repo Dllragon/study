@@ -43,6 +43,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.nageoffer.onecoupon.framework.exception.ClientException;
 import com.nageoffer.onecoupon.merchant.admin.common.context.UserContext;
 import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTaskSendTypeEnum;
 import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTaskStatusEnum;
@@ -51,9 +52,12 @@ import com.nageoffer.onecoupon.merchant.admin.dao.mapper.CouponTaskMapper;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTaskCreateReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTaskPageQueryReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTaskPageQueryRespDTO;
+import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTaskQueryRespDTO;
+import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTemplateQueryRespDTO;
 import com.nageoffer.onecoupon.merchant.admin.mq.event.CouponTaskExecuteEvent;
 import com.nageoffer.onecoupon.merchant.admin.mq.producer.CouponTaskActualExecuteProducer;
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTaskService;
+import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
 import com.nageoffer.onecoupon.merchant.admin.service.handler.excel.RowCountListener;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBlockingDeque;
@@ -81,6 +85,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class CouponTaskServiceImpl extends ServiceImpl<CouponTaskMapper, CouponTaskDO> implements CouponTaskService {
 
+    private final CouponTemplateService couponTemplateService;
     private final CouponTaskMapper couponTaskMapper;
     private final RedissonClient redissonClient;
     private final CouponTaskActualExecuteProducer couponTaskActualExecuteProducer;
@@ -103,6 +108,10 @@ public class CouponTaskServiceImpl extends ServiceImpl<CouponTaskMapper, CouponT
         // 验证非空参数
         // 验证参数是否正确，比如文件地址是否为我们期望的格式等
         // 验证参数依赖关系，比如选择定时发送，发送时间是否不为空等
+        CouponTemplateQueryRespDTO couponTemplate = couponTemplateService.findCouponTemplateById(requestParam.getCouponTemplateId());
+        if (couponTemplate == null) {
+            throw new ClientException("优惠券模板不存在，请检查提交信息是否正确");
+        }
         // ......
 
         // 构建优惠券推送任务数据库持久层实体
@@ -156,6 +165,12 @@ public class CouponTaskServiceImpl extends ServiceImpl<CouponTaskMapper, CouponT
 
         // 转换数据库持久层对象为优惠券模板返回参数
         return selectPage.convert(each -> BeanUtil.toBean(each, CouponTaskPageQueryRespDTO.class));
+    }
+
+    @Override
+    public CouponTaskQueryRespDTO findCouponTaskById(String taskId) {
+        CouponTaskDO couponTaskDO = couponTaskMapper.selectById(taskId);
+        return BeanUtil.toBean(couponTaskDO, CouponTaskQueryRespDTO.class);
     }
 
     private void refreshCouponTaskSendNum(JSONObject delayJsonObject) {

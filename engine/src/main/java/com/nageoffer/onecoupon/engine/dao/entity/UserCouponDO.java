@@ -69,11 +69,6 @@ public class UserCouponDO {
     private Long userId;
 
     /**
-     * 订单号
-     */
-    private String orderSn;
-
-    /**
      * 优惠券模板id
      */
     private Long couponTemplateId;

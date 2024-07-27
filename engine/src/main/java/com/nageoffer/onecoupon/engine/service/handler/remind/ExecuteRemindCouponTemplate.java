@@ -34,7 +34,6 @@
 
 package com.nageoffer.onecoupon.engine.service.handler.remind;
 
-
 import cn.hutool.json.JSONUtil;
 import com.nageoffer.onecoupon.engine.common.enums.CouponRemindTypeEnum;
 import com.nageoffer.onecoupon.engine.mq.event.CouponRemindEvent;
@@ -58,7 +57,6 @@ import java.util.concurrent.*;
 
 import static com.nageoffer.onecoupon.engine.common.constant.EngineRedisConstant.COUPON_REMIND_CHECK_KEY;
 
-
 /**
  * 执行相应的抢券提醒
  * <p>
@@ -70,7 +68,7 @@ import static com.nageoffer.onecoupon.engine.common.constant.EngineRedisConstant
 @RequiredArgsConstructor
 public class ExecuteRemindCouponTemplate {
 
-    // 提醒用户属于IO密集型任务
+    // 提醒用户属于 IO 密集型任务
     private final ExecutorService executorService = new ThreadPoolExecutor(
             Runtime.getRuntime().availableProcessors(),
             Runtime.getRuntime().availableProcessors() << 1,
@@ -101,14 +99,14 @@ public class ExecuteRemindCouponTemplate {
                 String key = String.format(COUPON_REMIND_CHECK_KEY, remindDTO.getUserId(), remindDTO.getCouponTemplateId(), remindDTO.getRemindTime(), remindDTO.getType());
                 stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(remindDTO));
                 delayedQueue.offer(key, 5, TimeUnit.SECONDS);
-                // 提醒用户
+                // 向用户发起消息提醒
                 switch (Objects.requireNonNull(CouponRemindTypeEnum.getByType(remindDTO.getType()))) {
                     case EMAIL -> sendEmailRemindCouponTemplate.remind(remindDTO);
                     case MESSAGE -> sendMessageRemindCouponTemplate.remind(remindDTO);
                     default -> {
                     }
                 }
-                // 提醒完后删除key
+                // 提醒用户后删除 Key
                 stringRedisTemplate.delete(key);
             }
         });
@@ -124,7 +122,7 @@ public class ExecuteRemindCouponTemplate {
         private static final Logger LOG = LoggerFactory.getLogger(RefreshCouponRemindDelayQueueRunner.class);
 
         @Override
-        public void run(String... args)  {
+        public void run(String... args) {
             Executors.newSingleThreadExecutor(
                             runnable -> {
                                 Thread thread = new Thread(runnable);
@@ -136,11 +134,11 @@ public class ExecuteRemindCouponTemplate {
                         RBlockingDeque<String> blockingDeque = redissonClient.getBlockingDeque(REDIS_BLOCKING_DEQUE);
                         for (; ; ) {
                             try {
-                                // 获取延迟队列的key
+                                // 获取延迟队列待消费 Key
                                 String key = blockingDeque.take();
                                 LOG.info("检查key：{} 是否被消费", key);
                                 if (null != stringRedisTemplate.hasKey(key)) {
-                                    // redis中还存在该key，说明任务没被消费完，则可能是消费机器宕机了，重新投递消息
+                                    // Redis 中还存在该 Key，说明任务没被消费完，则可能是消费机器宕机了，重新投递消息
                                     CouponRemindEvent couponRemindEvent = JSONUtil.toBean(stringRedisTemplate.opsForValue().get(key), CouponRemindEvent.class);
                                     couponRemindProducer.sendMessage(couponRemindEvent);
                                     stringRedisTemplate.delete(key);
@@ -151,7 +149,4 @@ public class ExecuteRemindCouponTemplate {
                     });
         }
     }
-
-
-
 }

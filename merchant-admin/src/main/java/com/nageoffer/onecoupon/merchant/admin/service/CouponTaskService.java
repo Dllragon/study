@@ -40,6 +40,7 @@ import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTaskDO;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTaskCreateReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTaskPageQueryReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTaskPageQueryRespDTO;
+import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTaskQueryRespDTO;
 
 /**
  * 优惠券推送业务逻辑层
@@ -64,4 +65,12 @@ public interface CouponTaskService extends IService<CouponTaskDO> {
      * @return 商家优惠券推送任务分页数据
      */
     IPage<CouponTaskPageQueryRespDTO> pageQueryCouponTask(CouponTaskPageQueryReqDTO requestParam);
+
+    /**
+     * 查询优惠券推送任务详情
+     *
+     * @param taskId 推送任务 ID
+     * @return 优惠券推送任务详情
+     */
+    CouponTaskQueryRespDTO findCouponTaskById(String taskId);
 }

@@ -41,6 +41,7 @@ import com.nageoffer.onecoupon.framework.web.Results;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplatePageQueryReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTemplatePageQueryRespDTO;
+import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTemplateQueryRespDTO;
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -76,5 +77,11 @@ public class CouponTemplateController {
     @GetMapping("/api/merchant-admin/coupon-template/page")
     public Result<IPage<CouponTemplatePageQueryRespDTO>> pageQueryCouponTemplate(CouponTemplatePageQueryReqDTO requestParam) {
         return Results.success(couponTemplateService.pageQueryCouponTemplate(requestParam));
+    }
+
+    @Operation(summary = "查询优惠券模板详情")
+    @GetMapping("/api/merchant-admin/coupon-template/find")
+    public Result<CouponTemplateQueryRespDTO> findCouponTemplate(String couponTemplateId) {
+        return Results.success(couponTemplateService.findCouponTemplateById(couponTemplateId));
     }
 }
