@@ -32,27 +32,59 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.dao.mapper;
+package com.nageoffer.onecoupon.settlement.toolkit;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.nageoffer.onecoupon.settlement.common.enums.DiscountTypeEnum;
 import com.nageoffer.onecoupon.settlement.dao.entity.CouponTemplateDO;
-import org.apache.ibatis.annotations.Param;
+import com.nageoffer.onecoupon.settlement.dao.entity.DiscountCouponDO;
+import com.nageoffer.onecoupon.settlement.dao.entity.FixedDiscountCouponDO;
+import com.nageoffer.onecoupon.settlement.dao.entity.ThresholdCouponDO;
+
+import java.util.Map;
 
 /**
- * 优惠券模板数据访问接口
+ * 优惠券工厂类，用于创建不同类型的优惠券实例
  * <p>
- * 作者：马丁
+ * 作者：Henry Wan
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 开发时间：2024-07-24
  */
-public interface CouponTemplateMapper extends BaseMapper<CouponTemplateDO> {
+public class CouponFactory {
 
     /**
-     * 自减优惠券模板库存
+     * 创建优惠券对象，根据传入的 CouponTemplateDO 对象和附加参数生成具体的优惠券实例。
      *
-     * @param couponTemplateId 优惠券模板 ID
-     * @return 是否发生记录变更
+     * @param coupon            基础优惠券模板对象
+     * @param additionalParams  附加参数，包含优惠券类型所需的额外信息
+     * @return                  具体的优惠券实例
      */
+    public static CouponTemplateDO createCoupon(CouponTemplateDO coupon, Map<String, Object> additionalParams) {
+        // 检查优惠券类型是否有效
+        if (coupon.getType() == null || coupon.getType() >= DiscountTypeEnum.values().length || coupon.getType() < 0) {
+            throw new IllegalArgumentException("Invalid coupon type");
+        }
 
-    int decrementCouponTemplateStock(@Param("shopNumber") Long shopNumber, @Param("couponTemplateId") Long couponTemplateId, @Param("decrementStock") Long decrementStock);
+        // 根据优惠券类型创建具体的优惠券实例
+        switch (DiscountTypeEnum.values()[coupon.getType()]) {
+            case FIXED_DISCOUNT:
+                // 固定折扣类型优惠券
+                Integer fixedDiscountAmount = (Integer) additionalParams.get("discountAmount");
+                return new FixedDiscountCouponDO(coupon, fixedDiscountAmount);
+
+            case THRESHOLD_DISCOUNT:
+                // 阈值折扣类型优惠券
+                Integer thresholdAmount = (Integer) additionalParams.get("thresholdAmount");
+                Integer thresholdDiscountAmount = (Integer) additionalParams.get("discountAmount");
+                return new ThresholdCouponDO(coupon, thresholdAmount, thresholdDiscountAmount);
+
+            case DISCOUNT_COUPON:
+                // 折扣券类型优惠券
+                Double discountRate = (Double) additionalParams.get("discountRate");
+                return new DiscountCouponDO(coupon, discountRate);
+
+            default:
+                // 如果类型无效，抛出异常
+                throw new IllegalArgumentException("Invalid coupon type");
+        }
+    }
 }

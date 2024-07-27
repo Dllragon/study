@@ -32,13 +32,59 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.handler;
+package com.nageoffer.onecoupon.settlement.dao.entity;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
+ * 立减券（无门槛）数据库持久层实体
  * <p>
  * 作者：Henry Wan
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-21 
+ * 开发时间：2024-07-23
  */
-public interface PaymentHandler {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class FixedDiscountCouponDO extends CouponTemplateDO {
+
+    /**
+     * 优惠金额
+     */
+    private Integer discountAmount;
+
+    @Builder(builderMethodName = "fixedDiscountCouponBuilder")
+    public FixedDiscountCouponDO(CouponTemplateDO coupon, Integer discountAmount) {
+        super(coupon.getId(), coupon.getShopNumber(), coupon.getName(), coupon.getSource(), coupon.getTarget(), coupon.getGoods(), coupon.getType(),
+                coupon.getValidStartTime(), coupon.getValidEndTime(), coupon.getStock(), coupon.getReceiveRule(), coupon.getConsumeRule(), coupon.getStatus(),
+                coupon.getCreateTime(), coupon.getUpdateTime(), coupon.getDelFlag());
+        setDiscountAmount(discountAmount);
+    }
+
+    public static FixedDiscountCouponDOBuilder builder() {
+        return new FixedDiscountCouponDOBuilder();
+    }
+
+    public static class FixedDiscountCouponDOBuilder extends CouponTemplateDO.CouponTemplateDOBuilder {
+        private Integer discountAmount;
+
+        FixedDiscountCouponDOBuilder() {
+            super();
+        }
+
+        public FixedDiscountCouponDOBuilder discountAmount(Integer discountAmount) {
+            this.discountAmount = discountAmount;
+            return this;
+        }
+
+        @Override
+        public FixedDiscountCouponDO build() {
+            CouponTemplateDO coupon = super.build();
+            return new FixedDiscountCouponDO(coupon, discountAmount);
+        }
+    }
 }

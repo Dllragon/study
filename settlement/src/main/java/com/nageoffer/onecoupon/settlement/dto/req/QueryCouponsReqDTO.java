@@ -32,30 +32,28 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.dao.mapper;
+package com.nageoffer.onecoupon.settlement.dto.req;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.nageoffer.onecoupon.settlement.dao.entity.UserCouponDO;
-import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
-import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-
-import java.util.List;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 /**
- * 用户优惠券数据库持久层
+ * 查询用户优惠券请求参数
  * <p>
- * 作者：马丁
- * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-17
+ * 作者：Henry Wan
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-25
  */
-@Mapper
-public interface UserCouponMapper extends BaseMapper<UserCouponDO> {
+@Data
+@Schema(description = "查询用户优惠券请求参数")
+public class QueryCouponsReqDTO {
 
-    IPage<QueryCouponsRespDTO> pageQueryAvailableCoupons(@Param("requestParam") QueryCouponsReqDTO requestParam);
-    
-    IPage<QueryCouponsRespDTO> pageQueryUnavailableCoupons(@Param("requestParam") QueryCouponsReqDTO requestParam);
+    @Schema(description = "用户ID", required = true)
+    private Long userId;
 
+    @Schema(description = "分页页码")
+    private Integer pageNum;
+
+    @Schema(description = "分页大小")
+    private Integer pageSize;
 }

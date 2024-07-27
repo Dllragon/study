@@ -32,30 +32,31 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.dao.mapper;
+package com.nageoffer.onecoupon.settlement.service;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.nageoffer.onecoupon.settlement.dao.entity.UserCouponDO;
-import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
-import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * 用户优惠券数据库持久层
  * <p>
- * 作者：马丁
- * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-17
+ * 作者：Henry Wan
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-21 
  */
-@Mapper
-public interface UserCouponMapper extends BaseMapper<UserCouponDO> {
+public interface CouponSettlementService {
 
-    IPage<QueryCouponsRespDTO> pageQueryAvailableCoupons(@Param("requestParam") QueryCouponsReqDTO requestParam);
-    
-    IPage<QueryCouponsRespDTO> pageQueryUnavailableCoupons(@Param("requestParam") QueryCouponsReqDTO requestParam);
+    /**
+     * 计算订单总金额
+     * @param orderId 订单ID
+     * @return 订单总金额
+     */
+    BigDecimal calculateTotalAmount(Long orderId);
 
+    /**
+     * 应用优惠券，计算最终价格
+     * @param orderId 订单ID
+     * @param couponIds 优惠券ID列表
+     * @return 最终应付金额
+     */
+    BigDecimal applyCoupons(Long orderId, List<Long> couponIds);
 }

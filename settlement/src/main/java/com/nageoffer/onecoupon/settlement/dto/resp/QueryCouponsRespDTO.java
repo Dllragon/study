@@ -32,82 +32,50 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.dao.entity;
+package com.nageoffer.onecoupon.settlement.dto.resp;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.util.Date;
 
 /**
+ * 查询用户优惠券响应参数
  * <p>
  * 作者：Henry Wan
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-20 
+ * 开发时间：2024-07-25
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("t_payment")
-public class PaymentDO {
+@Schema(description = "查询用户优惠券响应参数")
+public class QueryCouponsRespDTO {
 
-    /**
-     * 支付ID
-     */
-    private Long id;
+    @Schema(description = "优惠券模板ID")
+    private Long couponTemplateId;
 
-    /**
-     * 订单ID
-     */
-    private Long orderId;
+    @Schema(description = "优惠券名称")
+    private String couponName;
 
-    /**
-     * 用户ID
-     */
-    private Long userId;
+    @Schema(description = "领取时间")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date receiveTime;
 
-    /**
-     * 支付金额
-     */
-    private BigDecimal paymentAmount;
+    @Schema(description = "有效期开始时间")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date validStartTime;
 
-    /**
-     * 支付方式
-     */
-    private String paymentMethod;
+    @Schema(description = "有效期结束时间")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date validEndTime;
 
-    /**
-     * 支付状态
-     */
-    private Integer paymentStatus;
+    @Schema(description = "状态 0：未使用 1：锁定 2：已使用 3：已过期 4：已撤回")
+    private Integer status;
 
-    /**
-     * 支付时间
-     */
-    private Date paymentTime;
-
-    /**
-     * 创建时间
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 修改时间
-     */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-    /**
-     * 删除标识 0：未删除 1：已删除
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Integer delFlag;
 }

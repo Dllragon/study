@@ -32,21 +32,17 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.service;
+package com.nageoffer.onecoupon.settlement.dao.mapper;
 
-import com.nageoffer.onecoupon.settlement.dao.entity.OrderDO;
-
-import java.math.BigDecimal;
-import java.util.List;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.nageoffer.onecoupon.settlement.dao.entity.ThresholdCouponDO;
 
 /**
+ * 满减券数据访问接口
  * <p>
  * 作者：Henry Wan
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-21 
+ * 开发时间：2024-07-23
  */
-public interface OrderService {
-    OrderDO createUserOrder(Long userId, String shopNumber, BigDecimal totalAmount, BigDecimal payableAmount, Long couponId, BigDecimal couponAmount);
-    List<OrderDO> getUserOrder(Long userId);
-    OrderDO getOrderDetail(Long orderId);
+public interface ThresholdCouponMapper extends BaseMapper<ThresholdCouponDO> {
 }

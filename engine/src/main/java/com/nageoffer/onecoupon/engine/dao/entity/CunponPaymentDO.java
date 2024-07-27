@@ -32,30 +32,83 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.dao.mapper;
+package com.nageoffer.onecoupon.engine.dao.entity;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.nageoffer.onecoupon.settlement.dao.entity.UserCouponDO;
-import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
-import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.Date;
 
 /**
- * 用户优惠券数据库持久层
+ * 优惠券支付数据库持久层实体
  * <p>
- * 作者：马丁
- * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-17
+ * 作者：Henry Wan
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-20 
  */
-@Mapper
-public interface UserCouponMapper extends BaseMapper<UserCouponDO> {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@TableName("t_payment")
+public class CunponPaymentDO {
 
-    IPage<QueryCouponsRespDTO> pageQueryAvailableCoupons(@Param("requestParam") QueryCouponsReqDTO requestParam);
-    
-    IPage<QueryCouponsRespDTO> pageQueryUnavailableCoupons(@Param("requestParam") QueryCouponsReqDTO requestParam);
+    /**
+     * 支付ID
+     */
+    private Long id;
 
+    /**
+     * 订单ID
+     */
+    private Long orderId;
+
+    /**
+     * 用户ID
+     */
+    private Long userId;
+
+    /**
+     * 支付金额
+     */
+    private BigDecimal paymentAmount;
+
+    /**
+     * 支付方式
+     */
+    private String paymentMethod;
+
+    /**
+     * 支付状态
+     */
+    private Integer paymentStatus;
+
+    /**
+     * 支付时间
+     */
+    private Date paymentTime;
+
+    /**
+     * 创建时间
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private Date createTime;
+
+    /**
+     * 修改时间
+     */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Date updateTime;
+
+    /**
+     * 删除标识 0：未删除 1：已删除
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private Integer delFlag;
 }

@@ -32,30 +32,39 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.dao.mapper;
+package com.nageoffer.onecoupon.engine.service;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.nageoffer.onecoupon.settlement.dao.entity.UserCouponDO;
-import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
-import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
+import com.nageoffer.onecoupon.engine.dao.entity.CunponPaymentDO;
 
-import java.util.List;
+import java.math.BigDecimal;
 
 /**
- * 用户优惠券数据库持久层
+ * 优惠券支付服务接口
  * <p>
- * 作者：马丁
- * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-17
+ * 作者：Henry Wan
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-21
  */
-@Mapper
-public interface UserCouponMapper extends BaseMapper<UserCouponDO> {
+public interface CouponPayService {
 
-    IPage<QueryCouponsRespDTO> pageQueryAvailableCoupons(@Param("requestParam") QueryCouponsReqDTO requestParam);
-    
-    IPage<QueryCouponsRespDTO> pageQueryUnavailableCoupons(@Param("requestParam") QueryCouponsReqDTO requestParam);
+    /**
+     * 创建优惠券支付记录
+     * @param orderId        订单ID
+     * @param userId         用户ID
+     * @param paymentAmount  支付金额
+     * @param paymentMethod  支付方式
+     * @return               创建的优惠券支付记录对象
+     */
+    CunponPaymentDO createPaymentRecord(Long orderId, Long userId, BigDecimal paymentAmount, String paymentMethod);
 
+    // TODO   PaymentGateway paymentGateway
+
+    /**
+     * 处理支付操作
+     * 根据支付ID，处理相应的支付操作。
+     *
+     * @param paymentId  支付ID
+     * @return           如果支付处理成功，返回 true；否则返回 false
+     */
+    boolean processPayment(Long paymentId);
 }
