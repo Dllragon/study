@@ -46,8 +46,25 @@ import java.math.BigDecimal;
  * 开发时间：2024-07-21
  */
 public interface CouponPayService {
+
+    /**
+     * 创建优惠券支付记录
+     * @param orderId        订单ID
+     * @param userId         用户ID
+     * @param paymentAmount  支付金额
+     * @param paymentMethod  支付方式
+     * @return               创建的优惠券支付记录对象
+     */
     CunponPaymentDO createPaymentRecord(Long orderId, Long userId, BigDecimal paymentAmount, String paymentMethod);
 
     // TODO   PaymentGateway paymentGateway
+
+    /**
+     * 处理支付操作
+     * 根据支付ID，处理相应的支付操作。
+     *
+     * @param paymentId  支付ID
+     * @return           如果支付处理成功，返回 true；否则返回 false
+     */
     boolean processPayment(Long paymentId);
 }

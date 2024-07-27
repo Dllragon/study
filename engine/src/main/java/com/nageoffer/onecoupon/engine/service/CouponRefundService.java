@@ -44,5 +44,11 @@ import java.math.BigDecimal;
  * 开发时间：2024-07-21  
  */
 public interface CouponRefundService{
+
+    /**
+     * 处理订单的优惠券退款
+     *
+     * @param orderId       订单ID
+     */
     boolean processRefund(Long orderId, BigDecimal refundAmount);
 }
