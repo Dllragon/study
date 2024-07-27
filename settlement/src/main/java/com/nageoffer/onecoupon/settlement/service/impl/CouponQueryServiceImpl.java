@@ -67,6 +67,7 @@ public class CouponQueryServiceImpl implements CouponQueryService {
      */
     @Override
     public IPage<QueryCouponsRespDTO> pageQueryAvailableCoupons(QueryCouponsReqDTO requestParam) {
+        
         // 分页对象
         Page<UserCouponDO> page = new Page<>(requestParam.getPageNum(), requestParam.getPageSize());
 
