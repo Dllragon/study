@@ -36,6 +36,7 @@ package com.nageoffer.onecoupon.settlement.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nageoffer.onecoupon.settlement.dao.entity.UserCouponDO;
 import com.nageoffer.onecoupon.settlement.dao.mapper.UserCouponMapper;
 import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
@@ -43,7 +44,6 @@ import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
 import com.nageoffer.onecoupon.settlement.service.CouponQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.stereotype.Service;
 
 /**
@@ -68,7 +68,7 @@ public class CouponQueryServiceImpl implements CouponQueryService {
      */
     @Override
     public IPage<QueryCouponsRespDTO> pageQueryAvailableCoupons(QueryCouponsReqDTO requestParam) {
-        
+
         // 分页对象
         Page<UserCouponDO> page = new Page<>(requestParam.getPageNum(), requestParam.getPageSize());
 
