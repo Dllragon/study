@@ -84,4 +84,11 @@ public class CouponTemplateController {
     public Result<CouponTemplateQueryRespDTO> findCouponTemplate(String couponTemplateId) {
         return Results.success(couponTemplateService.findCouponTemplateById(couponTemplateId));
     }
+
+    @Operation(summary = "结束优惠券模板")
+    @PostMapping("/api/merchant-admin/coupon-template/terminate")
+    public Result<Void> terminateCouponTemplate(String couponTemplateId) {
+        couponTemplateService.terminateCouponTemplate(couponTemplateId);
+        return Results.success();
+    }
 }

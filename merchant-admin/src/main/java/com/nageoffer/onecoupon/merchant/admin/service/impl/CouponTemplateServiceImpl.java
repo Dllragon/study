@@ -35,13 +35,17 @@
 package com.nageoffer.onecoupon.merchant.admin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.starter.annotation.LogRecord;
+import com.nageoffer.onecoupon.framework.exception.ClientException;
+import com.nageoffer.onecoupon.merchant.admin.common.constant.MerchantAdminRedisConstant;
 import com.nageoffer.onecoupon.merchant.admin.common.context.UserContext;
 import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTemplateStatusEnum;
 import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTemplateDO;
@@ -53,6 +57,8 @@ import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTemplateQueryRespDT
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
 import com.nageoffer.onecoupon.merchant.admin.service.basics.chain.MerchantAdminChainContext;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -72,8 +78,11 @@ import static com.nageoffer.onecoupon.merchant.admin.common.enums.ChainBizMarkEn
 public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper, CouponTemplateDO> implements CouponTemplateService {
 
     private final CouponTemplateMapper couponTemplateMapper;
-
     private final MerchantAdminChainContext merchantAdminChainContext;
+    private final StringRedisTemplate stringRedisTemplate;
+
+    @Value("one-coupon.update-coupon-template.update-cache:direct")
+    public String updateCouponTemplateCacheType;
 
     @LogRecord(
             success = COUPON_TEMPLATE_LOG_CONTENT,
@@ -121,5 +130,36 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
 
         CouponTemplateDO couponTemplateDO = couponTemplateMapper.selectOne(queryWrapper);
         return BeanUtil.toBean(couponTemplateDO, CouponTemplateQueryRespDTO.class);
+    }
+
+    @Override
+    public void terminateCouponTemplate(String couponTemplateId) {
+        // 验证是否存在数据横向越权
+        LambdaQueryWrapper<CouponTemplateDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateDO.class)
+                .eq(CouponTemplateDO::getShopNumber, UserContext.getShopNumber())
+                .eq(CouponTemplateDO::getId, couponTemplateId);
+        CouponTemplateDO couponTemplateDO = couponTemplateMapper.selectOne(queryWrapper);
+        if (couponTemplateDO == null) {
+            // 一旦查询优惠券不存在，基本可判定横向越权，可上报该异常行为，次数多了后执行封号等处理
+            throw new ClientException("优惠券模板异常，请检查操作是否正确...");
+        }
+
+        // 验证优惠券模板是否正常
+        if (ObjectUtil.notEqual(couponTemplateDO.getStatus(), CouponTemplateStatusEnum.ACTIVE.getStatus())) {
+            throw new ClientException("优惠券模板已结束");
+        }
+
+        // 修改优惠券模板为结束状态
+        CouponTemplateDO updateCouponTemplateDO = CouponTemplateDO.builder()
+                .status(CouponTemplateStatusEnum.ENDED.getStatus())
+                .build();
+        Wrapper<CouponTemplateDO> updateWrapper = Wrappers.lambdaUpdate(CouponTemplateDO.class)
+                .eq(CouponTemplateDO::getId, couponTemplateDO.getId())
+                .eq(CouponTemplateDO::getShopNumber, UserContext.getShopNumber());
+        couponTemplateMapper.update(updateCouponTemplateDO, updateWrapper);
+
+        // 修改优惠券模板缓存状态为结束状态
+        String couponTemplateCacheKey = String.format(MerchantAdminRedisConstant.COUPON_TEMPLATE_KEY, couponTemplateId);
+        stringRedisTemplate.opsForHash().put(couponTemplateCacheKey, "status", String.valueOf(CouponTemplateStatusEnum.ENDED.getStatus()));
     }
 }
