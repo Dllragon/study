@@ -61,7 +61,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.nageoffer.onecoupon.merchant.admin.common.constant.CouponTemplateConstant.COUPON_TEMPLATE_LOG_CONTENT;
 import static com.nageoffer.onecoupon.merchant.admin.common.enums.ChainBizMarkEnum.MERCHANT_ADMIN_CREATE_COUPON_TEMPLATE_KEY;
@@ -103,6 +105,17 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
 
         // 因为模板 ID 是运行中生成的，@LogRecord 默认拿不到，所以我们需要手动设置
         LogRecordContext.putVariable("bizNo", couponTemplateDO.getId());
+
+        // 缓存预热：通过将数据库的记录序列化成 JSON 字符串放入 Redis 缓存
+        CouponTemplateQueryRespDTO actualRespDTO = BeanUtil.toBean(couponTemplateDO, CouponTemplateQueryRespDTO.class);
+        Map<String, Object> cacheTargetMap = BeanUtil.beanToMap(actualRespDTO, false, true);
+        Map<String, String> actualCacheTargetMap = cacheTargetMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue() != null ? entry.getValue().toString() : ""
+                ));
+        String couponTemplateCacheKey = String.format(MerchantAdminRedisConstant.COUPON_TEMPLATE_KEY, couponTemplateDO.getId());
+        stringRedisTemplate.opsForHash().putAll(couponTemplateCacheKey, actualCacheTargetMap);
     }
 
     @Override

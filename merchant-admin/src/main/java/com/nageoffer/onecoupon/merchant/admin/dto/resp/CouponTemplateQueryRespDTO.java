@@ -51,11 +51,24 @@ import java.util.Date;
 @Schema(description = "优惠券模板详情查询返回实体")
 public class CouponTemplateQueryRespDTO {
 
+
+    /**
+     * 优惠券id
+     */
+    @Schema(description = "优惠券id")
+    private String id;
+
     /**
      * 优惠券名称
      */
     @Schema(description = "优惠券名称")
     private String name;
+
+    /**
+     * 店铺编号
+     */
+    @Schema(description = "店铺编号")
+    private String shopNumber;
 
     /**
      * 优惠券来源 0：店铺券 1：平台券
@@ -112,4 +125,10 @@ public class CouponTemplateQueryRespDTO {
      */
     @Schema(description = "消耗规则")
     private String consumeRule;
+
+    /**
+     * 优惠券状态 0：生效中 1：已结束
+     */
+    @Schema(description = "优惠券状态 0：生效中 1：已结束")
+    private Integer status;
 }
