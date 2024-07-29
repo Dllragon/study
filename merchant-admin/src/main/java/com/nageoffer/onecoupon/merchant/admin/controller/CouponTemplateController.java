@@ -38,6 +38,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.onecoupon.framework.idempotent.NoRepeatSubmit;
 import com.nageoffer.onecoupon.framework.result.Result;
 import com.nageoffer.onecoupon.framework.web.Results;
+import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateNumberReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplatePageQueryReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTemplatePageQueryRespDTO;
@@ -83,6 +84,14 @@ public class CouponTemplateController {
     @GetMapping("/api/merchant-admin/coupon-template/find")
     public Result<CouponTemplateQueryRespDTO> findCouponTemplate(String couponTemplateId) {
         return Results.success(couponTemplateService.findCouponTemplateById(couponTemplateId));
+    }
+
+    @Operation(summary = "增加优惠券模板发行量")
+    @NoRepeatSubmit(message = "请勿短时间内重复增加优惠券发行量")
+    @PostMapping("/api/merchant-admin/coupon-template/increase-number")
+    public Result<Void> increaseNumberCouponTemplate(@RequestBody CouponTemplateNumberReqDTO requestParam) {
+        couponTemplateService.increaseNumberCouponTemplate(requestParam);
+        return Results.success();
     }
 
     @Operation(summary = "结束优惠券模板")
