@@ -34,6 +34,7 @@
 
 package com.nageoffer.onecoupon.merchant.admin.service.basics.log;
 
+import cn.hutool.core.util.StrUtil;
 import com.mzt.logapi.beans.LogRecord;
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.service.ILogRecordService;
@@ -72,7 +73,7 @@ public class DBLogRecordServiceImpl implements ILogRecordService {
                             .operatorId(UserContext.getUserId())
                             .operationLog(logRecord.getAction())
                             .originalData(Optional.ofNullable(LogRecordContext.getVariable("originalData")).map(Object::toString).orElse(null))
-                            .modifiedData(logRecord.getExtra())
+                            .modifiedData(StrUtil.isBlank(logRecord.getExtra()) ? null : logRecord.getExtra())
                             .build();
                     couponTemplateLogMapper.insert(couponTemplateLogDO);
                 }
