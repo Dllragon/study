@@ -36,6 +36,7 @@ package com.nageoffer.onecoupon.gateway.filter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -57,19 +58,22 @@ public class RequestLoggingFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         HttpMethod method = request.getMethod();
 
-        String requestLogId = UUID.randomUUID().toString();
+        String traceId = UUID.randomUUID().toString();
+
         long startTime = System.currentTimeMillis();
-        LOG.info("请求流水号{} 请求URI: {}", requestLogId, request.getURI());
-        LOG.info("请求流水号{} 请求类型: {}", requestLogId, method);
-        LOG.info("请求流水号{} 请求头: {}", requestLogId, request.getHeaders());
+        MDC.put("traceId", traceId);
+
+        LOG.info("请求URI: {}", request.getURI());
+        LOG.info("请求类型: {}", method);
+        LOG.info("请求头: {}", request.getHeaders());
 
         if (method == HttpMethod.GET) {
-            LOG.info("请求流水号{} 请求参数: {}", requestLogId, request.getQueryParams());
+            LOG.info("请求参数: {}", request.getQueryParams());
         }
 
         return chain.filter(exchange).then(Mono.fromRunnable(() -> {
             long duration = System.currentTimeMillis() - startTime;
-            LOG.info("请求流水号{} 响应时间：{} ms", requestLogId, duration);
+            LOG.info("响应时间：{} ms", duration);
         }));
     }
 

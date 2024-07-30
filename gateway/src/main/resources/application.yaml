@@ -35,6 +35,12 @@ spring:
   application:
     name: oneCoupon-gateway
   cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        enabled: false
+      password: nacos
+      username: nacos
     gateway:
       routes:
         - id: oneCoupon-merchant-admin
