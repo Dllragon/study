@@ -32,25 +32,42 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.search.common.constant;
+package com.nageoffer.onecoupon.search.common.enums;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
- * 优惠券搜索层服务 RocketMQ 常量类
+ * 优惠券模板状态枚举
  * <p>
  * 作者：蛋仔
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-30
+ * 开发时间：2024-07-31
  */
-public final class SearchRockerMQConstant {
+@RequiredArgsConstructor
+public enum CouponTemplateStatusEnum {
 
     /**
-     * Canal 监听优惠券模板表 Binlog Topic Key
+     * 生效中
      */
-    public static final String TEMPLATE_COUPON_BINLOG_SYNC_TOPIC_KEY = "one-coupon_canal_search-service_es-sync_topic${unique-name:}";
+    EFFECTIVE(0),
 
     /**
-     * Canal 监听优惠券模板表 Binlog 消费者组 Key
+     * 已结束
      */
-    public static final String TEMPLATE_COUPON_BINLOG_SYNC_CG_KEY = "one-coupon_canal_search-service_es-sync_cg${unique-name:}";
+    EXPIRED(1),
+
+    /**
+     * 未删除
+     */
+    NORMAL(0),
+
+    /**
+     * 已删除
+     */
+    DELETED(1);
+
+    @Getter
+    private final Integer code;
 
 }

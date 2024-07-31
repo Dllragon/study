@@ -32,25 +32,118 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.search.common.constant;
+package com.nageoffer.onecoupon.search.dao.entity;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
+
+import java.util.Date;
 
 /**
- * 优惠券搜索层服务 RocketMQ 常量类
+ * 优惠券模板Elasticsearch文档实体
  * <p>
  * 作者：蛋仔
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-30
+ * 开发时间：2024-07-31
  */
-public final class SearchRockerMQConstant {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Document(indexName = "coupon_template")
+public class CouponTemplateDoc {
+
+    private static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
 
     /**
-     * Canal 监听优惠券模板表 Binlog Topic Key
+     * id
      */
-    public static final String TEMPLATE_COUPON_BINLOG_SYNC_TOPIC_KEY = "one-coupon_canal_search-service_es-sync_topic${unique-name:}";
+    @Id
+    @Field(type = FieldType.Long)
+    private Long id;
 
     /**
-     * Canal 监听优惠券模板表 Binlog 消费者组 Key
+     * 店铺编号
      */
-    public static final String TEMPLATE_COUPON_BINLOG_SYNC_CG_KEY = "one-coupon_canal_search-service_es-sync_cg${unique-name:}";
+    @Field(type = FieldType.Long, index = false)
+    private Long shopNumber;
+
+    /**
+     * 优惠券名称，参与分词与搜索
+     */
+    @Field(type = FieldType.Text, store = true)
+    private String name;
+
+    /**
+     * 优惠券来源 0：店铺券 1：平台券
+     */
+    @Field(type = FieldType.Integer, index = false)
+    private Integer source;
+
+    /**
+     * 优惠对象 0：商品专属 1：全店通用
+     */
+    @Field(type = FieldType.Integer, index = false)
+    private Integer target;
+
+    /**
+     * 优惠商品编码, 不进行分词
+     */
+    @Field(type = FieldType.Keyword, index = false)
+    private String goods;
+
+    /**
+     * 优惠类型 0：立减券 1：满减券 2：折扣券
+     */
+    @Field(type = FieldType.Integer, index = false)
+    private Integer type;
+
+    /**
+     * 有效期开始时间
+     */
+    @Field(type = FieldType.Date, pattern = DATE_TIME_PATTERN, index = false)
+    private Date validStartTime;
+
+    /**
+     * 有效期结束时间
+     */
+    @Field(type = FieldType.Date, pattern = DATE_TIME_PATTERN, index = false)
+    private Date validEndTime;
+
+    /**
+     * 库存
+     */
+    @Field(type = FieldType.Integer, index = false)
+    private Integer stock;
+
+    /**
+     * 领取规则
+     */
+    @Field(type = FieldType.Text, index = false)
+    private String receiveRule;
+
+    /**
+     * 消耗规则
+     */
+    @Field(type = FieldType.Text, index = false)
+    private String consumeRule;
+
+    /**
+     * 创建时间
+     */
+    @Field(type = FieldType.Date, pattern = DATE_TIME_PATTERN, index = false)
+    private Date createTime;
+
+    /**
+     * 修改时间
+     */
+    @Field(type = FieldType.Date, pattern = DATE_TIME_PATTERN, index = false)
+    private Date updateTime;
 
 }
