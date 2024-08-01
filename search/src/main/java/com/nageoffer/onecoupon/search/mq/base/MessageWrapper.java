@@ -34,7 +34,13 @@
 
 package com.nageoffer.onecoupon.search.mq.base;
 
-import lombok.*;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 import java.io.Serializable;
 import java.util.UUID;

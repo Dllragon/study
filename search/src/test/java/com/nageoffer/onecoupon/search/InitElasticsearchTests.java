@@ -52,5 +52,4 @@ public class InitElasticsearchTests {
         String clusterVersion = elasticsearchTemplate.getClusterVersion();
         log.info(clusterVersion);
     }
-
 }

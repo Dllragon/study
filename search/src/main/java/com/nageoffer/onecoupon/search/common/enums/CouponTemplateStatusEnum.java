@@ -69,5 +69,4 @@ public enum CouponTemplateStatusEnum {
 
     @Getter
     private final Integer code;
-
 }

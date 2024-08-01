@@ -145,5 +145,4 @@ public class CouponTemplateDoc {
      */
     @Field(type = FieldType.Date, pattern = DATE_TIME_PATTERN, index = false)
     private Date updateTime;
-
 }

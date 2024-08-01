@@ -68,7 +68,6 @@ public class CanalBinlogSyncCouponTemplateConsumer implements RocketMQListener<C
 
     private final ElasticsearchTemplate elasticsearchTemplate;
 
-
     @Override
     public void onMessage(CanalBinlogEvent canalBinlogEvent) {
         log.info("{}", canalBinlogEvent);

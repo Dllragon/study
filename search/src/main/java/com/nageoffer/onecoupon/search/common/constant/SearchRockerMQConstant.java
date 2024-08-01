@@ -52,5 +52,4 @@ public final class SearchRockerMQConstant {
      * Canal 监听优惠券模板表 Binlog 消费者组 Key
      */
     public static final String TEMPLATE_COUPON_BINLOG_SYNC_CG_KEY = "one-coupon_canal_search-service_es-sync_cg${unique-name:}";
-
 }
