@@ -72,7 +72,6 @@
         <rocketmq-spring-boot-starter.version>2.3.0</rocketmq-spring-boot-starter.version>
         <spotless-maven-plugin.version>2.22.1</spotless-maven-plugin.version>
         <maven-compiler-plugin.version>3.6.1</maven-compiler-plugin.version>
-        <elasticsearch.version>7.17.13</elasticsearch.version>
         <elasticsearch-spring-boot-starter.version>2.6.12</elasticsearch-spring-boot-starter.version>
     </properties>
 
