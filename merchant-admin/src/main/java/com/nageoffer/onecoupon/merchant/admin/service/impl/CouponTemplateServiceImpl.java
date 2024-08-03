@@ -61,7 +61,6 @@ import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTemplateQueryRespDT
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
 import com.nageoffer.onecoupon.merchant.admin.service.basics.chain.MerchantAdminChainContext;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -88,9 +87,6 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
     private final CouponTemplateMapper couponTemplateMapper;
     private final MerchantAdminChainContext merchantAdminChainContext;
     private final StringRedisTemplate stringRedisTemplate;
-
-    @Value("one-coupon.update-coupon-template.update-cache:direct")
-    public String updateCouponTemplateCacheType;
 
     @LogRecord(
             success = CREATE_COUPON_TEMPLATE_LOG_CONTENT,
