@@ -100,7 +100,7 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
 
         // 当保存用户优惠券集合达到批量保存数量
         CouponTemplateExecuteEvent event = messageWrapper.getMessage();
-        if (!event.getDistributionEndFlag() && event.getBatchUserSetSize() >= BATCH_USER_COUPON_SIZE) {
+        if (!event.getDistributionEndFlag() && event.getBatchUserSetSize() % BATCH_USER_COUPON_SIZE == 0) {
             decrementCouponTemplateStockAndSaveUserCouponList(event);
         }
         // 分发任务结束标识为 TRUE，代表已经没有 Excel 记录了
