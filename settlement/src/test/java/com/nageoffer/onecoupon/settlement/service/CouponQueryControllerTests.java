@@ -69,24 +69,24 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * CouponQueryControllerTests 用于测试 CouponQueryController 中的接口逻辑
- *
+ * <p>
  * 数据库和 Redis 中的数据需要符合测试要求。
- *
+ * <p>
  * 插入语句用于生成数据库测试数据：
  * INSERT INTO t_user_coupon (
- *     id, user_id, order_sn, coupon_template_id, receive_time,
- *     receive_count, valid_start_time, valid_end_time, use_time,
- *     source, status, create_time, update_time, del_flag
+ * id, user_id, order_sn, coupon_template_id, receive_time,
+ * receive_count, valid_start_time, valid_end_time, use_time,
+ * source, status, create_time, update_time, del_flag
  * ) VALUES (
- *     1812833908648099852, 1812833908648099852, NULL, 1810966706881941507, '2024-07-15 16:46:05',
- *     NULL, '2024-07-20 16:46:05', '2024-07-25 17:18:04', NULL,
- *     NULL, 0, NULL, NULL, 0
+ * 1812833908648099852, 1812833908648099852, NULL, 1810966706881941507, '2024-07-15 16:46:05',
+ * NULL, '2024-07-20 16:46:05', '2024-07-25 17:18:04', NULL,
+ * NULL, 0, NULL, NULL, 0
  * );
  */
 public class CouponQueryControllerTests {
@@ -227,63 +227,70 @@ public class CouponQueryControllerTests {
         doNothing().when(lock).unlock();
 
         // 执行测试请求
-        MvcResult result = mockMvc.perform(get("/api/settlement/coupon-query/page")
+        MvcResult mvcResult = mockMvc.perform(get("/api/settlement/coupon-query/page")
                         .contentType(MediaType.APPLICATION_JSON)
                         .param("userId", "1812833908648099852")  // 传入用户ID
                         .param("pageNum", "1")  // 传入页码
                         .param("pageSize", "10"))  // 传入页面大小
-                .andExpect(status().isOk())  // 期待返回状态为 200
-//                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))  // 期待返回 JSON 格式
+                .andExpect(request().asyncStarted())
                 .andReturn();
 
+        // 等待异步请求完成并进行断言
+        mockMvc.perform(asyncDispatch(mvcResult)) // 等待异步请求完成
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE)) // 期待返回 JSON 格式
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isNotEmpty());
+
         // 获取实际的 JSON 响应
-        String actualJson = result.getResponse().getContentAsString();
+        String actualJson = mvcResult.getResponse().getContentAsString();
         System.out.println("实际的 JSON 响应: " + actualJson);
 
         // 定义预期的 JSON 响应
         String expectedJson = """
-        {
-            "code": "0",
-            "message": null,
-            "data": {
-                "availableCoupons": {
-                    "records": [
-                        {
-                            "couponTemplateId": 1810966706881941507,
-                            "couponName": null,
-                            "receiveTime": "2024-07-15 16:46:05",
-                            "validStartTime": "2024-07-20 16:46:05",
-                            "validEndTime": "2024-07-25 17:18:04",
-                            "status": 0
-                        }
-                    ],
-                    "total": 1,
-                    "size": 10,
-                    "current": 1,
-                    "pages": 1
+            
+                {
+                "code": "0",
+                "message": null,
+                "data": {
+                    "availableCoupons": {
+                        "records": [
+                            {
+                                "couponTemplateId": 1810966706881941507,
+                                "couponName": null,
+                                "receiveTime": "2024-07-15 16:46:05",
+                                "validStartTime": "2024-07-20 16:46:05",
+                                "validEndTime": "2024-07-25 17:18:04",
+                                "status": 0
+                            }
+                        ],
+                        "total": 1,
+                        "size": 10,
+                        "current": 1,
+                        "pages": 1
+                    },
+                    "unavailableCoupons": {
+                        "records": [
+                            {
+                                "couponTemplateId": 1810966706881941510,
+                                "couponName": null,
+                                "receiveTime": "2024-07-10 16:46:05",
+                                "validStartTime": "2024-07-15 16:46:05",
+                                "validEndTime": "2024-07-20 17:18:04",
+                                "status": 1
+                            }
+                        ],
+                        "total": 1,
+                        "size": 10,
+                        "current": 1,
+                        "pages": 1
+                    }
                 },
-                "unavailableCoupons": {
-                    "records": [
-                        {
-                            "couponTemplateId": 1810966706881941510,
-                            "couponName": null,
-                            "receiveTime": "2024-07-10 16:46:05",
-                            "validStartTime": "2024-07-15 16:46:05",
-                            "validEndTime": "2024-07-20 17:18:04",
-                            "status": 1
-                        }
-                    ],
-                    "total": 1,
-                    "size": 10,
-                    "current": 1,
-                    "pages": 1
-                }
-            },
-            "requestId": null,
-            "success": true,
-            "fail": false
-        }
-        """;
+                "requestId": null,
+                "success": true,
+                "fail": false
+            }
+            """;
 
         // 使用 JSONAssert 验证实际响应与预期是否一致
         JSONAssert.assertEquals(expectedJson, actualJson, false);
