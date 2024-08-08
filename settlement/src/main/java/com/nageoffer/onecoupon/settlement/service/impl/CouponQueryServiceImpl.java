@@ -52,6 +52,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 查询用户可用 / 不可用优惠券列表接口
@@ -135,6 +136,9 @@ public class CouponQueryServiceImpl implements CouponQueryService {
             try {
                 // 缓存结果
                 valueOps.set(cacheKey, response);
+
+                // 缓存结果并设置失效时间为 1 小时
+                // valueOps.set(cacheKey, response, 1, TimeUnit.HOURS);
             } catch (Exception e) {
                 // 记录缓存存储时的异常信息
                 System.err.println("Error storing to Redis: " + e.getMessage());

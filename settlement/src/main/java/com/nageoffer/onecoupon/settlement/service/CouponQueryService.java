@@ -52,7 +52,8 @@ public interface CouponQueryService {
 
     /**
      * 查询用户可/不可用的优惠券列表
-     * @param  requestParam
+     *
+     * @param requestParam
      * @return 可/不可用的优惠券列表
      */
     CompletableFuture<CouponsRespDTO> pageQueryUserCoupons(QueryCouponsReqDTO requestParam);

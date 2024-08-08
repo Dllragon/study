@@ -42,7 +42,6 @@ import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
 import com.nageoffer.onecoupon.settlement.dto.resp.CouponsRespDTO;
 import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
 import com.nageoffer.onecoupon.settlement.dao.mapper.UserCouponMapper;
-import com.nageoffer.onecoupon.settlement.dao.entity.UserCouponDO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -66,6 +65,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;

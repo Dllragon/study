@@ -49,7 +49,6 @@ import org.springframework.web.context.request.async.DeferredResult;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
-@RequestMapping("/api/settlement/coupon-query")
 @Tag(name = "查询用户优惠券")
 public class CouponQueryController {
 
@@ -59,8 +58,8 @@ public class CouponQueryController {
         this.couponQueryService = couponQueryService;
     }
 
+    @RequestMapping("/api/settlement/coupon-query/page")
     @Operation(summary = "分页查询用户可/不可用的优惠券列表")
-    @GetMapping("/page")
     public DeferredResult<Result<CouponsRespDTO>> pageQueryAvailableCoupons(QueryCouponsReqDTO requestParam) {
         // 创建一个DeferredResult对象，设置超时时间为5000毫秒
         DeferredResult<Result<CouponsRespDTO>> deferredResult = new DeferredResult<>(5000L);
@@ -84,7 +83,6 @@ public class CouponQueryController {
             deferredResult.setErrorResult(errorResult);
             return null;
         });
-
         return deferredResult;
     }
 }
