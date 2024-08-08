@@ -40,6 +40,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.Mapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
@@ -61,10 +62,8 @@ import java.util.concurrent.CompletableFuture;
 @Tag(name = "查询用户优惠券")
 public class CouponQueryController {
 
-    private final CouponQueryService couponQueryService;
-
-    @RequestMapping("/api/settlement/coupon-query/page")
     @Operation(summary = "分页查询用户可/不可用的优惠券列表")
+    @GetMapping("/api/settlement/coupon-query/page")
     public DeferredResult<Result<CouponsRespDTO>> pageQueryAvailableCoupons(QueryCouponsReqDTO requestParam) {
         // 创建一个DeferredResult对象，设置超时时间为5000毫秒
         DeferredResult<Result<CouponsRespDTO>> deferredResult = new DeferredResult<>(5000L);
@@ -91,4 +90,6 @@ public class CouponQueryController {
 
         return deferredResult;
     }
+
+    private final CouponQueryService couponQueryService;
 }
