@@ -32,29 +32,44 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.service;
+package com.nageoffer.onecoupon.settlement.config;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
-import com.nageoffer.onecoupon.settlement.dto.resp.CouponsRespDTO;
-import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.data.redis.serializer.SerializationException;
 
-import java.util.concurrent.CompletableFuture;
+import java.nio.charset.Charset;
 
 /**
- * 查询用户可用 / 不可用优惠券列表接口
+ * Redis Key 序列化｜定义全局统一前缀
  * <p>
- * 作者：Henry Wan
+ * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-23
+ * 开发时间：2024-07-14
  */
-public interface CouponQueryService {
+@RequiredArgsConstructor
+public class RedisKeySerializer implements InitializingBean, RedisSerializer<String> {
 
-    /**
-     * 查询用户可/不可用的优惠券列表
-     * @param  requestParam
-     * @return 可/不可用的优惠券列表
-     */
-    CompletableFuture<CouponsRespDTO> pageQueryUserCoupons(QueryCouponsReqDTO requestParam);
+    private final String keyPrefix;
+
+    private final String charsetName;
+
+    private Charset charset;
+
+    @Override
+    public byte[] serialize(String key) throws SerializationException {
+        String builderKey = keyPrefix + key;
+        return builderKey.getBytes();
+    }
+
+    @Override
+    public String deserialize(byte[] bytes) throws SerializationException {
+        return new String(bytes, charset);
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        charset = Charset.forName(charsetName);
+    }
 }
-

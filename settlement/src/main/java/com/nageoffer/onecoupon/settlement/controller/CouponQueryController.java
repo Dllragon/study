@@ -34,40 +34,57 @@
 
 package com.nageoffer.onecoupon.settlement.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.onecoupon.framework.result.Result;
 import com.nageoffer.onecoupon.framework.web.Results;
-import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
-import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
-import com.nageoffer.onecoupon.settlement.service.CouponQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
+import com.nageoffer.onecoupon.settlement.dto.resp.CouponsRespDTO;
+import com.nageoffer.onecoupon.settlement.service.CouponQueryService;
+import org.springframework.web.context.request.async.DeferredResult;
 
-/**
- * 查询用户优惠券控制层
- * <p>
- * 作者：Henry Wan
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-24
- */
+import java.util.concurrent.CompletableFuture;
+
 @RestController
-@RequiredArgsConstructor
+@RequestMapping("/api/settlement/coupon-query")
 @Tag(name = "查询用户优惠券")
 public class CouponQueryController {
+
     private final CouponQueryService couponQueryService;
 
-    @Operation(summary = "分页查询用户可用的优惠券列表")
-    @GetMapping("/api/settlement/coupon-query/page/available")
-    public Result<IPage<QueryCouponsRespDTO>> pageQueryAvailableCoupons(QueryCouponsReqDTO requestParam) {
-        return Results.success(couponQueryService.pageQueryAvailableCoupons(requestParam));
+    public CouponQueryController(CouponQueryService couponQueryService) {
+        this.couponQueryService = couponQueryService;
     }
 
-    @Operation(summary = "分页查询用户不可用的优惠券列表")
-    @GetMapping("/api/settlement/coupon-query/page/unavailable")
-    public Result<IPage<QueryCouponsRespDTO>> pageQueryUnavailableCoupons(QueryCouponsReqDTO requestParam) {
-        return Results.success(couponQueryService.pageQueryUnavailableCoupons(requestParam));
+    @Operation(summary = "分页查询用户可/不可用的优惠券列表")
+    @GetMapping("/page")
+    public DeferredResult<Result<CouponsRespDTO>> pageQueryAvailableCoupons(QueryCouponsReqDTO requestParam) {
+        // 创建一个DeferredResult对象，设置超时时间为5000毫秒
+        DeferredResult<Result<CouponsRespDTO>> deferredResult = new DeferredResult<>(5000L);
+
+        // 设置默认的超时响应
+        deferredResult.onTimeout(() -> {
+            Result<Void> timeoutResult = Results.failure("请求超时，请稍后重试。");
+            deferredResult.setErrorResult(timeoutResult);
+        });
+
+        // 调用服务方法
+        CompletableFuture<CouponsRespDTO> couponsFuture = couponQueryService.pageQueryUserCoupons(requestParam);
+
+        // 异步处理结果
+        couponsFuture.thenAccept(couponsRespDTO -> {
+            Result<CouponsRespDTO> result = Results.success(couponsRespDTO);
+            deferredResult.setResult(result);
+        }).exceptionally(ex -> {
+            // 捕获异常，并设置错误结果
+            Result<Void> errorResult = Results.failure("处理过程中发生错误：" + ex.getMessage());
+            deferredResult.setErrorResult(errorResult);
+            return null;
+        });
+
+        return deferredResult;
     }
 }
