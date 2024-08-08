@@ -38,6 +38,7 @@ import com.nageoffer.onecoupon.framework.result.Result;
 import com.nageoffer.onecoupon.framework.web.Results;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -56,14 +57,11 @@ import java.util.concurrent.CompletableFuture;
  * 开发时间：2024-07-24
  */
 @RestController
+@RequiredArgsConstructor
 @Tag(name = "查询用户优惠券")
 public class CouponQueryController {
 
     private final CouponQueryService couponQueryService;
-
-    public CouponQueryController(CouponQueryService couponQueryService) {
-        this.couponQueryService = couponQueryService;
-    }
 
     @RequestMapping("/api/settlement/coupon-query/page")
     @Operation(summary = "分页查询用户可/不可用的优惠券列表")
