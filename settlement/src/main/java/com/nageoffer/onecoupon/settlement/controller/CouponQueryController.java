@@ -83,6 +83,7 @@ public class CouponQueryController {
             deferredResult.setErrorResult(errorResult);
             return null;
         });
+
         return deferredResult;
     }
 }
