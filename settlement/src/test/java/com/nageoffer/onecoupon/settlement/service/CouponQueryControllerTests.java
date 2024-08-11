@@ -41,6 +41,7 @@ import com.nageoffer.onecoupon.settlement.controller.CouponQueryController;
 import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
 import com.nageoffer.onecoupon.settlement.dto.resp.CouponsRespDTO;
 import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
+import com.nageoffer.onecoupon.settlement.handler.AsyncResponseHandler;
 import com.nageoffer.onecoupon.settlement.dao.mapper.UserCouponMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,7 +51,7 @@ import org.mockito.MockitoAnnotations;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.skyscreamer.jsonassert.JSONAssert;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -65,7 +66,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -100,11 +100,15 @@ public class CouponQueryControllerTests {
 
     // 模拟 RedisTemplate，用于 Redis 交互
     @Mock
-    private RedisTemplate<String, Object> redisTemplate;
+    private StringRedisTemplate stringRedisTemplate;
 
     // 模拟 ValueOperations，便于 Redis 操作
     @Mock
-    private ValueOperations<String, Object> valueOperations;
+    private ValueOperations<String, String> valueOperations;
+
+    // 模拟 AsyncResponseHandler，用于处理异步请求
+    @Mock
+    private AsyncResponseHandler asyncResponseHandler;
 
     // 模拟 UserCouponMapper，用于数据库交互
     @Mock
@@ -146,7 +150,7 @@ public class CouponQueryControllerTests {
                 .build();
 
         // 模拟 Redis 操作
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
 
         // 模拟 Redisson 锁
         when(redissonClient.getLock(any(String.class))).thenReturn(lock);
@@ -213,18 +217,13 @@ public class CouponQueryControllerTests {
                 .build();
 
         // 模拟服务层返回 CompletableFuture 对象
+        CompletableFuture<CouponsRespDTO> couponsFuture = CompletableFuture.completedFuture(couponsRespDTO);
         when(couponQueryService.pageQueryUserCoupons(any(QueryCouponsReqDTO.class)))
-                .thenReturn(CompletableFuture.completedFuture(couponsRespDTO));
+                .thenReturn(couponsFuture);
 
-        // 模拟缓存未命中（返回 null）
-        when(valueOperations.get(anyString())).thenReturn(null);
-
-        // 模拟缓存异常抛出
-        doThrow(new RuntimeException("Redis error")).when(valueOperations).set(anyString(), any());
-
-        // 模拟锁的行为
-        doNothing().when(lock).lock();
-        doNothing().when(lock).unlock();
+        // 模拟 AsyncResponseHandler 的行为
+        when(asyncResponseHandler.createDeferredResult(couponsFuture))
+                .thenCallRealMethod();
 
         // 执行测试请求
         MvcResult mvcResult = mockMvc.perform(get("/api/settlement/coupon-query/page")
@@ -248,49 +247,48 @@ public class CouponQueryControllerTests {
 
         // 定义预期的 JSON 响应
         String expectedJson = """
-            
-                {
-                "code": "0",
-                "message": null,
-                "data": {
-                    "availableCoupons": {
-                        "records": [
-                            {
-                                "couponTemplateId": 1810966706881941507,
-                                "couponName": null,
-                                "receiveTime": "2024-07-15 16:46:05",
-                                "validStartTime": "2024-07-20 16:46:05",
-                                "validEndTime": "2024-07-25 17:18:04",
-                                "status": 0
-                            }
-                        ],
-                        "total": 1,
-                        "size": 10,
-                        "current": 1,
-                        "pages": 1
+                    {
+                    "code": "0",
+                    "message": null,
+                    "data": {
+                        "availableCoupons": {
+                            "records": [
+                                {
+                                    "couponTemplateId": 1810966706881941507,
+                                    "couponName": null,
+                                    "receiveTime": "2024-07-15 16:46:05",
+                                    "validStartTime": "2024-07-20 16:46:05",
+                                    "validEndTime": "2024-07-25 17:18:04",
+                                    "status": 0
+                                }
+                            ],
+                            "total": 1,
+                            "size": 10,
+                            "current": 1,
+                            "pages": 1
+                        },
+                        "unavailableCoupons": {
+                            "records": [
+                                {
+                                    "couponTemplateId": 1810966706881941510,
+                                    "couponName": null,
+                                    "receiveTime": "2024-07-10 16:46:05",
+                                    "validStartTime": "2024-07-15 16:46:05",
+                                    "validEndTime": "2024-07-20 17:18:04",
+                                    "status": 1
+                                }
+                            ],
+                            "total": 1,
+                            "size": 10,
+                            "current": 1,
+                            "pages": 1
+                        }
                     },
-                    "unavailableCoupons": {
-                        "records": [
-                            {
-                                "couponTemplateId": 1810966706881941510,
-                                "couponName": null,
-                                "receiveTime": "2024-07-10 16:46:05",
-                                "validStartTime": "2024-07-15 16:46:05",
-                                "validEndTime": "2024-07-20 17:18:04",
-                                "status": 1
-                            }
-                        ],
-                        "total": 1,
-                        "size": 10,
-                        "current": 1,
-                        "pages": 1
-                    }
-                },
-                "requestId": null,
-                "success": true,
-                "fail": false
-            }
-            """;
+                    "requestId": null,
+                    "success": true,
+                    "fail": false
+                }
+                """;
 
         // 使用 JSONAssert 验证实际响应与预期是否一致
         JSONAssert.assertEquals(expectedJson, actualJson, false);

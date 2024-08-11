@@ -48,7 +48,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = RedisDistributedProperties.PREFIX)
 public class RedisDistributedProperties {
 
-    public static final String PREFIX = "settlement.cache.redis";
+    public static final String PREFIX = "framework.cache.redis";
 
     /**
      * Key 前缀

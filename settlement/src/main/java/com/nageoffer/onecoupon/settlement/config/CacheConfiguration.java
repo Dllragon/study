@@ -69,20 +69,4 @@ public class CacheConfiguration {
         String prefixCharset = redisDistributedProperties.getPrefixCharset();
         return new RedisKeySerializer(prefix, prefixCharset);
     }
-
-    /**
-     * 创建 RedisTemplate Bean
-     */
-    @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-
-        // 使用Jackson2JsonRedisSerializer进行JSON序列化
-        Jackson2JsonRedisSerializer<Object> serializer = new Jackson2JsonRedisSerializer<>(Object.class);
-        template.setValueSerializer(serializer);
-        template.setKeySerializer(new StringRedisSerializer());
-
-        return template;
-    }
 }

@@ -102,7 +102,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = Throwable.class)
     public Result defaultErrorHandler(HttpServletRequest request, Throwable throwable) {
         log.error("[{}] {} ", request.getMethod(), getUrl(request), throwable);
-        return Results.failure("处理过程中发生错误");
+        return Results.failure();
     }
 
     private String getUrl(HttpServletRequest request) {

@@ -46,13 +46,14 @@ import com.nageoffer.onecoupon.settlement.service.CouponQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * 查询用户可用 / 不可用优惠券列表接口
@@ -71,6 +72,8 @@ public class CouponQueryServiceImpl implements CouponQueryService {
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
+    private final ObjectMapper objectMapper; // 用于 JSON 序列化和反序列化
+    private final StringRedisTemplate stringRedisTemplate;
     private static final String COUPON_CACHE_KEY_PREFIX = "user:coupons:";
 
     /**
@@ -83,7 +86,7 @@ public class CouponQueryServiceImpl implements CouponQueryService {
     public CompletableFuture<CouponsRespDTO> pageQueryUserCoupons(QueryCouponsReqDTO requestParam) {
         return CompletableFuture.supplyAsync(() -> {
             // 定义 Redis 操作对象
-            ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
+            ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
 
             // 构造缓存键
             String cacheKey = COUPON_CACHE_KEY_PREFIX + requestParam.getUserId() + ":" + requestParam.getPageNum() + ":" + requestParam.getPageSize();
@@ -91,8 +94,12 @@ public class CouponQueryServiceImpl implements CouponQueryService {
             CouponsRespDTO cachedCoupons = null;
 
             try {
-                // 尝试从缓存获取所有优惠券
-                cachedCoupons = (CouponsRespDTO) valueOps.get(cacheKey);
+                // 尝试从缓存获取所有优惠券（获取的是JSON字符串）
+                String cachedJson = valueOps.get(cacheKey);
+                if (cachedJson != null) {
+                    // 将 JSON 字符串反序列化为 CouponsRespDTO 对象
+                    cachedCoupons = objectMapper.readValue(cachedJson, CouponsRespDTO.class);
+                }
             } catch (Exception e) {
                 // 记录缓存获取时的异常信息
                 System.err.println("Error retrieving from Redis: " + e.getMessage());
@@ -134,9 +141,10 @@ public class CouponQueryServiceImpl implements CouponQueryService {
                     .build();
 
             try {
-                // 缓存结果
-                valueOps.set(cacheKey, response);
+                // 将 CouponsRespDTO 对象序列化为 JSON 字符串
+                String responseJson = objectMapper.writeValueAsString(response);
 
+                valueOps.set(cacheKey, responseJson);
                 // 缓存结果并设置失效时间为 1 小时
                 // valueOps.set(cacheKey, response, 1, TimeUnit.HOURS);
             } catch (Exception e) {
