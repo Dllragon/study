@@ -34,17 +34,19 @@
 
 package com.nageoffer.onecoupon.settlement.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.onecoupon.framework.result.Result;
-import com.nageoffer.onecoupon.framework.web.Results;
-import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
-import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
-import com.nageoffer.onecoupon.settlement.service.CouponQueryService;
+import com.nageoffer.onecoupon.settlement.handler.AsyncResponseHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
+import com.nageoffer.onecoupon.settlement.dto.resp.CouponsRespDTO;
+import com.nageoffer.onecoupon.settlement.service.CouponQueryService;
+import org.springframework.web.context.request.async.DeferredResult;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 查询用户优惠券控制层
@@ -57,17 +59,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Tag(name = "查询用户优惠券")
 public class CouponQueryController {
+
     private final CouponQueryService couponQueryService;
+    private final AsyncResponseHandler asyncResponseHandler;
 
-    @Operation(summary = "分页查询用户可用的优惠券列表")
-    @GetMapping("/api/settlement/coupon-query/page/available")
-    public Result<IPage<QueryCouponsRespDTO>> pageQueryAvailableCoupons(QueryCouponsReqDTO requestParam) {
-        return Results.success(couponQueryService.pageQueryAvailableCoupons(requestParam));
-    }
+    @Operation(summary = "分页查询用户可/不可用的优惠券列表")
+    @GetMapping("/api/settlement/coupon-query/page")
+    public DeferredResult<Result<CouponsRespDTO>> pageQueryAvailableCoupons(QueryCouponsReqDTO requestParam) {
 
-    @Operation(summary = "分页查询用户不可用的优惠券列表")
-    @GetMapping("/api/settlement/coupon-query/page/unavailable")
-    public Result<IPage<QueryCouponsRespDTO>> pageQueryUnavailableCoupons(QueryCouponsReqDTO requestParam) {
-        return Results.success(couponQueryService.pageQueryUnavailableCoupons(requestParam));
+        // 调用服务方法
+        CompletableFuture<CouponsRespDTO> couponsFuture = couponQueryService.pageQueryUserCoupons(requestParam);
+        return asyncResponseHandler.createDeferredResult(couponsFuture);
     }
 }

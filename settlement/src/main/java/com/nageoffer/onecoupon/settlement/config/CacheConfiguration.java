@@ -32,68 +32,41 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.framework.web;
+package com.nageoffer.onecoupon.settlement.config;
 
-import com.nageoffer.onecoupon.framework.errorcode.BaseErrorCode;
-import com.nageoffer.onecoupon.framework.exception.AbstractException;
-import com.nageoffer.onecoupon.framework.result.Result;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.util.Optional;
 
 /**
- * 构建全局返回对象构造器｜方便开发者构建全局返回对象
+ * 分布式 Redis 缓存配置
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-08
+ * 开发时间：2024-07-14
  */
-public final class Results {
+@Configuration
+@RequiredArgsConstructor
+@EnableConfigurationProperties(RedisDistributedProperties.class)
+public class CacheConfiguration {
+
+    private final RedisDistributedProperties redisDistributedProperties;
 
     /**
-     * 构造成功响应
+     * 创建 Redis Key 序列化器，可自定义 Key Prefix
      */
-    public static Result<Void> success() {
-        return new Result<Void>()
-                .setCode(Result.SUCCESS_CODE);
-    }
-
-    /**
-     * 构造带返回数据的成功响应
-     */
-    public static <T> Result<T> success(T data) {
-        return new Result<T>()
-                .setCode(Result.SUCCESS_CODE)
-                .setData(data);
-    }
-
-    /**
-     * 构建服务端失败响应
-     */
-    public static Result<Void> failure() {
-        return new Result<Void>()
-                .setCode(BaseErrorCode.SERVICE_ERROR.code())
-                .setMessage(BaseErrorCode.SERVICE_ERROR.message());
-    }
-
-    /**
-     * 通过 {@link AbstractException} 构建失败响应
-     */
-    protected static Result<Void> failure(AbstractException abstractException) {
-        String errorCode = Optional.ofNullable(abstractException.getErrorCode())
-                .orElse(BaseErrorCode.SERVICE_ERROR.code());
-        String errorMessage = Optional.ofNullable(abstractException.getErrorMessage())
-                .orElse(BaseErrorCode.SERVICE_ERROR.message());
-        return new Result<Void>()
-                .setCode(errorCode)
-                .setMessage(errorMessage);
-    }
-
-    /**
-     * 通过 errorCode、errorMessage 构建失败响应
-     */
-    protected static Result<Void> failure(String errorCode, String errorMessage) {
-        return new Result<Void>()
-                .setCode(errorCode)
-                .setMessage(errorMessage);
+    @Bean
+    public RedisKeySerializer redisKeySerializer() {
+        String prefix = Optional.ofNullable(redisDistributedProperties.getPrefix()).orElse("");
+        String prefixCharset = redisDistributedProperties.getPrefixCharset();
+        return new RedisKeySerializer(prefix, prefixCharset);
     }
 }
