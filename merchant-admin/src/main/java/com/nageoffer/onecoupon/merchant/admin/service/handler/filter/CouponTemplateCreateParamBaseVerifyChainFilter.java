@@ -32,71 +32,87 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.service.impl;
+package com.nageoffer.onecoupon.merchant.admin.service.handler.filter;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.onecoupon.framework.exception.ClientException;
-import com.nageoffer.onecoupon.merchant.admin.common.constant.MerchantAdminRedisConstant;
-import com.nageoffer.onecoupon.merchant.admin.common.context.UserContext;
-import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTemplateStatusEnum;
 import com.nageoffer.onecoupon.merchant.admin.common.enums.DiscountTargetEnum;
 import com.nageoffer.onecoupon.merchant.admin.common.enums.DiscountTypeEnum;
-import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTemplateDO;
-import com.nageoffer.onecoupon.merchant.admin.dao.mapper.CouponTemplateMapper;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
-import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTemplateQueryRespDTO;
-import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
-import com.nageoffer.onecoupon.merchant.admin.service.basics.chain.MerchantAdminChainContext;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Service;
+import com.nageoffer.onecoupon.merchant.admin.service.basics.chain.MerchantAdminAbstractChainHandler;
+import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.nageoffer.onecoupon.merchant.admin.common.enums.ChainBizMarkEnum.MERCHANT_ADMIN_CREATE_COUPON_TEMPLATE_KEY;
 
 /**
- * 优惠券模板业务逻辑实现层
+ * 验证优惠券创建接口参数是否正确责任链｜验证参数基本数据关系是否正确
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-08
+ * 开发时间：2024-07-09
  */
-@Service
-@RequiredArgsConstructor
-public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper, CouponTemplateDO> implements CouponTemplateService {
+@Component
+public class CouponTemplateCreateParamBaseVerifyChainFilter implements MerchantAdminAbstractChainHandler<CouponTemplateSaveReqDTO> {
 
-    private final CouponTemplateMapper couponTemplateMapper;
-    private final MerchantAdminChainContext merchantAdminChainContext;
-    private final StringRedisTemplate stringRedisTemplate;
+    private final int maxStock = 20000000;
 
     @Override
-    public void createCouponTemplate(CouponTemplateSaveReqDTO requestParam) {
-        // 通过责任链验证请求参数是否正确
-        merchantAdminChainContext.handler(MERCHANT_ADMIN_CREATE_COUPON_TEMPLATE_KEY.name(), requestParam);
+    public void handler(CouponTemplateSaveReqDTO requestParam) {
+        boolean targetAnyMatch = Arrays.stream(DiscountTargetEnum.values())
+                .anyMatch(enumConstant -> enumConstant.getType() == requestParam.getTarget());
+        if (!targetAnyMatch) {
+            // 此处已经基本能判断数据请求属于恶意攻击，可以上报风控中心进行封禁账号
+            throw new ClientException("优惠对象值不存在");
+        }
+        if (ObjectUtil.equal(requestParam.getTarget(), DiscountTargetEnum.ALL_STORE_GENERAL)
+                && StrUtil.isNotEmpty(requestParam.getGoods())) {
+            throw new ClientException("优惠券全店通用不可设置指定商品");
+        }
+        if (ObjectUtil.equal(requestParam.getTarget(), DiscountTargetEnum.PRODUCT_SPECIFIC)
+                && StrUtil.isEmpty(requestParam.getGoods())) {
+            throw new ClientException("优惠券商品专属未设置指定商品");
+        }
 
-        // 新增优惠券模板信息到数据库
-        CouponTemplateDO couponTemplateDO = BeanUtil.toBean(requestParam, CouponTemplateDO.class);
-        couponTemplateDO.setStatus(CouponTemplateStatusEnum.ACTIVE.getStatus());
-        couponTemplateDO.setShopNumber(UserContext.getShopNumber());
-        couponTemplateMapper.insert(couponTemplateDO);
+        boolean typeAnyMatch = Arrays.stream(DiscountTypeEnum.values())
+                .anyMatch(enumConstant -> enumConstant.getType() == requestParam.getType());
+        if (!typeAnyMatch) {
+            // 此处已经基本能判断数据请求属于恶意攻击，可以上报风控中心进行封禁账号
+            throw new ClientException("优惠类型不存在");
+        }
 
-        // 缓存预热：通过将数据库的记录序列化成 JSON 字符串放入 Redis 缓存
-        CouponTemplateQueryRespDTO actualRespDTO = BeanUtil.toBean(couponTemplateDO, CouponTemplateQueryRespDTO.class);
-        Map<String, Object> cacheTargetMap = BeanUtil.beanToMap(actualRespDTO, false, true);
-        Map<String, String> actualCacheTargetMap = cacheTargetMap.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> entry.getValue() != null ? entry.getValue().toString() : ""
-                ));
-        String couponTemplateCacheKey = String.format(MerchantAdminRedisConstant.COUPON_TEMPLATE_KEY, couponTemplateDO.getId());
-        stringRedisTemplate.opsForHash().putAll(couponTemplateCacheKey, actualCacheTargetMap);
+        Date now = new Date();
+        if (requestParam.getValidStartTime().before(now)) {
+            // 为了方便大家测试，不用关注这个时间，这里取消异常抛出
+            // throw new ClientException("有效期开始时间不能早于当前时间");
+        }
+
+        if (requestParam.getStock() <= 0 || requestParam.getStock() > maxStock) {
+            // 此处已经基本能判断数据请求属于恶意攻击，可以上报风控中心进行封禁账号
+            throw new ClientException("库存数量设置异常");
+        }
+
+        if (!JSON.isValid(requestParam.getReceiveRule())) {
+            // 此处已经基本能判断数据请求属于恶意攻击，可以上报风控中心进行封禁账号
+            throw new ClientException("领取规则格式错误");
+        }
+        if (!JSON.isValid(requestParam.getConsumeRule())) {
+            // 此处已经基本能判断数据请求属于恶意攻击，可以上报风控中心进行封禁账号
+            throw new ClientException("消耗规则格式错误");
+        }
+    }
+
+    @Override
+    public String mark() {
+        return MERCHANT_ADMIN_CREATE_COUPON_TEMPLATE_KEY.name();
+    }
+
+    @Override
+    public int getOrder() {
+        return 10;
     }
 }
