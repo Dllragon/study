@@ -35,6 +35,8 @@
 package com.nageoffer.onecoupon.distribution.mq.consumer;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -143,13 +145,14 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
 
         // 构建 userCouponDOList 用户优惠券批量数组
         for (String each : batchUserIds) {
+            DateTime validEndTime = DateUtil.offsetHour(now, JSON.parseObject(event.getCouponTemplateConsumeRule()).getInteger("validityPeriod"));
             UserCouponDO userCouponDO = UserCouponDO.builder()
                     .couponTemplateId(Long.parseLong(event.getCouponTemplateId()))
                     .userId(Long.parseLong(each))
                     .receiveTime(now)
                     .receiveCount(1) // 代表第一次领取该优惠券
                     .validStartTime(now)
-                    .validEndTime(JSON.parseObject(event.getCouponTemplateConsumeRule()).getDate("validityPeriod"))
+                    .validEndTime(validEndTime)
                     .source(CouponSourceEnum.PLATFORM.getType())
                     .status(CouponStatusEnum.EFFECTIVE.getType())
                     .createTime(new Date())
