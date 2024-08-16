@@ -46,6 +46,8 @@ import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTemplateStatusE
 import com.nageoffer.onecoupon.merchant.admin.common.enums.DiscountTargetEnum;
 import com.nageoffer.onecoupon.merchant.admin.common.enums.DiscountTypeEnum;
 import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTemplateDO;
+import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTemplateLogDO;
+import com.nageoffer.onecoupon.merchant.admin.dao.mapper.CouponTemplateLogMapper;
 import com.nageoffer.onecoupon.merchant.admin.dao.mapper.CouponTemplateMapper;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTemplateQueryRespDTO;
@@ -77,6 +79,8 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
     private final MerchantAdminChainContext merchantAdminChainContext;
     private final StringRedisTemplate stringRedisTemplate;
 
+    private final CouponTemplateLogMapper couponTemplateLogMapper;
+
     @Override
     public void createCouponTemplate(CouponTemplateSaveReqDTO requestParam) {
         // 通过责任链验证请求参数是否正确
@@ -98,5 +102,31 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
                 ));
         String couponTemplateCacheKey = String.format(MerchantAdminRedisConstant.COUPON_TEMPLATE_KEY, couponTemplateDO.getId());
         stringRedisTemplate.opsForHash().putAll(couponTemplateCacheKey, actualCacheTargetMap);
+
+        try {
+            String operationLog = String.format("%s 用户创建优惠券：%s，优惠对象：%s，优惠类型：%s，库存数量：%d，优惠商品编码：%s，有效期开始时间：%s，有效期结束时间：%s，领取规则：%s，消耗规则：%s;",
+                    UserContext.getUsername(),
+                    requestParam.getName(),
+                    DiscountTargetEnum.findValueByType(requestParam.getTarget()),
+                    DiscountTypeEnum.findValueByType(requestParam.getType()),
+                    requestParam.getStock(),
+                    requestParam.getGoods() == null ? "" : requestParam.getGoods(),
+                    requestParam.getValidStartTime(),
+                    requestParam.getValidEndTime(),
+                    requestParam.getReceiveRule(),
+                    requestParam.getConsumeRule());
+
+            CouponTemplateLogDO couponTemplateLogDO = CouponTemplateLogDO.builder()
+                    .couponTemplateId(String.valueOf(couponTemplateDO.getId()))
+                    .operatorId(UserContext.getUserId())
+                    .shopNumber(UserContext.getShopNumber())
+                    .operationLog(operationLog)
+                    .modifiedData(JSON.toJSONString(couponTemplateDO))
+                    .build();
+            couponTemplateLogMapper.insert(couponTemplateLogDO);
+        } catch (Exception ex) {
+            log.error("记录操作日志错误", ex);
+            // 发起接口报警，但不能阻碍主流程继续执行
+        }
     }
 }
