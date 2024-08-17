@@ -87,7 +87,7 @@ group 缓存预热
     服务 -> 服务 : 构建预热优惠券缓存 Hash Value
     服务 -> 缓存操作 : 执行缓存预热 (put优惠券模板 for Hash)
     activate 缓存操作
-    缓存操作 -> 服务 : 预热成功
+    缓存操作 --> 服务 : 预热成功
     deactivate 缓存操作
 
 end group
