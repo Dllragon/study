@@ -35,10 +35,9 @@
 package com.nageoffer.onecoupon.merchant.admin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.mzt.logapi.context.LogRecordContext;
+import com.mzt.logapi.starter.annotation.LogRecord;
 import com.nageoffer.onecoupon.framework.exception.ClientException;
 import com.nageoffer.onecoupon.merchant.admin.common.constant.MerchantAdminRedisConstant;
 import com.nageoffer.onecoupon.merchant.admin.common.context.UserContext;
@@ -79,8 +78,22 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
     private final MerchantAdminChainContext merchantAdminChainContext;
     private final StringRedisTemplate stringRedisTemplate;
 
-    private final CouponTemplateLogMapper couponTemplateLogMapper;
-
+    @LogRecord(
+            success = """
+                    创建优惠券：{{#requestParam.name}}， \
+                    优惠对象：{COMMON_ENUM_PARSE{'DiscountTargetEnum' + '_' + #requestParam.target}}， \
+                    优惠类型：{COMMON_ENUM_PARSE{'DiscountTypeEnum' + '_' + #requestParam.type}}， \
+                    库存数量：{{#requestParam.stock}}， \
+                    优惠商品编码：{{#requestParam.goods}}， \
+                    有效期开始时间：{{#requestParam.validStartTime}}， \
+                    有效期结束时间：{{#requestParam.validEndTime}}， \
+                    领取规则：{{#requestParam.receiveRule}}， \
+                    消耗规则：{{#requestParam.consumeRule}};
+                    """,
+            type = "CouponTemplate",
+            bizNo = "{{#bizNo}}",
+            extra = "{{#requestParam.toString()}}"
+    )
     @Override
     public void createCouponTemplate(CouponTemplateSaveReqDTO requestParam) {
         // 通过责任链验证请求参数是否正确
@@ -92,6 +105,9 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
         couponTemplateDO.setShopNumber(UserContext.getShopNumber());
         couponTemplateMapper.insert(couponTemplateDO);
 
+        // 因为模板 ID 是运行中生成的，@LogRecord 默认拿不到，所以我们需要手动设置
+        LogRecordContext.putVariable("bizNo", couponTemplateDO.getId());
+
         // 缓存预热：通过将数据库的记录序列化成 JSON 字符串放入 Redis 缓存
         CouponTemplateQueryRespDTO actualRespDTO = BeanUtil.toBean(couponTemplateDO, CouponTemplateQueryRespDTO.class);
         Map<String, Object> cacheTargetMap = BeanUtil.beanToMap(actualRespDTO, false, true);
@@ -102,31 +118,5 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
                 ));
         String couponTemplateCacheKey = String.format(MerchantAdminRedisConstant.COUPON_TEMPLATE_KEY, couponTemplateDO.getId());
         stringRedisTemplate.opsForHash().putAll(couponTemplateCacheKey, actualCacheTargetMap);
-
-        try {
-            String operationLog = String.format("%s 用户创建优惠券：%s，优惠对象：%s，优惠类型：%s，库存数量：%d，优惠商品编码：%s，有效期开始时间：%s，有效期结束时间：%s，领取规则：%s，消耗规则：%s;",
-                    UserContext.getUsername(),
-                    requestParam.getName(),
-                    DiscountTargetEnum.findValueByType(requestParam.getTarget()),
-                    DiscountTypeEnum.findValueByType(requestParam.getType()),
-                    requestParam.getStock(),
-                    requestParam.getGoods() == null ? "" : requestParam.getGoods(),
-                    requestParam.getValidStartTime(),
-                    requestParam.getValidEndTime(),
-                    requestParam.getReceiveRule(),
-                    requestParam.getConsumeRule());
-
-            CouponTemplateLogDO couponTemplateLogDO = CouponTemplateLogDO.builder()
-                    .couponTemplateId(String.valueOf(couponTemplateDO.getId()))
-                    .operatorId(UserContext.getUserId())
-                    .shopNumber(UserContext.getShopNumber())
-                    .operationLog(operationLog)
-                    .modifiedData(JSON.toJSONString(couponTemplateDO))
-                    .build();
-            couponTemplateLogMapper.insert(couponTemplateLogDO);
-        } catch (Exception ex) {
-            log.error("记录操作日志错误", ex);
-            // 发起接口报警，但不能阻碍主流程继续执行
-        }
     }
 }
