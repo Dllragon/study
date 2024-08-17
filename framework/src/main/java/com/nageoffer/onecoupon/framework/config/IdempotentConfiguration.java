@@ -34,8 +34,8 @@
 
 package com.nageoffer.onecoupon.framework.config;
 
-import com.nageoffer.onecoupon.framework.idempotent.NoMQRepeatConsumeAspect;
-import com.nageoffer.onecoupon.framework.idempotent.NoRepeatSubmitAspect;
+import com.nageoffer.onecoupon.framework.idempotent.NoMQDuplicateConsumeAspect;
+import com.nageoffer.onecoupon.framework.idempotent.NoDuplicateSubmitAspect;
 import org.redisson.api.RedissonClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -53,15 +53,15 @@ public class IdempotentConfiguration {
      * 防止用户重复提交表单信息切面控制器
      */
     @Bean
-    public NoRepeatSubmitAspect noRepeatSubmitAspect(RedissonClient redissonClient) {
-        return new NoRepeatSubmitAspect(redissonClient);
+    public NoDuplicateSubmitAspect noDuplicateSubmitAspect(RedissonClient redissonClient) {
+        return new NoDuplicateSubmitAspect(redissonClient);
     }
 
     /**
      * 防止消息队列消费者重复消费消息切面控制器
      */
     @Bean
-    public NoMQRepeatConsumeAspect noMQRepeatConsumeAspect(StringRedisTemplate stringRedisTemplate) {
-        return new NoMQRepeatConsumeAspect(stringRedisTemplate);
+    public NoMQDuplicateConsumeAspect noMQDuplicateConsumeAspect(StringRedisTemplate stringRedisTemplate) {
+        return new NoMQDuplicateConsumeAspect(stringRedisTemplate);
     }
 }

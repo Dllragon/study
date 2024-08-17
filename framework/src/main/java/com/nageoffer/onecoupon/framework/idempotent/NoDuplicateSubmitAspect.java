@@ -58,7 +58,7 @@ import java.lang.reflect.Method;
  */
 @Aspect
 @RequiredArgsConstructor
-public final class NoRepeatSubmitAspect {
+public final class NoDuplicateSubmitAspect {
 
     private final RedissonClient redissonClient;
 

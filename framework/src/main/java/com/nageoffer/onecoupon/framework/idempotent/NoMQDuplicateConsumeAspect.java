@@ -54,7 +54,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Aspect
 @RequiredArgsConstructor
-public final class NoMQRepeatConsumeAspect {
+public final class NoMQDuplicateConsumeAspect {
 
     private final StringRedisTemplate stringRedisTemplate;
 
