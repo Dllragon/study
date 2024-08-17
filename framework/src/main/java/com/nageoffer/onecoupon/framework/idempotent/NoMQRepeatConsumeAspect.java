@@ -59,14 +59,14 @@ public final class NoMQRepeatConsumeAspect {
     private final StringRedisTemplate stringRedisTemplate;
 
     /**
-     * 增强方法标记 {@link NoMQRepeatConsume} 注解逻辑
+     * 增强方法标记 {@link NoMQDuplicateConsume} 注解逻辑
      */
-    @Around("@annotation(com.nageoffer.onecoupon.framework.idempotent.NoMQRepeatConsume)")
+    @Around("@annotation(com.nageoffer.onecoupon.framework.idempotent.NoMQDuplicateConsume)")
     public Object noMQRepeatConsume(ProceedingJoinPoint joinPoint) throws Throwable {
-        NoMQRepeatConsume noMQRepeatConsume = getNoMQRepeatConsumeAnnotation(joinPoint);
-        String uniqueKey = (String) SpELUtil.parseKey(noMQRepeatConsume.key(), ((MethodSignature) joinPoint.getSignature()).getMethod(), joinPoint.getArgs());
+        NoMQDuplicateConsume noMQDuplicateConsume = getNoMQDuplicateConsumeAnnotation(joinPoint);
+        String uniqueKey = (String) SpELUtil.parseKey(noMQDuplicateConsume.key(), ((MethodSignature) joinPoint.getSignature()).getMethod(), joinPoint.getArgs());
         Boolean setIfAbsent = stringRedisTemplate.opsForValue()
-                .setIfAbsent(uniqueKey, StrUtil.EMPTY, noMQRepeatConsume.keyTimeout(), TimeUnit.SECONDS);
+                .setIfAbsent(uniqueKey, StrUtil.EMPTY, noMQDuplicateConsume.keyTimeout(), TimeUnit.SECONDS);
         // 设置失败意味着已经有这个 Key，我们直接返回空即可
         if (!setIfAbsent) {
             return null;
@@ -86,9 +86,9 @@ public final class NoMQRepeatConsumeAspect {
     /**
      * @return 返回自定义防重复消费注解
      */
-    public static NoMQRepeatConsume getNoMQRepeatConsumeAnnotation(ProceedingJoinPoint joinPoint) throws NoSuchMethodException {
+    public static NoMQDuplicateConsume getNoMQDuplicateConsumeAnnotation(ProceedingJoinPoint joinPoint) throws NoSuchMethodException {
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         Method targetMethod = joinPoint.getTarget().getClass().getDeclaredMethod(methodSignature.getName(), methodSignature.getMethod().getParameterTypes());
-        return targetMethod.getAnnotation(NoMQRepeatConsume.class);
+        return targetMethod.getAnnotation(NoMQDuplicateConsume.class);
     }
 }

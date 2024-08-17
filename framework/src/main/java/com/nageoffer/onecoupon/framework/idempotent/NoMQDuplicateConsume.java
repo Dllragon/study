@@ -34,17 +34,31 @@
 
 package com.nageoffer.onecoupon.framework.idempotent;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
- * 幂等注解，防止用户重复提交表单信息
+ * 幂等注解，防止消息队列消费者重复消费消息
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-10
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-26
  */
-public @interface NoRepeatSubmit {
+@Target({ElementType.TYPE, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface NoMQDuplicateConsume {
 
     /**
-     * 触发幂等失败逻辑时，返回的错误提示信息
+     * 通过 SpEL 表达式生成的唯一 Key
      */
-    String message() default "您操作太快，请稍后再试";
+    String key();
+
+    /**
+     * 设置防重令牌 Key 过期时间，单位秒，默认 1 小时
+     */
+    long keyTimeout() default 3600L;
 }

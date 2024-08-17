@@ -35,7 +35,7 @@
 package com.nageoffer.onecoupon.merchant.admin.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.nageoffer.onecoupon.framework.idempotent.NoRepeatSubmit;
+import com.nageoffer.onecoupon.framework.idempotent.NoDuplicateSubmit;
 import com.nageoffer.onecoupon.framework.result.Result;
 import com.nageoffer.onecoupon.framework.web.Results;
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateNumberReqDTO;
@@ -67,7 +67,7 @@ public class CouponTemplateController {
     private final CouponTemplateService couponTemplateService;
 
     @Operation(summary = "商家创建优惠券模板")
-    @NoRepeatSubmit(message = "请勿短时间内重复提交优惠券模板")
+    @NoDuplicateSubmit(message = "请勿短时间内重复提交优惠券模板")
     @PostMapping("/api/merchant-admin/coupon-template/create")
     public Result<Void> createCouponTemplate(@RequestBody CouponTemplateSaveReqDTO requestParam) {
         couponTemplateService.createCouponTemplate(requestParam);
@@ -87,7 +87,7 @@ public class CouponTemplateController {
     }
 
     @Operation(summary = "增加优惠券模板发行量")
-    @NoRepeatSubmit(message = "请勿短时间内重复增加优惠券发行量")
+    @NoDuplicateSubmit(message = "请勿短时间内重复增加优惠券发行量")
     @PostMapping("/api/merchant-admin/coupon-template/increase-number")
     public Result<Void> increaseNumberCouponTemplate(@RequestBody CouponTemplateNumberReqDTO requestParam) {
         couponTemplateService.increaseNumberCouponTemplate(requestParam);

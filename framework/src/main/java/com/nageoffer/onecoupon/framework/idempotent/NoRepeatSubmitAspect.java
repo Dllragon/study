@@ -63,17 +63,17 @@ public final class NoRepeatSubmitAspect {
     private final RedissonClient redissonClient;
 
     /**
-     * 增强方法标记 {@link NoRepeatSubmit} 注解逻辑
+     * 增强方法标记 {@link NoDuplicateSubmit} 注解逻辑
      */
-    @Around("@annotation(com.nageoffer.onecoupon.framework.idempotent.NoRepeatSubmit)")
+    @Around("@annotation(com.nageoffer.onecoupon.framework.idempotent.NoDuplicateSubmit)")
     public Object noRepeatSubmit(ProceedingJoinPoint joinPoint) throws Throwable {
-        NoRepeatSubmit noRepeatSubmit = getNoRepeatSubmitAnnotation(joinPoint);
+        NoDuplicateSubmit noDuplicateSubmit = getNoDuplicateSubmitAnnotation(joinPoint);
         // 获取分布式锁标识
         String lockKey = String.format("no-repeat-submit:path:%s:currentUserId:%s:md5:%s", getServletPath(), getCurrentUserId(), calcArgsMD5(joinPoint));
         RLock lock = redissonClient.getLock(lockKey);
         // 尝试获取锁，获取锁失败就意味着已经重复提交，直接抛出异常
         if (!lock.tryLock()) {
-            throw new ClientException(noRepeatSubmit.message());
+            throw new ClientException(noDuplicateSubmit.message());
         }
         Object result;
         try {
@@ -88,10 +88,10 @@ public final class NoRepeatSubmitAspect {
     /**
      * @return 返回自定义防重复提交注解
      */
-    public static NoRepeatSubmit getNoRepeatSubmitAnnotation(ProceedingJoinPoint joinPoint) throws NoSuchMethodException {
+    public static NoDuplicateSubmit getNoDuplicateSubmitAnnotation(ProceedingJoinPoint joinPoint) throws NoSuchMethodException {
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         Method targetMethod = joinPoint.getTarget().getClass().getDeclaredMethod(methodSignature.getName(), methodSignature.getMethod().getParameterTypes());
-        return targetMethod.getAnnotation(NoRepeatSubmit.class);
+        return targetMethod.getAnnotation(NoDuplicateSubmit.class);
     }
 
     /**
