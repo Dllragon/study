@@ -66,10 +66,10 @@ public final class NoDuplicateSubmitAspect {
      * 增强方法标记 {@link NoDuplicateSubmit} 注解逻辑
      */
     @Around("@annotation(com.nageoffer.onecoupon.framework.idempotent.NoDuplicateSubmit)")
-    public Object noRepeatSubmit(ProceedingJoinPoint joinPoint) throws Throwable {
+    public Object noDuplicateSubmit(ProceedingJoinPoint joinPoint) throws Throwable {
         NoDuplicateSubmit noDuplicateSubmit = getNoDuplicateSubmitAnnotation(joinPoint);
         // 获取分布式锁标识
-        String lockKey = String.format("no-repeat-submit:path:%s:currentUserId:%s:md5:%s", getServletPath(), getCurrentUserId(), calcArgsMD5(joinPoint));
+        String lockKey = String.format("no-duplicate-submit:path:%s:currentUserId:%s:md5:%s", getServletPath(), getCurrentUserId(), calcArgsMD5(joinPoint));
         RLock lock = redissonClient.getLock(lockKey);
         // 尝试获取锁，获取锁失败就意味着已经重复提交，直接抛出异常
         if (!lock.tryLock()) {
