@@ -33,7 +33,7 @@ server:
 
 spring:
   application:
-    name: oneCoupon-engine
+    name: oneCoupon-engine${unique-name:}
   datasource:
     driver-class-name: org.apache.shardingsphere.driver.ShardingSphereDriver
     url: jdbc:shardingsphere:classpath:shardingsphere-config.yaml

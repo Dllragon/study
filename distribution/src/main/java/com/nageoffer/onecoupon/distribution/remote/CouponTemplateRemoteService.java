@@ -47,7 +47,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-14
  */
-@FeignClient(value = "oneCoupon-engine", url = "${one-coupon.distribution.feign.remote-url.engine:}")
+@FeignClient(value = "oneCoupon-engine${unique-name:}", url = "${one-coupon.distribution.feign.remote-url.engine:}")
 public interface CouponTemplateRemoteService {
 
     /**
