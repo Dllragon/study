@@ -32,7 +32,7 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.config;
+package com.nageoffer.onecoupon.framework.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
