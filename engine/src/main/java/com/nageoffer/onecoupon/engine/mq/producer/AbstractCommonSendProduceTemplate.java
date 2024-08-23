@@ -46,7 +46,6 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.messaging.Message;
 
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -110,8 +109,7 @@ public abstract class AbstractCommonSendProduceTemplate<T> {
                 sendResult = rocketMQTemplate.syncSend(
                         destinationBuilder.toString(),
                         buildMessage(messageSendEvent, baseSendExtendDTO),
-                        baseSendExtendDTO.getSentTimeout(),
-                        Optional.ofNullable(baseSendExtendDTO.getDelayLevel()).orElse(0)
+                        baseSendExtendDTO.getSentTimeout()
                 );
             } else {
                 byte[] bytes = JSON.toJSONBytes(new MessageWrapper(baseSendExtendDTO.getKeys(), messageSendEvent));

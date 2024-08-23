@@ -80,5 +80,5 @@ public final class BaseSendExtendDTO {
     /**
      * 延迟消息
      */
-    private Integer delayLevel;
+    private Long delayTime;
 }

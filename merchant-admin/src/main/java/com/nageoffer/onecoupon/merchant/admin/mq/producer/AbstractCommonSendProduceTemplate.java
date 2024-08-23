@@ -43,8 +43,6 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.messaging.Message;
 
-import java.util.Optional;
-
 /**
  * RocketMQ 抽象公共发送消息组件
  * <p>
@@ -92,8 +90,7 @@ public abstract class AbstractCommonSendProduceTemplate<T> {
             sendResult = rocketMQTemplate.syncSend(
                     destinationBuilder.toString(),
                     buildMessage(messageSendEvent, baseSendExtendDTO),
-                    baseSendExtendDTO.getSentTimeout(),
-                    Optional.ofNullable(baseSendExtendDTO.getDelayLevel()).orElse(0)
+                    baseSendExtendDTO.getSentTimeout()
             );
             log.info("[生产者] {} - 发送结果：{}，消息ID：{}，消息Keys：{}", baseSendExtendDTO.getEventName(), sendResult.getSendStatus(), sendResult.getMsgId(), baseSendExtendDTO.getKeys());
         } catch (Throwable ex) {
