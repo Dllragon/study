@@ -32,40 +32,52 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.common.constant;
+package com.nageoffer.onecoupon.merchant.admin.mq.consumer;
+
+import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.nageoffer.onecoupon.merchant.admin.common.constant.MerchantAdminRocketMQConstant;
+import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTemplateStatusEnum;
+import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTemplateDO;
+import com.nageoffer.onecoupon.merchant.admin.mq.base.MessageWrapper;
+import com.nageoffer.onecoupon.merchant.admin.mq.event.CouponTemplateDelayEvent;
+import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.springframework.stereotype.Component;
 
 /**
- * 商家后管优惠券 RocketMQ 常量类
+ * 优惠券模板推送延迟执行-变更记录状态消费者
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-13
+ * 开发时间：2024-08-21
  */
-public final class MerchantAdminRocketMQConstant {
+@Component
+@RequiredArgsConstructor
+@RocketMQMessageListener(
+        topic = MerchantAdminRocketMQConstant.TEMPLATE_TEMPLATE_DELAY_TOPIC_KEY,
+        consumerGroup = MerchantAdminRocketMQConstant.TEMPLATE_TEMPLATE_DELAY_STATUS_CG_KEY
+)
+@Slf4j(topic = "CouponTemplateDelayExecuteStatusConsumer")
+public class CouponTemplateDelayExecuteStatusConsumer implements RocketMQListener<MessageWrapper<CouponTemplateDelayEvent>> {
 
-    /**
-     * 优惠券推送任务定时执行 Topic Key
-     */
-    public static final String TEMPLATE_TASK_DELAY_TOPIC_KEY = "one-coupon_merchant-admin-service_coupon-task-delay_topic${unique-name:}";
+    private final CouponTemplateService couponTemplateService;
 
-    /**
-     * 优惠券推送任务定时执行-变更记录发送状态消费者组 Key
-     */
-    public static final String TEMPLATE_TASK_DELAY_STATUS_CG_KEY = "one-coupon_merchant-admin-service_coupon-task-delay-status_cg${unique-name:}";
+    @Override
+    public void onMessage(MessageWrapper<CouponTemplateDelayEvent> messageWrapper) {
+        // 开头打印日志，平常可 Debug 看任务参数，线上可报平安（比如消息是否消费，重新投递时获取参数等）
+        log.info("[消费者] 优惠券模板定时执行@变更模板表状态 - 执行消费逻辑，消息体：{}", JSON.toJSONString(messageWrapper));
 
-    /**
-     * 优惠券模板推送定时执行 Topic Key
-     */
-    public static final String TEMPLATE_TEMPLATE_DELAY_TOPIC_KEY = "one-coupon_merchant-admin-service_coupon-template-delay_topic${unique-name:}";
-
-    /**
-     * 优惠券模板推送定时执行-变更记录状态消费者组 Key
-     */
-    public static final String TEMPLATE_TEMPLATE_DELAY_STATUS_CG_KEY = "one-coupon_merchant-admin-service_coupon-template-delay-status_cg${unique-name:}";
-
-    /**
-     * 优惠券模板推送执行 Topic Key
-     * 负责扫描优惠券 Excel 并将里面的记录进行推送
-     */
-    public static final String TEMPLATE_TASK_EXECUTE_TOPIC_KEY = "one-coupon_distribution-service_coupon-task-execute_topic${unique-name:}";
+        // 修改指定优惠券模板状态为已结束
+        CouponTemplateDelayEvent message = messageWrapper.getMessage();
+        LambdaUpdateWrapper<CouponTemplateDO> updateWrapper = Wrappers.lambdaUpdate(CouponTemplateDO.class)
+                .eq(CouponTemplateDO::getShopNumber, message.getShopNumber())
+                .eq(CouponTemplateDO::getId, message.getCouponTemplateId())
+                .set(CouponTemplateDO::getStatus, CouponTemplateStatusEnum.ENDED.getStatus());
+        couponTemplateService.update(updateWrapper);
+    }
 }

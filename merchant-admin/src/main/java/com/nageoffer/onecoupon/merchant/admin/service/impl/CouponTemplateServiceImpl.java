@@ -58,6 +58,8 @@ import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplatePageQueryReq
 import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTemplatePageQueryRespDTO;
 import com.nageoffer.onecoupon.merchant.admin.dto.resp.CouponTemplateQueryRespDTO;
+import com.nageoffer.onecoupon.merchant.admin.mq.event.CouponTemplateDelayEvent;
+import com.nageoffer.onecoupon.merchant.admin.mq.producer.CouponTemplateDelayExecuteStatusProducer;
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
 import com.nageoffer.onecoupon.merchant.admin.service.basics.chain.MerchantAdminChainContext;
 import lombok.RequiredArgsConstructor;
@@ -91,6 +93,7 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
     private final CouponTemplateMapper couponTemplateMapper;
     private final MerchantAdminChainContext merchantAdminChainContext;
     private final StringRedisTemplate stringRedisTemplate;
+    private final CouponTemplateDelayExecuteStatusProducer couponTemplateDelayExecuteStatusProducer;
 
     @LogRecord(
             success = CREATE_COUPON_TEMPLATE_LOG_CONTENT,
@@ -142,6 +145,15 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
                 keys,
                 args.toArray()
         );
+
+        // 发送延时消息事件，优惠券活动到期修改优惠券模板状态
+        CouponTemplateDelayEvent templateDelayEvent = CouponTemplateDelayEvent.builder()
+                .shopNumber(UserContext.getShopNumber())
+                .couponTemplateId(couponTemplateDO.getId())
+                .delayTime(couponTemplateDO.getValidEndTime().getTime())
+                .build();
+
+        couponTemplateDelayExecuteStatusProducer.sendMessage(templateDelayEvent);
     }
 
     @Override
