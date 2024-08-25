@@ -79,10 +79,10 @@ public class CouponTaskDelayExecuteProducer extends AbstractCommonSendProduceTem
     }
 
     @Override
-    protected Message<?> buildMessage(CouponTaskDelayEvent couponTaskDelayEvent, BaseSendExtendDTO requestParam) {
+    protected Message<?> buildMessage(CouponTaskDelayEvent messageSendEvent, BaseSendExtendDTO requestParam) {
         String keys = StrUtil.isEmpty(requestParam.getKeys()) ? UUID.randomUUID().toString() : requestParam.getKeys();
         return MessageBuilder
-                .withPayload(new MessageWrapper(requestParam.getKeys(), couponTaskDelayEvent))
+                .withPayload(new MessageWrapper(keys, messageSendEvent))
                 .setHeader(MessageConst.PROPERTY_KEYS, keys)
                 .setHeader(MessageConst.PROPERTY_TAGS, requestParam.getTag())
                 .build();

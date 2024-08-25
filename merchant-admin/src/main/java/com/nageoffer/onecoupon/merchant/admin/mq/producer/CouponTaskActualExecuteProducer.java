@@ -79,10 +79,10 @@ public class CouponTaskActualExecuteProducer extends AbstractCommonSendProduceTe
     }
 
     @Override
-    protected Message<?> buildMessage(CouponTaskExecuteEvent couponTaskExecuteEvent, BaseSendExtendDTO requestParam) {
+    protected Message<?> buildMessage(CouponTaskExecuteEvent messageSendEvent, BaseSendExtendDTO requestParam) {
         String keys = StrUtil.isEmpty(requestParam.getKeys()) ? UUID.randomUUID().toString() : requestParam.getKeys();
         return MessageBuilder
-                .withPayload(new MessageWrapper(requestParam.getKeys(), couponTaskExecuteEvent))
+                .withPayload(new MessageWrapper(keys, messageSendEvent))
                 .setHeader(MessageConst.PROPERTY_KEYS, keys)
                 .setHeader(MessageConst.PROPERTY_TAGS, requestParam.getTag())
                 .build();

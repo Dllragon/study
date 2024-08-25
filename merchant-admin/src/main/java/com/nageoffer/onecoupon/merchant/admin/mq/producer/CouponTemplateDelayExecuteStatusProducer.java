@@ -77,10 +77,10 @@ public class CouponTemplateDelayExecuteStatusProducer extends AbstractCommonSend
     }
 
     @Override
-    protected Message<?> buildMessage(CouponTemplateDelayEvent couponTemplateDelayEvent, BaseSendExtendDTO requestParam) {
+    protected Message<?> buildMessage(CouponTemplateDelayEvent messageSendEvent, BaseSendExtendDTO requestParam) {
         String keys = StrUtil.isEmpty(requestParam.getKeys()) ? UUID.randomUUID().toString() : requestParam.getKeys();
         return MessageBuilder
-                .withPayload(new MessageWrapper(requestParam.getKeys(), couponTemplateDelayEvent))
+                .withPayload(new MessageWrapper(keys, messageSendEvent))
                 .setHeader(MessageConst.PROPERTY_KEYS, keys)
                 .setHeader(MessageConst.PROPERTY_TAGS, requestParam.getTag())
                 .build();
