@@ -32,59 +32,31 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.mq.producer;
+package com.nageoffer.onecoupon.engine.common.enums;
 
-import cn.hutool.core.util.StrUtil;
-import com.nageoffer.onecoupon.merchant.admin.common.constant.MerchantAdminRocketMQConstant;
-import com.nageoffer.onecoupon.merchant.admin.mq.base.BaseSendExtendDTO;
-import com.nageoffer.onecoupon.merchant.admin.mq.base.MessageWrapper;
-import com.nageoffer.onecoupon.merchant.admin.mq.event.CouponTaskDelayEvent;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.common.message.MessageConst;
-import org.apache.rocketmq.spring.core.RocketMQTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.stereotype.Component;
-
-import java.util.UUID;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
- * 优惠券推送任务定时执行生产者
+ * 优惠券模板状态枚举
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-13
+ * 开发时间：2024-07-09
  */
-@Slf4j
-@Component
-public class CouponTaskDelayExecuteProducer extends AbstractCommonSendProduceTemplate<CouponTaskDelayEvent> {
+@RequiredArgsConstructor
+public enum CouponTemplateStatusEnum {
 
-    private final ConfigurableEnvironment environment;
+    /**
+     * 0: 表示优惠券处于生效中的状态。
+     */
+    ACTIVE(0),
 
-    public CouponTaskDelayExecuteProducer(@Autowired RocketMQTemplate rocketMQTemplate, @Autowired ConfigurableEnvironment environment) {
-        super(rocketMQTemplate);
-        this.environment = environment;
-    }
+    /**
+     * 1: 表示优惠券已经结束，不可再使用。
+     */
+    ENDED(1);
 
-    @Override
-    protected BaseSendExtendDTO buildBaseSendExtendParam(CouponTaskDelayEvent messageSendEvent) {
-        return BaseSendExtendDTO.builder()
-                .eventName("优惠券推送定时执行")
-                .keys(String.valueOf(messageSendEvent.getCouponTaskId()))
-                .topic(environment.resolvePlaceholders(MerchantAdminRocketMQConstant.TEMPLATE_TASK_DELAY_TOPIC_KEY))
-                .sentTimeout(2000L)
-                .build();
-    }
-
-    @Override
-    protected Message<?> buildMessage(CouponTaskDelayEvent messageSendEvent, BaseSendExtendDTO requestParam) {
-        String keys = StrUtil.isEmpty(requestParam.getKeys()) ? UUID.randomUUID().toString() : requestParam.getKeys();
-        return MessageBuilder
-                .withPayload(new MessageWrapper(keys, messageSendEvent))
-                .setHeader(MessageConst.PROPERTY_KEYS, keys)
-                .setHeader(MessageConst.PROPERTY_TAGS, requestParam.getTag())
-                .build();
-    }
+    @Getter
+    private final int status;
 }

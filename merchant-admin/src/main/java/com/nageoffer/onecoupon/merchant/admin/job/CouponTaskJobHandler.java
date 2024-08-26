@@ -42,8 +42,8 @@ import com.nageoffer.onecoupon.framework.web.Results;
 import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTaskStatusEnum;
 import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTaskDO;
 import com.nageoffer.onecoupon.merchant.admin.dao.mapper.CouponTaskMapper;
-import com.nageoffer.onecoupon.merchant.admin.mq.event.CouponTaskDelayEvent;
-import com.nageoffer.onecoupon.merchant.admin.mq.producer.CouponTaskDelayExecuteProducer;
+import com.nageoffer.onecoupon.merchant.admin.mq.event.CouponTaskExecuteEvent;
+import com.nageoffer.onecoupon.merchant.admin.mq.producer.CouponTaskActualExecuteProducer;
 import com.xxl.job.core.handler.IJobHandler;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import io.swagger.v3.oas.annotations.Operation;
@@ -71,7 +71,7 @@ import java.util.List;
 public class CouponTaskJobHandler extends IJobHandler {
 
     private final CouponTaskMapper couponTaskMapper;
-    private final CouponTaskDelayExecuteProducer couponTaskDelayExecuteProducer;
+    private final CouponTaskActualExecuteProducer couponTaskActualExecuteProducer;
 
     private static final int MAX_LIMIT = 100;
 
@@ -89,6 +89,7 @@ public class CouponTaskJobHandler extends IJobHandler {
         Date now = new Date();
 
         while (true) {
+            // 获取已到执行时间待执行的优惠券定时分发任务
             List<CouponTaskDO> couponTaskDOList = fetchPendingTasks(initId, now);
 
             if (CollUtil.isEmpty(couponTaskDOList)) {
@@ -100,6 +101,7 @@ public class CouponTaskJobHandler extends IJobHandler {
                 distributeCoupon(each);
             }
 
+            // 查询出来的数据如果小于 MAX_LIMIT 意味着后面将不再有数据，返回即可
             if (couponTaskDOList.size() < MAX_LIMIT) {
                 break;
             }
@@ -113,12 +115,17 @@ public class CouponTaskJobHandler extends IJobHandler {
     }
 
     private void distributeCoupon(CouponTaskDO couponTask) {
-        // 通过消息队列发送消息，修改状态记录并由分发服务消费者消费该消息
-        CouponTaskDelayEvent couponTaskDelayEvent = CouponTaskDelayEvent.builder()
-                .couponTaskId(couponTask.getId())
+        // 修改延时执行推送任务任务状态为执行中
+        CouponTaskDO couponTaskDO = CouponTaskDO.builder()
+                .id(couponTask.getId())
                 .status(CouponTaskStatusEnum.IN_PROGRESS.getStatus())
                 .build();
-        couponTaskDelayExecuteProducer.sendMessage(couponTaskDelayEvent);
+        couponTaskMapper.updateById(couponTaskDO);
+        // 通过消息队列发送消息，由分发服务消费者消费该消息
+        CouponTaskExecuteEvent couponTaskExecuteEvent = CouponTaskExecuteEvent.builder()
+                .couponTaskId(couponTask.getId())
+                .build();
+        couponTaskActualExecuteProducer.sendMessage(couponTaskExecuteEvent);
     }
 
     private List<CouponTaskDO> fetchPendingTasks(long initId, Date now) {
