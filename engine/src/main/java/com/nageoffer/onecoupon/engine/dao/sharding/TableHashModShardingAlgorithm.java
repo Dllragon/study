@@ -32,24 +32,46 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine;
+package com.nageoffer.onecoupon.engine.dao.sharding;
 
-import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.apache.shardingsphere.sharding.api.sharding.standard.PreciseShardingValue;
+import org.apache.shardingsphere.sharding.api.sharding.standard.RangeShardingValue;
+import org.apache.shardingsphere.sharding.api.sharding.standard.StandardShardingAlgorithm;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
- * 引擎服务｜负责优惠券单个查看、列表查看、锁定以及核销等功能
+ * 基于 HashMod 方式自定义分表算法
  * <p>
  * 作者：马丁
- * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-08
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-14
  */
-@SpringBootApplication
-@MapperScan("com.nageoffer.onecoupon.engine.dao.mapper")
-public class EngineApplication {
+public final class TableHashModShardingAlgorithm implements StandardShardingAlgorithm<Long> {
 
-    public static void main(String[] args) {
-        SpringApplication.run(EngineApplication.class, args);
+    @Override
+    public String doSharding(Collection<String> availableTargetNames, PreciseShardingValue<Long> shardingValue) {
+        long id = shardingValue.getValue();
+        int shardingCount = availableTargetNames.size();
+        int mod = (int) hashShardingValue(id) % shardingCount;
+        int index = 0;
+        for (String targetName : availableTargetNames) {
+            if (index == mod) {
+                return targetName;
+            }
+            index++;
+        }
+        throw new IllegalArgumentException("No target found for value: " + id);
+    }
+
+    @Override
+    public Collection<String> doSharding(Collection<String> availableTargetNames, RangeShardingValue<Long> shardingValue) {
+        // 暂无范围分片场景，默认返回空
+        return List.of();
+    }
+
+    private long hashShardingValue(final Comparable<?> shardingValue) {
+        return Math.abs((long) shardingValue.hashCode());
     }
 }

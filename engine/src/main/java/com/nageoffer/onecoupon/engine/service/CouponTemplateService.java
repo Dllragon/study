@@ -32,24 +32,27 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine;
+package com.nageoffer.onecoupon.engine.service;
 
-import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateDO;
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateQueryReqDTO;
+import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
 
 /**
- * 引擎服务｜负责优惠券单个查看、列表查看、锁定以及核销等功能
+ * 优惠券模板业务逻辑层
  * <p>
  * 作者：马丁
- * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-08
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-14
  */
-@SpringBootApplication
-@MapperScan("com.nageoffer.onecoupon.engine.dao.mapper")
-public class EngineApplication {
+public interface CouponTemplateService extends IService<CouponTemplateDO> {
 
-    public static void main(String[] args) {
-        SpringApplication.run(EngineApplication.class, args);
-    }
+    /**
+     * 查询优惠券模板
+     *
+     * @param requestParam 请求参数
+     * @return 优惠券模板信息
+     */
+    CouponTemplateQueryRespDTO findCouponTemplate(CouponTemplateQueryReqDTO requestParam);
 }
