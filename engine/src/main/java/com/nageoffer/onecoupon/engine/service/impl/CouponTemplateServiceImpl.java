@@ -47,6 +47,7 @@ import com.nageoffer.onecoupon.engine.dao.mapper.CouponTemplateMapper;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateQueryReqDTO;
 import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateService;
+import com.nageoffer.onecoupon.framework.exception.ClientException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -100,40 +101,43 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
                             .eq(CouponTemplateDO::getStatus, CouponTemplateStatusEnum.ACTIVE.getStatus());
                     CouponTemplateDO couponTemplateDO = couponTemplateMapper.selectOne(queryWrapper);
 
-                    if (couponTemplateDO != null) {
-                        // 通过将数据库的记录序列化成 JSON 字符串放入 Redis 缓存
-                        CouponTemplateQueryRespDTO actualRespDTO = BeanUtil.toBean(couponTemplateDO, CouponTemplateQueryRespDTO.class);
-                        Map<String, Object> cacheTargetMap = BeanUtil.beanToMap(actualRespDTO, false, true);
-                        Map<String, String> actualCacheTargetMap = cacheTargetMap.entrySet().stream()
-                                .collect(Collectors.toMap(
-                                        Map.Entry::getKey,
-                                        entry -> entry.getValue() != null ? entry.getValue().toString() : ""
-                                ));
-
-                        // 通过 LUA 脚本执行设置 Hash 数据以及设置过期时间
-                        String luaScript = "redis.call('HMSET', KEYS[1], unpack(ARGV, 1, #ARGV - 1)) " +
-                                "redis.call('EXPIREAT', KEYS[1], ARGV[#ARGV])";
-
-                        List<String> keys = Collections.singletonList(couponTemplateCacheKey);
-                        List<String> args = new ArrayList<>(actualCacheTargetMap.size() * 2 + 1);
-                        actualCacheTargetMap.forEach((key, value) -> {
-                            args.add(key);
-                            args.add(value);
-                        });
-
-                        // 优惠券活动过期时间转换为秒级别的 Unix 时间戳
-                        args.add(String.valueOf(couponTemplateDO.getValidEndTime().getTime() / 1000));
-
-                        // 执行 LUA 脚本
-                        stringRedisTemplate.execute(
-                                new DefaultRedisScript<>(luaScript, Long.class),
-                                keys,
-                                args.toArray()
-                        );
-                        couponTemplateCacheMap = cacheTargetMap.entrySet()
-                                .stream()
-                                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    // 优惠券模板不存在或者已过期直接抛出异常
+                    if (couponTemplateDO == null) {
+                        throw new ClientException("优惠券模板不存在或已过期");
                     }
+
+                    // 通过将数据库的记录序列化成 JSON 字符串放入 Redis 缓存
+                    CouponTemplateQueryRespDTO actualRespDTO = BeanUtil.toBean(couponTemplateDO, CouponTemplateQueryRespDTO.class);
+                    Map<String, Object> cacheTargetMap = BeanUtil.beanToMap(actualRespDTO, false, true);
+                    Map<String, String> actualCacheTargetMap = cacheTargetMap.entrySet().stream()
+                            .collect(Collectors.toMap(
+                                    Map.Entry::getKey,
+                                    entry -> entry.getValue() != null ? entry.getValue().toString() : ""
+                            ));
+
+                    // 通过 LUA 脚本执行设置 Hash 数据以及设置过期时间
+                    String luaScript = "redis.call('HMSET', KEYS[1], unpack(ARGV, 1, #ARGV - 1)) " +
+                            "redis.call('EXPIREAT', KEYS[1], ARGV[#ARGV])";
+
+                    List<String> keys = Collections.singletonList(couponTemplateCacheKey);
+                    List<String> args = new ArrayList<>(actualCacheTargetMap.size() * 2 + 1);
+                    actualCacheTargetMap.forEach((key, value) -> {
+                        args.add(key);
+                        args.add(value);
+                    });
+
+                    // 优惠券活动过期时间转换为秒级别的 Unix 时间戳
+                    args.add(String.valueOf(couponTemplateDO.getValidEndTime().getTime() / 1000));
+
+                    // 执行 LUA 脚本
+                    stringRedisTemplate.execute(
+                            new DefaultRedisScript<>(luaScript, Long.class),
+                            keys,
+                            args.toArray()
+                    );
+                    couponTemplateCacheMap = cacheTargetMap.entrySet()
+                            .stream()
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                 }
             } finally {
                 lock.unlock();
