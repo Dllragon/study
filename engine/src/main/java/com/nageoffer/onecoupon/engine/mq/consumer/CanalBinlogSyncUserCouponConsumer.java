@@ -119,9 +119,9 @@ public class CanalBinlogSyncUserCouponConsumer implements RocketMQListener<Canal
                     .couponTemplateId(couponTemplateId)
                     .userCouponId(userCouponId)
                     .userId(UserContext.getUserId())
+                    .delayTime(DateUtil.parse(first.get("valid_end_time").toString()).getTime())
                     .build();
-            Date validEndTime = DateUtil.parse(first.get("valid_end_time").toString());
-            SendResult sendResult = couponDelayCloseProducer.sendMessage(userCouponDelayCloseEvent, validEndTime.getTime());
+            SendResult sendResult = couponDelayCloseProducer.sendMessage(userCouponDelayCloseEvent);
 
             // 发送消息失败解决方案简单且高效的逻辑之一：打印日志并报警，通过日志搜集并重新投递
             if (ObjectUtil.notEqual(sendResult.getSendStatus().name(), "SEND_OK")) {

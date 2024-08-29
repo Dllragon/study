@@ -193,8 +193,9 @@ public class UserCouponServiceImpl implements UserCouponService {
                             .couponTemplateId(requestParam.getCouponTemplateId())
                             .userCouponId(String.valueOf(userCouponDO.getId()))
                             .userId(UserContext.getUserId())
+                            .delayTime(validEndTime.getTime())
                             .build();
-                    SendResult sendResult = couponDelayCloseProducer.sendMessage(userCouponDelayCloseEvent, validEndTime.getTime());
+                    SendResult sendResult = couponDelayCloseProducer.sendMessage(userCouponDelayCloseEvent);
 
                     // 发送消息失败解决方案简单且高效的逻辑之一：打印日志并报警，通过日志搜集并重新投递
                     if (ObjectUtil.notEqual(sendResult.getSendStatus().name(), "SEND_OK")) {

@@ -43,8 +43,6 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.messaging.Message;
 
-import java.util.Optional;
-
 /**
  * RocketMQ 抽象公共发送消息组件
  * <p>
@@ -85,21 +83,33 @@ public abstract class AbstractCommonSendProduceTemplate<T> {
         BaseSendExtendDTO baseSendExtendDTO = buildBaseSendExtendParam(messageSendEvent);
         SendResult sendResult;
         try {
+            // 构建 Topic 目标落点 formats: `topicName:tags`
             StringBuilder destinationBuilder = StrUtil.builder().append(baseSendExtendDTO.getTopic());
             if (StrUtil.isNotBlank(baseSendExtendDTO.getTag())) {
                 destinationBuilder.append(":").append(baseSendExtendDTO.getTag());
             }
-            sendResult = rocketMQTemplate.syncSend(
-                    destinationBuilder.toString(),
-                    buildMessage(messageSendEvent, baseSendExtendDTO),
-                    baseSendExtendDTO.getSentTimeout(),
-                    Optional.ofNullable(baseSendExtendDTO.getDelayLevel()).orElse(0)
-            );
+
+            // 延迟时间不为空，发送任意延迟消息，否则发送普通消息
+            if (baseSendExtendDTO.getDelayTime() != null) {
+                sendResult = rocketMQTemplate.syncSendDeliverTimeMills(
+                        destinationBuilder.toString(),
+                        buildMessage(messageSendEvent, baseSendExtendDTO),
+                        baseSendExtendDTO.getDelayTime()
+                );
+            } else {
+                sendResult = rocketMQTemplate.syncSend(
+                        destinationBuilder.toString(),
+                        buildMessage(messageSendEvent, baseSendExtendDTO),
+                        baseSendExtendDTO.getSentTimeout()
+                );
+            }
+
             log.info("[生产者] {} - 发送结果：{}，消息ID：{}，消息Keys：{}", baseSendExtendDTO.getEventName(), sendResult.getSendStatus(), sendResult.getMsgId(), baseSendExtendDTO.getKeys());
         } catch (Throwable ex) {
             log.error("[生产者] {} - 消息发送失败，消息体：{}", baseSendExtendDTO.getEventName(), JSON.toJSONString(messageSendEvent), ex);
             throw ex;
         }
+
         return sendResult;
     }
 }

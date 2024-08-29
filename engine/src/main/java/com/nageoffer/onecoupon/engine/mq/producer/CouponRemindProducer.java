@@ -34,7 +34,6 @@
 
 package com.nageoffer.onecoupon.engine.mq.producer;
 
-import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nageoffer.onecoupon.engine.common.constant.EngineRockerMQConstant;
@@ -42,7 +41,6 @@ import com.nageoffer.onecoupon.engine.mq.base.BaseSendExtendDTO;
 import com.nageoffer.onecoupon.engine.mq.base.MessageWrapper;
 import com.nageoffer.onecoupon.engine.mq.event.CouponRemindEvent;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.common.message.MessageConst;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,6 +76,7 @@ public class CouponRemindProducer extends AbstractCommonSendProduceTemplate<Coup
                 .keys(messageSendEvent.getUserId() + ":" + messageSendEvent.getCouponTemplateId())
                 .topic(environment.resolvePlaceholders(EngineRockerMQConstant.COUPON_TEMPLATE_REMIND_TOPIC_KEY))
                 .sentTimeout(2000L)
+                .delayTime(DateUtil.offsetMinute(messageSendEvent.getStartTime(), -messageSendEvent.getRemindTime()).getTime())
                 .build();
     }
 
@@ -89,12 +88,5 @@ public class CouponRemindProducer extends AbstractCommonSendProduceTemplate<Coup
                 .setHeader(MessageConst.PROPERTY_KEYS, keys)
                 .setHeader(MessageConst.PROPERTY_TAGS, requestParam.getTag())
                 .build();
-    }
-
-    @Override
-    public SendResult sendMessage(CouponRemindEvent messageSendEvent) {
-        // 提醒时间
-        DateTime remindTime = DateUtil.offsetMinute(messageSendEvent.getStartTime(), -messageSendEvent.getRemindTime());
-        return sendMessage(messageSendEvent, remindTime.getTime());
     }
 }

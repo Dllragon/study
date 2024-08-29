@@ -66,4 +66,9 @@ public class UserCouponDelayCloseEvent {
      * 优惠券模板id
      */
     private String couponTemplateId;
+
+    /**
+     * 具体延迟时间
+     */
+    private Long delayTime;
 }

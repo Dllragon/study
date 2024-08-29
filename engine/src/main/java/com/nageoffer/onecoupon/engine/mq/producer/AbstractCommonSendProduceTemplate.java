@@ -37,16 +37,11 @@ package com.nageoffer.onecoupon.engine.mq.producer;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.nageoffer.onecoupon.engine.mq.base.BaseSendExtendDTO;
-import com.nageoffer.onecoupon.engine.mq.base.MessageWrapper;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.messaging.Message;
-
-import java.util.UUID;
 
 /**
  * RocketMQ 抽象公共发送消息组件
@@ -85,51 +80,36 @@ public abstract class AbstractCommonSendProduceTemplate<T> {
      * @return 消息发送返回结果
      */
     public SendResult sendMessage(T messageSendEvent) {
-        return sendMessage(messageSendEvent, null);
-    }
-
-    /**
-     * 消息事件通用发送
-     *
-     * @param messageSendEvent 消息发送事件
-     * @param deliverTimeStamp 任意延迟时间
-     * @return 消息发送返回结果
-     */
-    @SneakyThrows
-    public SendResult sendMessage(T messageSendEvent, Long deliverTimeStamp) {
         BaseSendExtendDTO baseSendExtendDTO = buildBaseSendExtendParam(messageSendEvent);
         SendResult sendResult;
         try {
-            if (deliverTimeStamp == null) {
-                StringBuilder destinationBuilder = StrUtil.builder().append(baseSendExtendDTO.getTopic());
-                if (StrUtil.isNotBlank(baseSendExtendDTO.getTag())) {
-                    destinationBuilder.append(":").append(baseSendExtendDTO.getTag());
-                }
+            // 构建 Topic 目标落点 formats: `topicName:tags`
+            StringBuilder destinationBuilder = StrUtil.builder().append(baseSendExtendDTO.getTopic());
+            if (StrUtil.isNotBlank(baseSendExtendDTO.getTag())) {
+                destinationBuilder.append(":").append(baseSendExtendDTO.getTag());
+            }
 
+            // 延迟时间不为空，发送任意延迟消息，否则发送普通消息
+            if (baseSendExtendDTO.getDelayTime() != null) {
+                sendResult = rocketMQTemplate.syncSendDeliverTimeMills(
+                        destinationBuilder.toString(),
+                        buildMessage(messageSendEvent, baseSendExtendDTO),
+                        baseSendExtendDTO.getDelayTime()
+                );
+            } else {
                 sendResult = rocketMQTemplate.syncSend(
                         destinationBuilder.toString(),
                         buildMessage(messageSendEvent, baseSendExtendDTO),
                         baseSendExtendDTO.getSentTimeout()
                 );
-            } else {
-                byte[] bytes = JSON.toJSONBytes(new MessageWrapper(baseSendExtendDTO.getKeys(), messageSendEvent));
-                org.apache.rocketmq.common.message.Message message = new org.apache.rocketmq.common.message.Message(baseSendExtendDTO.getTopic(), bytes);
-                if (StrUtil.isNotBlank(baseSendExtendDTO.getTag())) {
-                    message.setTags(baseSendExtendDTO.getTag());
-                }
-                String keys = StrUtil.isEmpty(baseSendExtendDTO.getKeys()) ? UUID.randomUUID().toString() : baseSendExtendDTO.getKeys();
-                message.setKeys(keys);
-
-                message.setDeliverTimeMs(deliverTimeStamp); // 设置消息的送达时间，毫秒级 Unix 时间戳
-                DefaultMQProducer defaultMQProducer = rocketMQTemplate.getProducer();
-
-                sendResult = defaultMQProducer.send(message);
             }
+
             log.info("[生产者] {} - 发送结果：{}，消息ID：{}，消息Keys：{}", baseSendExtendDTO.getEventName(), sendResult.getSendStatus(), sendResult.getMsgId(), baseSendExtendDTO.getKeys());
         } catch (Throwable ex) {
             log.error("[生产者] {} - 消息发送失败，消息体：{}", baseSendExtendDTO.getEventName(), JSON.toJSONString(messageSendEvent), ex);
             throw ex;
         }
+
         return sendResult;
     }
 }

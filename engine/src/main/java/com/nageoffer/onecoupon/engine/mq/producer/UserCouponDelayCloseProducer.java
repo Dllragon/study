@@ -75,6 +75,7 @@ public class UserCouponDelayCloseProducer extends AbstractCommonSendProduceTempl
                 .keys(String.valueOf(messageSendEvent.getUserCouponId()))
                 .topic(environment.resolvePlaceholders(EngineRockerMQConstant.USER_COUPON_DELAY_CLOSE_TOPIC_KEY))
                 .sentTimeout(2000L)
+                .delayTime(messageSendEvent.getDelayTime())
                 .build();
     }
 

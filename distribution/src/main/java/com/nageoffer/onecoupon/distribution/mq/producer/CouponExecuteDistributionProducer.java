@@ -82,7 +82,7 @@ public class CouponExecuteDistributionProducer extends AbstractCommonSendProduce
     protected Message<?> buildMessage(CouponTemplateExecuteEvent event, BaseSendExtendDTO requestParam) {
         String keys = StrUtil.isEmpty(requestParam.getKeys()) ? UUID.randomUUID().toString() : requestParam.getKeys();
         return MessageBuilder
-                .withPayload(new MessageWrapper(requestParam.getKeys(), event))
+                .withPayload(new MessageWrapper(keys, event))
                 .setHeader(MessageConst.PROPERTY_KEYS, keys)
                 .setHeader(MessageConst.PROPERTY_TAGS, requestParam.getTag())
                 .build();
