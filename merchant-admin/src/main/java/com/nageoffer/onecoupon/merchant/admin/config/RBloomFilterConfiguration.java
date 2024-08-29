@@ -32,37 +32,30 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.config;
+package com.nageoffer.onecoupon.merchant.admin.config;
 
-import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.redisson.api.RBloomFilter;
+import org.redisson.api.RedissonClient;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
- * 取消预约提醒的布隆过滤器属性配置
+ * 布隆过滤器配置类
  * <p>
- * 作者：优雅
+ * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-20
+ * 开发时间：2024-08-27
  */
-@Data
-@ConfigurationProperties(prefix = CancelRemindBloomFilterProperties.PREFIX)
-public class CancelRemindBloomFilterProperties {
-
-    public static final String PREFIX = "engine.cache.redis.bloom-filter.cancel-remind";
+@Configuration
+public class RBloomFilterConfiguration {
 
     /**
-     * 用户注册布隆过滤器实例名称
+     * 优惠券查询缓存穿透布隆过滤器
      */
-    private String name = "cancel_remind_cache_penetration_bloom_filter";
-
-    /**
-     * 预期插入量
-     */
-    private Long expectedInsertions = 6400L;
-
-    /**
-     * 预期错误概率
-     */
-    private Double falseProbability = 0.03D;
-
+    @Bean
+    public RBloomFilter<String> couponTemplateQueryBloomFilter(RedissonClient redissonClient) {
+        RBloomFilter<String> bloomFilter = redissonClient.getBloomFilter("couponTemplateQueryBloomFilter");
+        bloomFilter.tryInit(640L, 0.001);
+        return bloomFilter;
+    }
 }

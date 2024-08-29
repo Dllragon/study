@@ -63,6 +63,7 @@ import com.nageoffer.onecoupon.merchant.admin.mq.producer.CouponTemplateDelayExe
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
 import com.nageoffer.onecoupon.merchant.admin.service.basics.chain.MerchantAdminChainContext;
 import lombok.RequiredArgsConstructor;
+import org.redisson.api.RBloomFilter;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -94,6 +95,7 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
     private final MerchantAdminChainContext merchantAdminChainContext;
     private final StringRedisTemplate stringRedisTemplate;
     private final CouponTemplateDelayExecuteStatusProducer couponTemplateDelayExecuteStatusProducer;
+    private final RBloomFilter<String> couponTemplateQueryBloomFilter;
 
     @LogRecord(
             success = CREATE_COUPON_TEMPLATE_LOG_CONTENT,
@@ -154,6 +156,9 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
                 .build();
 
         couponTemplateDelayExecuteStatusProducer.sendMessage(templateDelayEvent);
+
+        // 添加优惠券模板 ID 到布隆过滤器
+        couponTemplateQueryBloomFilter.add(String.valueOf(couponTemplateDO.getId()));
     }
 
     @Override

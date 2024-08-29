@@ -36,7 +36,6 @@ package com.nageoffer.onecoupon.engine.config;
 
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RedissonClient;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -48,17 +47,25 @@ import org.springframework.context.annotation.Configuration;
  * 开发时间：2024-07-20
  */
 @Configuration
-@EnableConfigurationProperties(CancelRemindBloomFilterProperties.class)
 public class RBloomFilterConfiguration {
+
+    /**
+     * 优惠券查询缓存穿透布隆过滤器
+     */
+    @Bean
+    public RBloomFilter<String> couponTemplateQueryBloomFilter(RedissonClient redissonClient) {
+        RBloomFilter<String> bloomFilter = redissonClient.getBloomFilter("couponTemplateQueryBloomFilter");
+        bloomFilter.tryInit(640L, 0.001);
+        return bloomFilter;
+    }
 
     /**
      * 防止取消提醒缓存穿透的布隆过滤器
      */
     @Bean
-    public RBloomFilter<String> userRegisterCachePenetrationBloomFilter(RedissonClient redissonClient, CancelRemindBloomFilterProperties properties) {
-        RBloomFilter<String> cachePenetrationBloomFilter = redissonClient.getBloomFilter(properties.getName());
-        cachePenetrationBloomFilter.tryInit(properties.getExpectedInsertions(), properties.getFalseProbability());
-        return cachePenetrationBloomFilter;
+    public RBloomFilter<String> cancelRemindBloomFilter(RedissonClient redissonClient) {
+        RBloomFilter<String> bloomFilter = redissonClient.getBloomFilter("cancelRemindBloomFilter");
+        bloomFilter.tryInit(640L, 0.001);
+        return bloomFilter;
     }
-
 }

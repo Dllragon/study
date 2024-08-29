@@ -79,7 +79,7 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
 
     private final CouponTemplateRemindMapper couponTemplateRemindMapper;
     private final CouponTemplateService couponTemplateService;
-    private final RBloomFilter<String> couponTemplateCancelRemindBloomFilter;
+    private final RBloomFilter<String> cancelRemindBloomFilter;
     private final CouponRemindProducer couponRemindProducer;
     private final StringRedisTemplate stringRedisTemplate;
 
@@ -166,13 +166,13 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
             }
         }
         // 取消提醒这个信息添加到布隆过滤器中
-        couponTemplateCancelRemindBloomFilter.add(String.valueOf(Objects.hash(requestParam.getCouponTemplateId(), requestParam.getUserId(), requestParam.getRemindTime(), requestParam.getType())));
+        cancelRemindBloomFilter.add(String.valueOf(Objects.hash(requestParam.getCouponTemplateId(), requestParam.getUserId(), requestParam.getRemindTime(), requestParam.getType())));
         return true;
     }
 
     @Override
     public boolean isCancelRemind(RemindCouponTemplateDTO requestParam) {
-        if (!couponTemplateCancelRemindBloomFilter.contains(String.valueOf(Objects.hash(requestParam.getCouponTemplateId(), requestParam.getUserId(), requestParam.getRemindTime(), requestParam.getType())))) {
+        if (!cancelRemindBloomFilter.contains(String.valueOf(Objects.hash(requestParam.getCouponTemplateId(), requestParam.getUserId(), requestParam.getRemindTime(), requestParam.getType())))) {
             // 布隆过滤器中不存在，说明没取消提醒，此时已经能挡下大部分请求
             return false;
         }
