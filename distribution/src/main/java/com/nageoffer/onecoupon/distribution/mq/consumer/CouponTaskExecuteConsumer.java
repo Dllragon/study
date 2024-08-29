@@ -43,7 +43,7 @@ import com.nageoffer.onecoupon.distribution.common.enums.CouponTemplateStatusEnu
 import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTaskMapper;
 import com.nageoffer.onecoupon.distribution.mq.base.MessageWrapper;
 import com.nageoffer.onecoupon.distribution.mq.event.CouponTaskExecuteEvent;
-import com.nageoffer.onecoupon.distribution.mq.producer.CouponTemplateExecuteProducer;
+import com.nageoffer.onecoupon.distribution.mq.producer.CouponExecuteDistributionProducer;
 import com.nageoffer.onecoupon.distribution.remote.CouponTemplateRemoteService;
 import com.nageoffer.onecoupon.distribution.remote.dto.resp.CouponTemplateQueryRemoteRespDTO;
 import com.nageoffer.onecoupon.distribution.service.handler.excel.CouponTaskExcelObject;
@@ -77,7 +77,7 @@ public class CouponTaskExecuteConsumer implements RocketMQListener<MessageWrappe
     private final CouponTemplateRemoteService couponTemplateRemoteService;
 
     private final StringRedisTemplate stringRedisTemplate;
-    private final CouponTemplateExecuteProducer couponTemplateExecuteProducer;
+    private final CouponExecuteDistributionProducer couponExecuteDistributionProducer;
 
     @Override
     public void onMessage(MessageWrapper<CouponTaskExecuteEvent> messageWrapper) {
@@ -127,7 +127,7 @@ public class CouponTaskExecuteConsumer implements RocketMQListener<MessageWrappe
                 couponTaskDO,
                 actualRemoteCouponTemplate,
                 stringRedisTemplate,
-                couponTemplateExecuteProducer
+                couponExecuteDistributionProducer
         );
         EasyExcel.read(couponTaskDO.getFileAddress(), CouponTaskExcelObject.class, readExcelDistributionListener).sheet().doRead();
     }

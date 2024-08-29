@@ -32,24 +32,59 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.common.constant;
+package com.nageoffer.onecoupon.distribution.mq.producer;
+
+import cn.hutool.core.util.StrUtil;
+import com.nageoffer.onecoupon.distribution.common.constant.DistributionRocketMQConstant;
+import com.nageoffer.onecoupon.distribution.mq.base.BaseSendExtendDTO;
+import com.nageoffer.onecoupon.distribution.mq.base.MessageWrapper;
+import com.nageoffer.onecoupon.distribution.mq.event.CouponTemplateExecuteEvent;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.common.message.MessageConst;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 /**
- * 商家后管优惠券 RocketMQ 常量类
+ * 优惠券推送任务执行生产者
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-13
  */
-public final class MerchantAdminRocketMQConstant {
+@Slf4j
+@Component
+public class CouponExecuteDistributionProducer extends AbstractCommonSendProduceTemplate<CouponTemplateExecuteEvent> {
 
-    /**
-     * 优惠券模板推送定时执行 Topic Key
-     */
-    public static final String TEMPLATE_TASK_DELAY_TOPIC_KEY = "one-coupon_merchant-admin-service_coupon-task-delay_topic${unique-name:}";
+    private final ConfigurableEnvironment environment;
 
-    /**
-     * 优惠券模板推送定时执行-执行发送开始执行指令消费者组 Key
-     */
-    public static final String TEMPLATE_TASK_SEND_EXECUTE_CG_KEY = "one-coupon_merchant-admin-service_coupon-task-send-execute_cg${unique-name:}";
+    public CouponExecuteDistributionProducer(@Autowired RocketMQTemplate rocketMQTemplate, @Autowired ConfigurableEnvironment environment) {
+        super(rocketMQTemplate);
+        this.environment = environment;
+    }
+
+    @Override
+    protected BaseSendExtendDTO buildBaseSendExtendParam(CouponTemplateExecuteEvent messageSendEvent) {
+        return BaseSendExtendDTO.builder()
+                .eventName("优惠券发放执行")
+                .keys(String.valueOf(messageSendEvent.getCouponTaskId()))
+                .topic(environment.resolvePlaceholders(DistributionRocketMQConstant.TEMPLATE_EXECUTE_DISTRIBUTION_TOPIC_KEY))
+                .sentTimeout(2000L)
+                .build();
+    }
+
+    @Override
+    protected Message<?> buildMessage(CouponTemplateExecuteEvent event, BaseSendExtendDTO requestParam) {
+        String keys = StrUtil.isEmpty(requestParam.getKeys()) ? UUID.randomUUID().toString() : requestParam.getKeys();
+        return MessageBuilder
+                .withPayload(new MessageWrapper(requestParam.getKeys(), event))
+                .setHeader(MessageConst.PROPERTY_KEYS, keys)
+                .setHeader(MessageConst.PROPERTY_TAGS, requestParam.getTag())
+                .build();
+    }
 }

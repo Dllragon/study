@@ -112,7 +112,6 @@
 
 代码入口：
 
-- 延时推送任务消费者：com.nageoffer.onecoupon.distribution.mq.consumer.CouponTaskSendExecuteConsumer#onMessage
 - 用户分发优惠券消费者：com.nageoffer.onecoupon.distribution.mq.consumer.CouponTaskExecuteConsumer#onMessage
 
 业务亮点：

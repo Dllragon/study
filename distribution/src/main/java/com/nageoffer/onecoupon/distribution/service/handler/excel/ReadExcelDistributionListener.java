@@ -43,7 +43,7 @@ import com.nageoffer.onecoupon.distribution.common.constant.DistributionRedisCon
 import com.nageoffer.onecoupon.distribution.common.constant.EngineRedisConstant;
 import com.nageoffer.onecoupon.distribution.dao.entity.CouponTaskDO;
 import com.nageoffer.onecoupon.distribution.mq.event.CouponTemplateExecuteEvent;
-import com.nageoffer.onecoupon.distribution.mq.producer.CouponTemplateExecuteProducer;
+import com.nageoffer.onecoupon.distribution.mq.producer.CouponExecuteDistributionProducer;
 import com.nageoffer.onecoupon.distribution.remote.dto.resp.CouponTemplateQueryRemoteRespDTO;
 import com.nageoffer.onecoupon.distribution.toolkit.StockDecrementReturnCombinedUtil;
 import lombok.Getter;
@@ -67,7 +67,7 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
     private final CouponTemplateQueryRemoteRespDTO couponTemplate;
 
     private final StringRedisTemplate stringRedisTemplate;
-    private final CouponTemplateExecuteProducer couponTemplateExecuteProducer;
+    private final CouponExecuteDistributionProducer couponExecuteDistributionProducer;
 
     @Getter
     private int rowCount = 0;
@@ -131,7 +131,7 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
                 .batchUserSetSize(batchUserSetSize)
                 .distributionEndFlag(Boolean.FALSE)
                 .build();
-        couponTemplateExecuteProducer.sendMessage(couponTemplateExecuteEvent);
+        couponExecuteDistributionProducer.sendMessage(couponTemplateExecuteEvent);
 
         // 同步当前执行进度到缓存
         stringRedisTemplate.opsForValue().set(templateTaskExecuteProgressKey, String.valueOf(rowCount));
@@ -147,6 +147,6 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
                 .couponTemplateConsumeRule(couponTemplate.getConsumeRule())
                 .couponTaskId(String.valueOf(couponTask.getId()))
                 .build();
-        couponTemplateExecuteProducer.sendMessage(couponTemplateExecuteEvent);
+        couponExecuteDistributionProducer.sendMessage(couponTemplateExecuteEvent);
     }
 }
