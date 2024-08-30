@@ -41,6 +41,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -62,6 +63,15 @@ public class QueryCouponsRespDTO {
 
     @Schema(description = "优惠券名称")
     private String couponName;
+
+    @Schema(description = "优惠券金额")
+    private BigDecimal couponAmount;
+
+    @Schema(description = "适用商品信息")
+    private String applicableGoods;
+
+    @Schema(description = "适用店铺信息")
+    private String applicableShop;
 
     @Schema(description = "领取时间")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

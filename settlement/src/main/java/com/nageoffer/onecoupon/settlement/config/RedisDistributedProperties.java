@@ -32,29 +32,31 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.service;
+package com.nageoffer.onecoupon.settlement.config;
 
-import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
-import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
-
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * 查询用户可用优惠券列表接口
+ * 分布式 Redis 缓存配置属性
  * <p>
- * 作者：Henry Wan
+ * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-23
+ * 开发时间：2024-07-14
  */
-public interface CouponQueryService {
+@Data
+@ConfigurationProperties(prefix = RedisDistributedProperties.PREFIX)
+public class RedisDistributedProperties {
+
+    public static final String PREFIX = "framework.cache.redis";
 
     /**
-     * 查询用户可用的优惠券列表
-     *
-     * @param requestParam
-     * @return 可用的优惠券列表
+     * Key 前缀
      */
-    CompletableFuture<List<QueryCouponsRespDTO>> queryUserCoupons(QueryCouponsReqDTO requestParam);
-}
+    private String prefix;
 
+    /**
+     * Key 前缀字符集
+     */
+    private String prefixCharset = "UTF-8";
+}

@@ -35,6 +35,7 @@
 package com.nageoffer.onecoupon.settlement.controller;
 
 import com.nageoffer.onecoupon.framework.result.Result;
+import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
 import com.nageoffer.onecoupon.settlement.handler.AsyncResponseHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,10 +43,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
-import com.nageoffer.onecoupon.settlement.dto.resp.CouponsRespDTO;
 import com.nageoffer.onecoupon.settlement.service.CouponQueryService;
 import org.springframework.web.context.request.async.DeferredResult;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -63,12 +64,13 @@ public class CouponQueryController {
     private final CouponQueryService couponQueryService;
     private final AsyncResponseHandler asyncResponseHandler;
 
-    @Operation(summary = "分页查询用户可/不可用的优惠券列表")
-    @GetMapping("/api/settlement/coupon-query/page")
-    public DeferredResult<Result<CouponsRespDTO>> pageQueryAvailableCoupons(QueryCouponsReqDTO requestParam) {
+    @Operation(summary = "查询用户可用的优惠券列表")
+    @GetMapping("/api/settlement/coupon-query")
+    public DeferredResult<Result<List<QueryCouponsRespDTO>>> pageQueryAvailableCoupons(QueryCouponsReqDTO requestParam) {
+        // 调用服务方法，获取异步结果
+        CompletableFuture<List<QueryCouponsRespDTO>> couponsFuture = couponQueryService.queryUserCoupons(requestParam);
 
-        // 调用服务方法
-        CompletableFuture<CouponsRespDTO> couponsFuture = couponQueryService.pageQueryUserCoupons(requestParam);
+        // 使用异步响应处理器返回结果
         return asyncResponseHandler.createDeferredResult(couponsFuture);
     }
 }
