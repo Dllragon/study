@@ -37,7 +37,9 @@ package com.nageoffer.onecoupon.distribution.mq.consumer;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.map.MapUtil;
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
@@ -47,8 +49,10 @@ import com.nageoffer.onecoupon.distribution.common.enums.CouponSourceEnum;
 import com.nageoffer.onecoupon.distribution.common.enums.CouponStatusEnum;
 import com.nageoffer.onecoupon.distribution.common.enums.CouponTaskStatusEnum;
 import com.nageoffer.onecoupon.distribution.dao.entity.CouponTaskDO;
+import com.nageoffer.onecoupon.distribution.dao.entity.CouponTaskFailDO;
 import com.nageoffer.onecoupon.distribution.dao.entity.CouponTemplateDO;
 import com.nageoffer.onecoupon.distribution.dao.entity.UserCouponDO;
+import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTaskFailMapper;
 import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTaskMapper;
 import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTemplateMapper;
 import com.nageoffer.onecoupon.distribution.dao.mapper.UserCouponMapper;
@@ -90,6 +94,7 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
     private final UserCouponMapper userCouponMapper;
     private final CouponTemplateMapper couponTemplateMapper;
     private final CouponTaskMapper couponTaskMapper;
+    private final CouponTaskFailMapper couponTaskFailMapper;
     private final StringRedisTemplate stringRedisTemplate;
 
     private final static int BATCH_USER_COUPON_SIZE = 5000;
@@ -112,15 +117,30 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
             event.setBatchUserSetSize(batchUserIdsSize.intValue());
 
             decrementCouponTemplateStockAndSaveUserCouponList(event);
-            List<String> batchUserIds = stringRedisTemplate.opsForSet().pop(batchUserSetKey, Integer.MAX_VALUE);
+            List<String> batchUserMaps = stringRedisTemplate.opsForSet().pop(batchUserSetKey, Integer.MAX_VALUE);
             // 此时待保存入库用户优惠券列表如果还有值，就意味着可能库存不足引起的
-            if (CollUtil.isNotEmpty(batchUserIds)) {
-                // TODO 应该添加到 t_coupon_task_fail 并标记错误原因
+            if (CollUtil.isNotEmpty(batchUserMaps)) {
+                // 添加到 t_coupon_task_fail 并标记错误原因，方便后续查看未成功发送的原因和记录
+                List<CouponTaskFailDO> couponTaskFailDOList = new ArrayList<>(batchUserMaps.size());
+                for (String batchUserMapStr : batchUserMaps) {
+                    Map<Object, Object> objectMap = MapUtil.builder()
+                            .put("rowNum", JSON.parseObject(batchUserMapStr).get("rowNum"))
+                            .put("cause", "用户已领取该优惠券")
+                            .build();
+                    CouponTaskFailDO couponTaskFailDO = CouponTaskFailDO.builder()
+                            .batchId(event.getCouponTaskBatchId())
+                            .jsonObject(com.alibaba.fastjson.JSON.toJSONString(objectMap))
+                            .build();
+                    couponTaskFailDOList.add(couponTaskFailDO);
+                }
+
+                // 添加到 t_coupon_task_fail 并标记错误原因
+                couponTaskFailMapper.insert(couponTaskFailDOList);
             }
 
             // 确保所有用户都已经接到优惠券后，设置优惠券推送任务完成时间
             CouponTaskDO couponTaskDO = CouponTaskDO.builder()
-                    .id(Long.parseLong(event.getCouponTaskId()))
+                    .id(event.getCouponTaskId())
                     .status(CouponTaskStatusEnum.SUCCESS.getStatus())
                     .completionTime(new Date())
                     .build();
@@ -137,18 +157,20 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
 
         // 获取 Redis 中待保存入库用户优惠券列表
         String batchUserSetKey = String.format(DistributionRedisConstant.TEMPLATE_TASK_EXECUTE_BATCH_USER_KEY, event.getCouponTaskId());
-        List<String> batchUserIds = stringRedisTemplate.opsForSet().pop(batchUserSetKey, couponTemplateStock);
+        List<String> batchUserMaps = stringRedisTemplate.opsForSet().pop(batchUserSetKey, couponTemplateStock);
 
         // 因为 batchUserIds 数据较多，ArrayList 会进行数次扩容，为了避免额外性能消耗，直接初始化 batchUserIds 大小的数组
-        List<UserCouponDO> userCouponDOList = new ArrayList<>(batchUserIds.size());
+        List<UserCouponDO> userCouponDOList = new ArrayList<>(batchUserMaps.size());
         Date now = new Date();
 
         // 构建 userCouponDOList 用户优惠券批量数组
-        for (String each : batchUserIds) {
+        for (String each : batchUserMaps) {
+            JSONObject userIdAndRowNumJsonObject = JSON.parseObject(each);
             DateTime validEndTime = DateUtil.offsetHour(now, JSON.parseObject(event.getCouponTemplateConsumeRule()).getInteger("validityPeriod"));
             UserCouponDO userCouponDO = UserCouponDO.builder()
-                    .couponTemplateId(Long.parseLong(event.getCouponTemplateId()))
-                    .userId(Long.parseLong(each))
+                    .couponTemplateId(event.getCouponTemplateId())
+                    .rowNum(userIdAndRowNumJsonObject.getInteger("rowNum"))
+                    .userId(userIdAndRowNumJsonObject.getLong("userId"))
                     .receiveTime(now)
                     .receiveCount(1) // 代表第一次领取该优惠券
                     .validStartTime(now)
@@ -163,21 +185,21 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
         }
 
         // 平台优惠券每个用户限领一次。批量新增用户优惠券记录，底层通过递归方式直到全部新增成功
-        batchSaveUserCouponList(Long.parseLong(event.getCouponTemplateId()), userCouponDOList);
+        batchSaveUserCouponList(event.getCouponTemplateId(), event.getCouponTaskBatchId(), userCouponDOList);
 
         // TODO 将这些优惠券添加到用户的领券记录中
     }
 
     private Integer decrementCouponTemplateStock(CouponTemplateExecuteEvent event, Integer decrementStockSize) {
         // 通过乐观机制自减优惠券库存记录
-        String couponTemplateId = event.getCouponTemplateId();
-        int decremented = couponTemplateMapper.decrementCouponTemplateStock(event.getShopNumber(), Long.parseLong(couponTemplateId), decrementStockSize);
+        Long couponTemplateId = event.getCouponTemplateId();
+        int decremented = couponTemplateMapper.decrementCouponTemplateStock(event.getShopNumber(), couponTemplateId, decrementStockSize);
 
         // 如果修改记录失败，意味着优惠券库存已不足，需要重试获取到可自减的库存数值
         if (!SqlHelper.retBool(decremented)) {
             LambdaQueryWrapper<CouponTemplateDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateDO.class)
                     .eq(CouponTemplateDO::getShopNumber, event.getShopNumber())
-                    .eq(CouponTemplateDO::getId, Long.parseLong(couponTemplateId));
+                    .eq(CouponTemplateDO::getId, couponTemplateId);
             CouponTemplateDO couponTemplateDO = couponTemplateMapper.selectOne(queryWrapper);
             return decrementCouponTemplateStock(event, couponTemplateDO.getStock());
         }
@@ -185,7 +207,7 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
         return decrementStockSize;
     }
 
-    private void batchSaveUserCouponList(Long couponTemplateId, List<UserCouponDO> userCouponDOList) {
+    private void batchSaveUserCouponList(Long couponTemplateId, Long couponTaskBatchId, List<UserCouponDO> userCouponDOList) {
         // MyBatis-Plus 批量执行用户优惠券记录
         try {
             userCouponMapper.insert(userCouponDOList, userCouponDOList.size());
@@ -195,6 +217,10 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
                 // 查询已经存在的用户优惠券记录
                 List<Long> userIds = userCouponDOList.stream().map(UserCouponDO::getUserId).toList();
                 List<UserCouponDO> existingUserCoupons = getExistingUserCoupons(couponTemplateId, userIds);
+
+                // 添加到 t_coupon_task_fail 并标记错误原因，方便后续查看未成功发送的原因和记录
+                List<CouponTaskFailDO> couponTaskFailDOList = new ArrayList<>(existingUserCoupons.size());
+
                 // 遍历已经存在的集合，获取 userId，并从需要新增的集合中移除匹配的元素
                 for (UserCouponDO each : existingUserCoupons) {
                     Long userId = each.getUserId();
@@ -205,14 +231,27 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
                         UserCouponDO item = iterator.next();
                         if (item.getUserId().equals(userId)) {
                             iterator.remove();
-                            // TODO 应该添加到 t_coupon_task_fail 并标记错误原因
                         }
                     }
+
+                    // 添加到 t_coupon_task_fail 并标记错误原因，方便后续查看未成功发送的原因和记录
+                    Map<Object, Object> objectMap = MapUtil.builder()
+                            .put("rowNum", each.getRowNum())
+                            .put("cause", "用户已领取该优惠券")
+                            .build();
+                    CouponTaskFailDO couponTaskFailDO = CouponTaskFailDO.builder()
+                            .batchId(couponTaskBatchId)
+                            .jsonObject(com.alibaba.fastjson.JSON.toJSONString(objectMap))
+                            .build();
+                    couponTaskFailDOList.add(couponTaskFailDO);
                 }
+
+                // 添加到 Excel 任务失败记录表
+                couponTaskFailMapper.insert(couponTaskFailDOList);
 
                 // 采用递归方式重试，直到不存在重复的记录为止
                 if (CollUtil.isNotEmpty(userCouponDOList)) {
-                    batchSaveUserCouponList(couponTemplateId, userCouponDOList);
+                    batchSaveUserCouponList(couponTemplateId, couponTaskBatchId, userCouponDOList);
                 }
             }
         }

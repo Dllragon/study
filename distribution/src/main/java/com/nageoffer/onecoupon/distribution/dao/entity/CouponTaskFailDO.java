@@ -32,78 +32,42 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.mq.event;
+package com.nageoffer.onecoupon.distribution.dao.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 优惠券模板任务执行事件
+ * 优惠券模板失败记录数据库持久层实体
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-13
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-08-31
  */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CouponTemplateExecuteEvent {
+@Builder
+@TableName("t_coupon_task_fail")
+public class CouponTaskFailDO {
 
     /**
-     * 优惠券分发任务id
+     * id
      */
-    private Long couponTaskId;
+    private Long id;
 
     /**
-     * 优惠券分发任务批量id
+     * 批量id
      */
-    private Long couponTaskBatchId;
+    private Long batchId;
 
     /**
-     * 通知方式，可组合使用 0：站内信 1：弹框推送 2：邮箱 3：短信
+     * JSON字符串，存储失败原因，Excel 行数等信息
      */
-    private String notifyType;
-
-    /**
-     * 店铺编号
-     */
-    private Long shopNumber;
-
-    /**
-     * 优惠券模板id
-     */
-    private Long couponTemplateId;
-
-    /**
-     * 消耗规则
-     */
-    private String couponTemplateConsumeRule;
-
-    /**
-     * 用户id
-     */
-    private String userId;
-
-    /**
-     * 手机号
-     */
-    private String phone;
-
-    /**
-     * 邮箱
-     */
-    private String mail;
-
-    /**
-     * 批量保存用户优惠券 Set 长度，默认满 5000 才会批量保存数据库
-     */
-    private Integer batchUserSetSize;
-
-    /**
-     * 分发结束标识
-     */
-    private Boolean distributionEndFlag;
+    @TableField(value = "`json_object`")
+    private String jsonObject;
 }

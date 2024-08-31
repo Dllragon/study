@@ -40,6 +40,7 @@ import com.alibaba.fastjson2.JSON;
 import com.nageoffer.onecoupon.distribution.common.constant.DistributionRocketMQConstant;
 import com.nageoffer.onecoupon.distribution.common.enums.CouponTaskStatusEnum;
 import com.nageoffer.onecoupon.distribution.common.enums.CouponTemplateStatusEnum;
+import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTaskFailMapper;
 import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTaskMapper;
 import com.nageoffer.onecoupon.distribution.mq.base.MessageWrapper;
 import com.nageoffer.onecoupon.distribution.mq.event.CouponTaskExecuteEvent;
@@ -75,6 +76,7 @@ public class CouponTaskExecuteConsumer implements RocketMQListener<MessageWrappe
 
     private final CouponTaskMapper couponTaskMapper;
     private final CouponTemplateRemoteService couponTemplateRemoteService;
+    private final CouponTaskFailMapper couponTaskFailMapper;
 
     private final StringRedisTemplate stringRedisTemplate;
     private final CouponExecuteDistributionProducer couponExecuteDistributionProducer;
@@ -126,6 +128,7 @@ public class CouponTaskExecuteConsumer implements RocketMQListener<MessageWrappe
         ReadExcelDistributionListener readExcelDistributionListener = new ReadExcelDistributionListener(
                 couponTaskDO,
                 actualRemoteCouponTemplate,
+                couponTaskFailMapper,
                 stringRedisTemplate,
                 couponExecuteDistributionProducer
         );
