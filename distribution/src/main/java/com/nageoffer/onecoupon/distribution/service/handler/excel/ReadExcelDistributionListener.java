@@ -70,20 +70,19 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
     private final CouponExecuteDistributionProducer couponExecuteDistributionProducer;
 
     @Getter
-    private int rowCount = 0;
+    private int rowCount = 1;
     private final static String STOCK_DECREMENT_AND_BATCH_SAVE_USER_RECORD_LUA_PATH = "lua/stock_decrement_and_batch_save_user_record.lua";
     private final static int BATCH_USER_COUPON_SIZE = 5000;
 
     @Override
     public void invoke(CouponTaskExcelObject data, AnalysisContext context) {
-        ++rowCount;
         String couponTaskId = String.valueOf(couponTask.getId());
 
         // 获取当前进度，判断是否已经执行过。如果已执行，则跳过即可，防止执行到一半应用宕机
         String templateTaskExecuteProgressKey = String.format(DistributionRedisConstant.TEMPLATE_TASK_EXECUTE_PROGRESS_KEY, couponTaskId);
         String progress = stringRedisTemplate.opsForValue().get(templateTaskExecuteProgressKey);
-        if (StrUtil.isNotBlank(progress) && Integer.parseInt(progress) > rowCount) {
-            rowCount = Integer.parseInt(progress);
+        if (StrUtil.isNotBlank(progress) && Integer.parseInt(progress) >= rowCount) {
+            ++rowCount;
             return;
         }
 
@@ -135,6 +134,7 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
 
         // 同步当前执行进度到缓存
         stringRedisTemplate.opsForValue().set(templateTaskExecuteProgressKey, String.valueOf(rowCount));
+        ++rowCount;
     }
 
     @Override
