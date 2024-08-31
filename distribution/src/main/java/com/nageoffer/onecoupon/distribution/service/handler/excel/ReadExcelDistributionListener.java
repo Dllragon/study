@@ -46,10 +46,10 @@ import com.nageoffer.onecoupon.distribution.common.constant.DistributionRedisCon
 import com.nageoffer.onecoupon.distribution.common.constant.EngineRedisConstant;
 import com.nageoffer.onecoupon.distribution.dao.entity.CouponTaskDO;
 import com.nageoffer.onecoupon.distribution.dao.entity.CouponTaskFailDO;
+import com.nageoffer.onecoupon.distribution.dao.entity.CouponTemplateDO;
 import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTaskFailMapper;
 import com.nageoffer.onecoupon.distribution.mq.event.CouponTemplateExecuteEvent;
 import com.nageoffer.onecoupon.distribution.mq.producer.CouponExecuteDistributionProducer;
-import com.nageoffer.onecoupon.distribution.remote.dto.resp.CouponTemplateQueryRemoteRespDTO;
 import com.nageoffer.onecoupon.distribution.toolkit.StockDecrementReturnCombinedUtil;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -71,7 +71,7 @@ import java.util.Map;
 public class ReadExcelDistributionListener extends AnalysisEventListener<CouponTaskExcelObject> {
 
     private final CouponTaskDO couponTaskDO;
-    private final CouponTemplateQueryRemoteRespDTO couponTemplate;
+    private final CouponTemplateDO couponTemplateDO;
     private final CouponTaskFailMapper couponTaskFailMapper;
 
     private final StringRedisTemplate stringRedisTemplate;
@@ -103,7 +103,7 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
         });
 
         // 执行 LUA 脚本进行扣减库存以及增加 Redis 用户领券记录
-        String couponTemplateKey = String.format(EngineRedisConstant.COUPON_TEMPLATE_KEY, couponTemplate.getId());
+        String couponTemplateKey = String.format(EngineRedisConstant.COUPON_TEMPLATE_KEY, couponTemplateDO.getId());
         String batchUserSetKey = String.format(DistributionRedisConstant.TEMPLATE_TASK_EXECUTE_BATCH_USER_KEY, couponTaskId);
         Map<Object, Object> userRowNumMap = MapUtil.builder()
                 .put("userId", data.getUserId())
@@ -149,8 +149,8 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
                 .couponTaskId(couponTaskId)
                 .notifyType(couponTaskDO.getNotifyType())
                 .shopNumber(couponTaskDO.getShopNumber())
-                .couponTemplateId(Long.parseLong(couponTemplate.getId()))
-                .couponTemplateConsumeRule(couponTemplate.getConsumeRule())
+                .couponTemplateId(couponTemplateDO.getId())
+                .couponTemplateConsumeRule(couponTemplateDO.getConsumeRule())
                 .batchUserSetSize(batchUserSetSize)
                 .distributionEndFlag(Boolean.FALSE)
                 .build();
@@ -167,8 +167,8 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
         CouponTemplateExecuteEvent couponTemplateExecuteEvent = CouponTemplateExecuteEvent.builder()
                 .distributionEndFlag(Boolean.TRUE) // 设置解析完成标识
                 .shopNumber(couponTaskDO.getShopNumber())
-                .couponTemplateId(Long.parseLong(couponTemplate.getId()))
-                .couponTemplateConsumeRule(couponTemplate.getConsumeRule())
+                .couponTemplateId(couponTemplateDO.getId())
+                .couponTemplateConsumeRule(couponTemplateDO.getConsumeRule())
                 .couponTaskId(couponTaskDO.getId())
                 .build();
         couponExecuteDistributionProducer.sendMessage(couponTemplateExecuteEvent);

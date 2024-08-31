@@ -37,20 +37,19 @@ package com.nageoffer.onecoupon.distribution.mq.consumer;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson2.JSON;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.onecoupon.distribution.common.constant.DistributionRocketMQConstant;
 import com.nageoffer.onecoupon.distribution.common.enums.CouponTaskStatusEnum;
 import com.nageoffer.onecoupon.distribution.common.enums.CouponTemplateStatusEnum;
+import com.nageoffer.onecoupon.distribution.dao.entity.CouponTemplateDO;
 import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTaskFailMapper;
 import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTaskMapper;
+import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTemplateMapper;
 import com.nageoffer.onecoupon.distribution.mq.base.MessageWrapper;
 import com.nageoffer.onecoupon.distribution.mq.event.CouponTaskExecuteEvent;
 import com.nageoffer.onecoupon.distribution.mq.producer.CouponExecuteDistributionProducer;
-import com.nageoffer.onecoupon.distribution.remote.CouponTemplateRemoteService;
-import com.nageoffer.onecoupon.distribution.remote.dto.resp.CouponTemplateQueryRemoteRespDTO;
 import com.nageoffer.onecoupon.distribution.service.handler.excel.CouponTaskExcelObject;
 import com.nageoffer.onecoupon.distribution.service.handler.excel.ReadExcelDistributionListener;
-import com.nageoffer.onecoupon.framework.exception.RemoteException;
-import com.nageoffer.onecoupon.framework.result.Result;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -75,7 +74,7 @@ import org.springframework.stereotype.Component;
 public class CouponTaskExecuteConsumer implements RocketMQListener<MessageWrapper<CouponTaskExecuteEvent>> {
 
     private final CouponTaskMapper couponTaskMapper;
-    private final CouponTemplateRemoteService couponTemplateRemoteService;
+    private final CouponTemplateMapper couponTemplateMapper;
     private final CouponTaskFailMapper couponTaskFailMapper;
 
     private final StringRedisTemplate stringRedisTemplate;
@@ -94,40 +93,21 @@ public class CouponTaskExecuteConsumer implements RocketMQListener<MessageWrappe
             return;
         }
 
-        // var 无法推断没有初始化的变量
-        Result<CouponTemplateQueryRemoteRespDTO> remoteCouponTemplateResult;
-        try {
-            // 调用引擎服务获取优惠券模板信息
-            remoteCouponTemplateResult = couponTemplateRemoteService.pageQueryCouponTemplate(
-                    String.valueOf(couponTaskDO.getShopNumber()),
-                    String.valueOf(couponTaskDO.getCouponTemplateId())
-            );
-
-            // 判断远程调用优惠券模板信息数据是否为空或调用失败
-            if (remoteCouponTemplateResult == null) {
-                log.warn("[消费者] 优惠券推送任务正式执行 - 调用引擎服务层失败，将会重试调用");
-                throw new RemoteException("调用引擎服务层优惠券模板返回空");
-            } else if (remoteCouponTemplateResult.isFail()) {
-                log.error("[消费者] 优惠券推送任务正式执行 - 调用引擎服务层失败，返回错误信息：{}", remoteCouponTemplateResult.getMessage());
-                return;
-            }
-        } catch (Throwable ex) {
-            log.warn("[消费者] 优惠券推送任务正式执行 - 调用引擎服务层失败，将会重试调用", ex);
-            throw ex;
-        }
-
         // 判断优惠券状态是否正确
-        var actualRemoteCouponTemplate = remoteCouponTemplateResult.getData();
-        var status = actualRemoteCouponTemplate.getStatus();
+        var queryWrapper = Wrappers.lambdaQuery(CouponTemplateDO.class)
+                .eq(CouponTemplateDO::getId, couponTaskDO.getCouponTemplateId())
+                .eq(CouponTemplateDO::getShopNumber, couponTaskDO.getShopNumber());
+        var couponTemplateDO = couponTemplateMapper.selectOne(queryWrapper);
+        var status = couponTemplateDO.getStatus();
         if (ObjectUtil.notEqual(status, CouponTemplateStatusEnum.ACTIVE.getStatus())) {
-            log.error("[消费者] 优惠券推送任务正式执行 - 优惠券ID：{}，优惠券模板状态：{}", actualRemoteCouponTemplate.getId(), status);
+            log.error("[消费者] 优惠券推送任务正式执行 - 优惠券ID：{}，优惠券模板状态：{}", couponTaskDO.getCouponTemplateId(), status);
             return;
         }
 
         // 正式开始执行优惠券推送任务
         ReadExcelDistributionListener readExcelDistributionListener = new ReadExcelDistributionListener(
                 couponTaskDO,
-                actualRemoteCouponTemplate,
+                couponTemplateDO,
                 couponTaskFailMapper,
                 stringRedisTemplate,
                 couponExecuteDistributionProducer
