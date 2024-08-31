@@ -55,7 +55,12 @@ public class CouponTemplateExecuteEvent {
     /**
      * 优惠券分发任务id
      */
-    private String couponTaskId;
+    private Long couponTaskId;
+
+    /**
+     * 优惠券分发任务批量id
+     */
+    private Long couponTaskBatchId;
 
     /**
      * 通知方式，可组合使用 0：站内信 1：弹框推送 2：邮箱 3：短信
@@ -70,7 +75,7 @@ public class CouponTemplateExecuteEvent {
     /**
      * 优惠券模板id
      */
-    private String couponTemplateId;
+    private Long couponTemplateId;
 
     /**
      * 消耗规则
@@ -95,7 +100,7 @@ public class CouponTemplateExecuteEvent {
     /**
      * 批量保存用户优惠券 Set 长度，默认满 5000 才会批量保存数据库
      */
-    private Long batchUserSetSize;
+    private Integer batchUserSetSize;
 
     /**
      * 分发结束标识

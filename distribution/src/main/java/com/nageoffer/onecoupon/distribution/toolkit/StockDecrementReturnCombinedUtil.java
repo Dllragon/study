@@ -66,7 +66,7 @@ public class StockDecrementReturnCombinedUtil {
     /**
      * 从组合的int中提取第二个字段（1到5000之间的数字）
      */
-    public static long extractSecondField(long combined) {
+    public static int extractSecondField(int combined) {
         return combined & ((1 << SECOND_FIELD_BITS) - 1);
     }
 }

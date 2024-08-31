@@ -32,33 +32,17 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.remote.dto.req;
+package com.nageoffer.onecoupon.distribution.dao.mapper;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.nageoffer.onecoupon.distribution.dao.entity.CouponTaskFailDO;
 
 /**
- * 优惠券模板查询接口请求参数实体
+ * 优惠券模板失败记录数据库持久层
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-08-31
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class CouponTemplateQueryRemoteReqDTO {
-
-    /**
-     * 店铺编号
-     */
-    private String shopNumber;
-
-    /**
-     * 优惠券模板id
-     */
-    private String couponTemplateId;
+public interface CouponTaskFailMapper extends BaseMapper<CouponTaskFailDO> {
 }

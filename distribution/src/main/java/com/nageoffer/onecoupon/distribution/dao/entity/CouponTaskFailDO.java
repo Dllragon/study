@@ -32,82 +32,42 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.remote.dto.resp;
+package com.nageoffer.onecoupon.distribution.dao.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-
-import java.util.Date;
+import lombok.NoArgsConstructor;
 
 /**
- * 优惠券模板查询接口返回参数实体
+ * 优惠券模板失败记录数据库持久层实体
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-08-31
  */
 @Data
-public class CouponTemplateQueryRemoteRespDTO {
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@TableName("t_coupon_task_fail")
+public class CouponTaskFailDO {
 
     /**
-     * 优惠券id
+     * id
      */
-    private String id;
+    private Long id;
 
     /**
-     * 优惠券名称
+     * 批量id
      */
-    private String name;
+    private Long batchId;
 
     /**
-     * 优惠券来源 0：店铺券 1：平台券
+     * JSON字符串，存储失败原因，Excel 行数等信息
      */
-    private Integer source;
-
-    /**
-     * 优惠对象 0：商品专属 1：全店通用
-     */
-    private Integer target;
-
-    /**
-     * 优惠商品编码
-     */
-    private String goods;
-
-    /**
-     * 优惠类型 0：立减券 1：满减券 2：折扣券
-     */
-    private Integer type;
-
-    /**
-     * 有效期开始时间
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date validStartTime;
-
-    /**
-     * 有效期结束时间
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date validEndTime;
-
-    /**
-     * 库存
-     */
-    private Integer stock;
-
-    /**
-     * 领取规则
-     */
-    private String receiveRule;
-
-    /**
-     * 消耗规则
-     */
-    private String consumeRule;
-
-    /**
-     * 优惠券状态 0：生效中 1：已结束
-     */
-    private Integer status;
+    @TableField(value = "`json_object`")
+    private String jsonObject;
 }
