@@ -32,24 +32,31 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution;
+package com.nageoffer.onecoupon.distribution.common.enums;
 
-import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
- * 分发模块｜负责按批次分发用户优惠券，可提供应用弹框推送、站内信或短信通知等
+ * 优惠券使用状态枚举类
  * <p>
  * 作者：马丁
- * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-08
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-15
  */
-@SpringBootApplication
-@MapperScan("com.nageoffer.onecoupon.distribution.dao.mapper")
-public class DistributionApplication {
+@RequiredArgsConstructor
+public enum CouponStatusEnum {
 
-    public static void main(String[] args) {
-        SpringApplication.run(DistributionApplication.class, args);
-    }
+    /**
+     * 生效中
+     */
+    EFFECTIVE(0),
+
+    /**
+     * 已结束
+     */
+    ENDED(1);
+
+    @Getter
+    private final int type;
 }

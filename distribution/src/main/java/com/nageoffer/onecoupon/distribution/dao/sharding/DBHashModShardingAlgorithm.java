@@ -32,87 +32,71 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.task;
+package com.nageoffer.onecoupon.distribution.dao.sharding;
 
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.IdUtil;
-import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.annotation.ExcelProperty;
-import com.alibaba.excel.annotation.write.style.ColumnWidth;
-import com.alibaba.excel.util.ListUtils;
-import com.github.javafaker.Faker;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.junit.jupiter.api.Test;
+import cn.hutool.core.lang.Singleton;
+import lombok.Getter;
+import org.apache.shardingsphere.infra.util.exception.ShardingSpherePreconditions;
+import org.apache.shardingsphere.sharding.api.sharding.standard.PreciseShardingValue;
+import org.apache.shardingsphere.sharding.api.sharding.standard.RangeShardingValue;
+import org.apache.shardingsphere.sharding.api.sharding.standard.StandardShardingAlgorithm;
+import org.apache.shardingsphere.sharding.exception.algorithm.sharding.ShardingAlgorithmInitializationException;
 
-import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
+import java.util.Properties;
 
 /**
- * 百万 Excel 文件生成单元测试
+ * 基于 HashMod 方式自定义分库算法
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-12
+ * 开发时间：2024-07-16
  */
-public final class ExcelGenerateTests {
+public final class DBHashModShardingAlgorithm implements StandardShardingAlgorithm<Long> {
 
-    /**
-     * 写入优惠券推送示例 Excel 的数据，自行控制即可
-     */
-    private final int writeNum = 5001;
-    private final Faker faker = new Faker(Locale.CHINA);
-    private final String excelPath = Paths.get("").toAbsolutePath().getParent() + "/tmp";
+    @Getter
+    private Properties props;
 
-    @Test
-    public void testExcelGenerate() {
-        if (!FileUtil.exist(excelPath)) {
-            FileUtil.mkdir(excelPath);
+    private int shardingCount;
+    private static final String SHARDING_COUNT_KEY = "sharding-count";
+
+    @Override
+    public String doSharding(Collection<String> availableTargetNames, PreciseShardingValue<Long> shardingValue) {
+        int mod = getShardingMod(shardingValue.getValue(), availableTargetNames.size());
+        int index = 0;
+        for (String targetName : availableTargetNames) {
+            if (index == mod) {
+                return targetName;
+            }
+            index++;
         }
-        String fileName = excelPath + "/oneCoupon任务推送Excel.xlsx";
-        EasyExcel.write(fileName, ExcelGenerateDemoData.class).sheet("优惠券推送列表").doWrite(data());
+        throw new IllegalArgumentException("No target found for value: " + shardingValue.getValue());
     }
 
-    private List<ExcelGenerateDemoData> data() {
-        List<ExcelGenerateDemoData> list = ListUtils.newArrayList();
-        for (int i = 0; i < writeNum; i++) {
-            ExcelGenerateDemoData data = ExcelGenerateDemoData.builder()
-                    .mail(faker.number().digits(10) + "@163.com")
-                    .phone(faker.phoneNumber().cellPhone())
-                    .userId(IdUtil.getSnowflakeNextIdStr())
-                    .build();
-            list.add(data);
-        }
-        return list;
+    @Override
+    public Collection<String> doSharding(Collection<String> availableTargetNames, RangeShardingValue<Long> shardingValue) {
+        // 暂无范围分片场景，默认返回空
+        return List.of();
     }
 
+    @Override
+    public void init(Properties props) {
+        this.props = props;
+        shardingCount = getShardingCount(props);
+        Singleton.put(this);
+    }
 
-    /**
-     * 百万 Excel 生成器示例数据模型
-     * <p>
-     * 作者：马丁
-     * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
-     * 开发时间：2024-07-12
-     */
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    static class ExcelGenerateDemoData {
+    public int getShardingMod(long id, int availableTargetSize) {
+        return (int) hashShardingValue(id) % shardingCount / (shardingCount / availableTargetSize);
+    }
 
-        @ColumnWidth(30)
-        @ExcelProperty("用户ID")
-        private String userId;
+    private int getShardingCount(final Properties props) {
+        ShardingSpherePreconditions.checkState(props.containsKey(SHARDING_COUNT_KEY), () -> new ShardingAlgorithmInitializationException(getType(), "Sharding count cannot be null."));
+        return Integer.parseInt(props.getProperty(SHARDING_COUNT_KEY));
+    }
 
-        @ColumnWidth(20)
-        @ExcelProperty("手机号")
-        private String phone;
-
-        @ColumnWidth(30)
-        @ExcelProperty("邮箱")
-        private String mail;
+    private long hashShardingValue(final Comparable<?> shardingValue) {
+        return Math.abs((long) shardingValue.hashCode());
     }
 }

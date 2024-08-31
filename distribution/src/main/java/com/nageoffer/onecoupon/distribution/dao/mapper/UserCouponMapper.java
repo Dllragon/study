@@ -32,24 +32,20 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution;
+package com.nageoffer.onecoupon.distribution.dao.mapper;
 
-import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.nageoffer.onecoupon.distribution.dao.entity.UserCouponDO;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
- * 分发模块｜负责按批次分发用户优惠券，可提供应用弹框推送、站内信或短信通知等
+ * 用户优惠券数据库持久层
  * <p>
  * 作者：马丁
- * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-08
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-14
  */
-@SpringBootApplication
-@MapperScan("com.nageoffer.onecoupon.distribution.dao.mapper")
-public class DistributionApplication {
-
-    public static void main(String[] args) {
-        SpringApplication.run(DistributionApplication.class, args);
-    }
+public interface UserCouponMapper extends BaseMapper<UserCouponDO> {
 }
