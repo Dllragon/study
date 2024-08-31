@@ -109,7 +109,7 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
         if (event.getDistributionEndFlag()) {
             String batchUserSetKey = String.format(DistributionRedisConstant.TEMPLATE_TASK_EXECUTE_BATCH_USER_KEY, event.getCouponTaskId());
             Long batchUserIdsSize = stringRedisTemplate.opsForSet().size(batchUserSetKey);
-            event.setBatchUserSetSize(batchUserIdsSize);
+            event.setBatchUserSetSize(batchUserIdsSize.intValue());
 
             decrementCouponTemplateStockAndSaveUserCouponList(event);
             List<String> batchUserIds = stringRedisTemplate.opsForSet().pop(batchUserSetKey, Integer.MAX_VALUE);
@@ -130,8 +130,8 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
 
     private void decrementCouponTemplateStockAndSaveUserCouponList(CouponTemplateExecuteEvent event) {
         // 如果等于 0 意味着已经没有了库存，直接返回即可
-        Long couponTemplateStock = decrementCouponTemplateStock(event, event.getBatchUserSetSize());
-        if (couponTemplateStock <= 0L) {
+        Integer couponTemplateStock = decrementCouponTemplateStock(event, event.getBatchUserSetSize());
+        if (couponTemplateStock <= 0) {
             return;
         }
 
@@ -164,9 +164,11 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
 
         // 平台优惠券每个用户限领一次。批量新增用户优惠券记录，底层通过递归方式直到全部新增成功
         batchSaveUserCouponList(Long.parseLong(event.getCouponTemplateId()), userCouponDOList);
+
+        // TODO 将这些优惠券添加到用户的领券记录中
     }
 
-    private Long decrementCouponTemplateStock(CouponTemplateExecuteEvent event, Long decrementStockSize) {
+    private Integer decrementCouponTemplateStock(CouponTemplateExecuteEvent event, Integer decrementStockSize) {
         // 通过乐观机制自减优惠券库存记录
         String couponTemplateId = event.getCouponTemplateId();
         int decremented = couponTemplateMapper.decrementCouponTemplateStock(event.getShopNumber(), Long.parseLong(couponTemplateId), decrementStockSize);
@@ -177,7 +179,7 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
                     .eq(CouponTemplateDO::getShopNumber, event.getShopNumber())
                     .eq(CouponTemplateDO::getId, Long.parseLong(couponTemplateId));
             CouponTemplateDO couponTemplateDO = couponTemplateMapper.selectOne(queryWrapper);
-            return decrementCouponTemplateStock(event, couponTemplateDO.getStock().longValue());
+            return decrementCouponTemplateStock(event, couponTemplateDO.getStock());
         }
 
         return decrementStockSize;

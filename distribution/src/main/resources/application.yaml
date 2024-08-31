@@ -56,6 +56,11 @@ one-coupon:
       remote-url:
         engine: http://127.0.0.1:10020
 
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+
 rocketmq:
   name-server: 127.0.0.1:9876
   producer:

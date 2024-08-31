@@ -95,7 +95,7 @@ public class CouponTemplateExecuteEvent {
     /**
      * 批量保存用户优惠券 Set 长度，默认满 5000 才会批量保存数据库
      */
-    private Long batchUserSetSize;
+    private Integer batchUserSetSize;
 
     /**
      * 分发结束标识

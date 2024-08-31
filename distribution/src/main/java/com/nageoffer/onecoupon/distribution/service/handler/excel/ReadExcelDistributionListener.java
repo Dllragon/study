@@ -88,17 +88,17 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
         }
 
         // 获取 LUA 脚本，并保存到 Hutool 的单例管理容器，下次直接获取不需要加载
-        DefaultRedisScript<Long> buildLuaScript = Singleton.get(STOCK_DECREMENT_AND_BATCH_SAVE_USER_RECORD_LUA_PATH, () -> {
-            DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
+        DefaultRedisScript<Integer> buildLuaScript = Singleton.get(STOCK_DECREMENT_AND_BATCH_SAVE_USER_RECORD_LUA_PATH, () -> {
+            DefaultRedisScript<Integer> redisScript = new DefaultRedisScript<>();
             redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource(STOCK_DECREMENT_AND_BATCH_SAVE_USER_RECORD_LUA_PATH)));
-            redisScript.setResultType(Long.class);
+            redisScript.setResultType(Integer.class);
             return redisScript;
         });
 
         // 执行 LUA 脚本进行扣减库存以及增加 Redis 用户领券记录
         String couponTemplateKey = String.format(EngineRedisConstant.COUPON_TEMPLATE_KEY, couponTemplate.getId());
         String batchUserSetKey = String.format(DistributionRedisConstant.TEMPLATE_TASK_EXECUTE_BATCH_USER_KEY, couponTaskId);
-        Long combinedFiled = stringRedisTemplate.execute(buildLuaScript, ListUtil.of(couponTemplateKey, batchUserSetKey), data.getUserId());
+        Integer combinedFiled = stringRedisTemplate.execute(buildLuaScript, ListUtil.of(couponTemplateKey, batchUserSetKey), data.getUserId());
 
         // firstField 为 false 说明优惠券已经没有库存了
         boolean firstField = StockDecrementReturnCombinedUtil.extractFirstField(combinedFiled);
@@ -110,7 +110,7 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
         }
 
         // 获取用户领券集合长度
-        long batchUserSetSize = StockDecrementReturnCombinedUtil.extractSecondField(combinedFiled);
+        int batchUserSetSize = StockDecrementReturnCombinedUtil.extractSecondField(combinedFiled);
 
         // 如果没有消息通知需求，仅在 batchUserSetSize = BATCH_USER_COUPON_SIZE 时发送消息消费。不满足条件仅记录执行进度即可
         if (batchUserSetSize < BATCH_USER_COUPON_SIZE && StrUtil.isBlank(couponTask.getNotifyType())) {
