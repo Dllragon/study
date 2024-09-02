@@ -150,6 +150,7 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
                 .notifyType(couponTaskDO.getNotifyType())
                 .shopNumber(couponTaskDO.getShopNumber())
                 .couponTemplateId(couponTemplateDO.getId())
+                .couponTaskBatchId(couponTaskDO.getBatchId())
                 .couponTemplateConsumeRule(couponTemplateDO.getConsumeRule())
                 .batchUserSetSize(batchUserSetSize)
                 .distributionEndFlag(Boolean.FALSE)
@@ -169,6 +170,7 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
                 .shopNumber(couponTaskDO.getShopNumber())
                 .couponTemplateId(couponTemplateDO.getId())
                 .couponTemplateConsumeRule(couponTemplateDO.getConsumeRule())
+                .couponTaskBatchId(couponTaskDO.getBatchId())
                 .couponTaskId(couponTaskDO.getId())
                 .build();
         couponExecuteDistributionProducer.sendMessage(couponTemplateExecuteEvent);

@@ -43,8 +43,10 @@ import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nageoffer.onecoupon.distribution.common.constant.DistributionRedisConstant;
 import com.nageoffer.onecoupon.distribution.common.constant.DistributionRocketMQConstant;
+import com.nageoffer.onecoupon.distribution.common.constant.EngineRedisConstant;
 import com.nageoffer.onecoupon.distribution.common.enums.CouponSourceEnum;
 import com.nageoffer.onecoupon.distribution.common.enums.CouponStatusEnum;
 import com.nageoffer.onecoupon.distribution.common.enums.CouponTaskStatusEnum;
@@ -56,22 +58,25 @@ import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTaskFailMapper;
 import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTaskMapper;
 import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTemplateMapper;
 import com.nageoffer.onecoupon.distribution.dao.mapper.UserCouponMapper;
-import com.nageoffer.onecoupon.distribution.dao.sharding.DBShardingUtil;
 import com.nageoffer.onecoupon.distribution.mq.base.MessageWrapper;
 import com.nageoffer.onecoupon.distribution.mq.event.CouponTemplateExecuteEvent;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.executor.BatchExecutorException;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -97,7 +102,24 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
     private final CouponTaskFailMapper couponTaskFailMapper;
     private final StringRedisTemplate stringRedisTemplate;
 
+    @Lazy
+    @Autowired
+    private CouponExecuteDistributionConsumer couponExecuteDistributionConsumer;
+
     private final static int BATCH_USER_COUPON_SIZE = 5000;
+    private static final String BATCH_SAVE_USER_COUPON_LUA_SCRIPT = """
+            -- 获取传递的参数
+            local userIdPrefix = KEYS[1]  -- 用户 ID 前缀（从 KEYS 获取）
+            local couponId = ARGV[1]  -- 优惠券 ID
+            local userIds = cjson.decode(ARGV[2])  -- 用户 ID 集合，JSON 格式的字符串
+            local currentTime = ARGV[3]  -- 获取当前 Unix 时间戳
+            
+            -- 遍历用户 ID 集合
+            for i, userId in ipairs(userIds) do
+                local key = userIdPrefix .. userId  -- 拼接用户 ID 前缀和用户 ID
+                redis.call('ZADD', key, currentTime, couponId)  -- 添加优惠券 ID 到 ZSet 中
+            end
+            """;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -148,6 +170,7 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
         }
     }
 
+    @SneakyThrows
     private void decrementCouponTemplateStockAndSaveUserCouponList(CouponTemplateExecuteEvent event) {
         // 如果等于 0 意味着已经没有了库存，直接返回即可
         Integer couponTemplateStock = decrementCouponTemplateStock(event, event.getBatchUserSetSize());
@@ -185,9 +208,26 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
         }
 
         // 平台优惠券每个用户限领一次。批量新增用户优惠券记录，底层通过递归方式直到全部新增成功
-        batchSaveUserCouponList(event.getCouponTemplateId(), event.getCouponTaskBatchId(), userCouponDOList);
+        try {
+            batchSaveUserCouponList(event.getCouponTemplateId(), event.getCouponTaskBatchId(), userCouponDOList);
+        } catch (Exception ex) {
+            // 如果这里抛异常，则将读取的 Redis 集合中数据再放回去
+            stringRedisTemplate.opsForSet().add(batchUserSetKey, batchUserMaps.toArray(new String[0]));
+            throw ex;
+        }
 
-        // TODO 将这些优惠券添加到用户的领券记录中
+        // 将这些优惠券添加到用户的领券记录中
+        String userIdsJson = new ObjectMapper().writeValueAsString(userCouponDOList.stream().map(UserCouponDO::getUserId).map(String::valueOf).toList());
+        DefaultRedisScript<Void> script = new DefaultRedisScript<>();
+        script.setScriptText(BATCH_SAVE_USER_COUPON_LUA_SCRIPT);
+        script.setResultType(Void.class);
+
+        // 调用 Lua 脚本时，传递参数
+        List<String> keys = Arrays.asList(EngineRedisConstant.USER_COUPON_TEMPLATE_LIST_KEY);
+        List<String> args = Arrays.asList(String.valueOf(event.getCouponTemplateId()), userIdsJson, String.valueOf(new Date().getTime()));
+
+        // 执行 Lua 脚本
+        stringRedisTemplate.execute(script, keys, args.toArray());
     }
 
     private Integer decrementCouponTemplateStock(CouponTemplateExecuteEvent event, Integer decrementStockSize) {
@@ -214,100 +254,58 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
         } catch (Exception ex) {
             Throwable cause = ex.getCause();
             if (cause instanceof BatchExecutorException) {
-                // 查询已经存在的用户优惠券记录
-                List<Long> userIds = userCouponDOList.stream().map(UserCouponDO::getUserId).toList();
-                List<UserCouponDO> existingUserCoupons = getExistingUserCoupons(couponTemplateId, userIds);
-
                 // 添加到 t_coupon_task_fail 并标记错误原因，方便后续查看未成功发送的原因和记录
-                List<CouponTaskFailDO> couponTaskFailDOList = new ArrayList<>(existingUserCoupons.size());
+                List<CouponTaskFailDO> couponTaskFailDOList = new ArrayList<>();
+                List<UserCouponDO> toRemove = new ArrayList<>();
 
-                // 遍历已经存在的集合，获取 userId，并从需要新增的集合中移除匹配的元素
-                for (UserCouponDO each : existingUserCoupons) {
-                    Long userId = each.getUserId();
+                // 调用批量新增失败后，为了避免大量重复失败，我们通过新增单条记录方式执行
+                userCouponDOList.forEach(each -> {
+                    try {
+                        userCouponMapper.insert(each);
+                    } catch (Exception ignored) {
+                        Boolean hasReceived = couponExecuteDistributionConsumer.hasUserReceivedCoupon(couponTemplateId, each.getUserId());
+                        if (hasReceived) {
+                            // 添加到 t_coupon_task_fail 并标记错误原因，方便后续查看未成功发送的原因和记录
+                            Map<Object, Object> objectMap = MapUtil.builder()
+                                    .put("rowNum", each.getRowNum())
+                                    .put("cause", "用户已领取该优惠券")
+                                    .build();
+                            CouponTaskFailDO couponTaskFailDO = CouponTaskFailDO.builder()
+                                    .batchId(couponTaskBatchId)
+                                    .jsonObject(com.alibaba.fastjson.JSON.toJSONString(objectMap))
+                                    .build();
+                            couponTaskFailDOList.add(couponTaskFailDO);
 
-                    // 使用迭代器遍历需要新增的集合，安全移除元素
-                    Iterator<UserCouponDO> iterator = userCouponDOList.iterator();
-                    while (iterator.hasNext()) {
-                        UserCouponDO item = iterator.next();
-                        if (item.getUserId().equals(userId)) {
-                            iterator.remove();
+                            // 从 userCouponDOList 中删除已经存在的记录
+                            toRemove.add(each);
                         }
                     }
+                });
 
-                    // 添加到 t_coupon_task_fail 并标记错误原因，方便后续查看未成功发送的原因和记录
-                    Map<Object, Object> objectMap = MapUtil.builder()
-                            .put("rowNum", each.getRowNum())
-                            .put("cause", "用户已领取该优惠券")
-                            .build();
-                    CouponTaskFailDO couponTaskFailDO = CouponTaskFailDO.builder()
-                            .batchId(couponTaskBatchId)
-                            .jsonObject(com.alibaba.fastjson.JSON.toJSONString(objectMap))
-                            .build();
-                    couponTaskFailDOList.add(couponTaskFailDO);
-                }
+                // 批量新增 t_coupon_task_fail 表
+                couponTaskFailMapper.insert(couponTaskFailDOList, couponTaskFailDOList.size());
 
-                // 添加到 Excel 任务失败记录表
-                couponTaskFailMapper.insert(couponTaskFailDOList);
-
-                // 采用递归方式重试，直到不存在重复的记录为止
-                if (CollUtil.isNotEmpty(userCouponDOList)) {
-                    batchSaveUserCouponList(couponTemplateId, couponTaskBatchId, userCouponDOList);
-                }
+                // 删除已经重复的内容
+                userCouponDOList.removeAll(toRemove);
+                return;
             }
+
+            throw ex;
         }
     }
 
     /**
-     * 获取已经存在的用户优惠券集合
-     * 为什么不直接使用 selectList 查询而是需要进行拆分再多次查询？因为一组用户 id 中可能会牵扯多个库，这样就会出现跨库查询问题
-     * 为此我们按照不同用户 id 的数据库进行分类，比如一共有 5000 条记录，ds0 下有 2600 条记录，ds1 下有 2400 条记录，分别查询即可成功
-     *
-     * <p>
-     * 如果直接使用以下语句查询会报某个数据库下某表不存在
-     * LambdaQueryWrapper<UserCouponDO> queryWrapper = Wrappers.lambdaQuery(UserCouponDO.class)
-     * .eq(UserCouponDO::getCouponTemplateId, couponTemplateId)
-     * .in(UserCouponDO::getUserId, userCouponDOList.stream().map(UserCouponDO::getUserId).toList());
-     * List<UserCouponDO> existingUserCoupons = userCouponMapper.selectList(queryWrapper);
+     * 查询用户是否已经领取过优惠券
      *
      * @param couponTemplateId 优惠券模板 ID
-     * @param userIds          用户 ID 集合
-     * @return 已经存在的用户优惠券模板信息集合
+     * @param userId           用户 ID
+     * @return 用户优惠券模板领取信息是否已存在
      */
-    public List<UserCouponDO> getExistingUserCoupons(Long couponTemplateId, List<Long> userIds) {
-        // 1. 将 userIds 拆分到数据库中
-        Map<Integer, List<Long>> databaseUserIdMap = splitUserIdsByDatabase(userIds);
-
-        List<UserCouponDO> result = new ArrayList<>();
-        // 2. 对每个数据库执行查询
-        for (Map.Entry<Integer, List<Long>> entry : databaseUserIdMap.entrySet()) {
-            List<Long> userIdSubset = entry.getValue();
-
-            // 执行查询
-            List<UserCouponDO> userCoupons = queryDatabase(couponTemplateId, userIdSubset);
-            result.addAll(userCoupons);
-        }
-
-        return result;
-    }
-
-    private List<UserCouponDO> queryDatabase(Long couponTemplateId, List<Long> userIds) {
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public Boolean hasUserReceivedCoupon(Long couponTemplateId, Long userId) {
         LambdaQueryWrapper<UserCouponDO> queryWrapper = Wrappers.lambdaQuery(UserCouponDO.class)
-                .eq(UserCouponDO::getCouponTemplateId, couponTemplateId)
-                .in(UserCouponDO::getUserId, userIds);
-
-        return userCouponMapper.selectList(queryWrapper);
-    }
-
-    private Map<Integer, List<Long>> splitUserIdsByDatabase(List<Long> userIds) {
-        Map<Integer, List<Long>> databaseUserIdMap = new HashMap<>();
-
-        for (Long userId : userIds) {
-            int databaseMod = DBShardingUtil.doUserCouponSharding(userId);
-            databaseUserIdMap
-                    .computeIfAbsent(databaseMod, k -> new ArrayList<>())
-                    .add(userId);
-        }
-
-        return databaseUserIdMap;
+                .eq(UserCouponDO::getUserId, userId)
+                .eq(UserCouponDO::getCouponTemplateId, couponTemplateId);
+        return userCouponMapper.selectOne(queryWrapper) != null;
     }
 }
