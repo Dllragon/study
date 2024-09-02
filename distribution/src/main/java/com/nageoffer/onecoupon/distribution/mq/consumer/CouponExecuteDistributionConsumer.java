@@ -37,7 +37,10 @@ package com.nageoffer.onecoupon.distribution.mq.consumer;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.lang.Singleton;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -68,8 +71,10 @@ import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -107,19 +112,7 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
     private CouponExecuteDistributionConsumer couponExecuteDistributionConsumer;
 
     private final static int BATCH_USER_COUPON_SIZE = 5000;
-    private static final String BATCH_SAVE_USER_COUPON_LUA_SCRIPT = """
-            -- 获取传递的参数
-            local userIdPrefix = KEYS[1]  -- 用户 ID 前缀（从 KEYS 获取）
-            local couponId = ARGV[1]  -- 优惠券 ID
-            local userIds = cjson.decode(ARGV[2])  -- 用户 ID 集合，JSON 格式的字符串
-            local currentTime = ARGV[3]  -- 获取当前 Unix 时间戳
-            
-            -- 遍历用户 ID 集合
-            for i, userId in ipairs(userIds) do
-                local key = userIdPrefix .. userId  -- 拼接用户 ID 前缀和用户 ID
-                redis.call('ZADD', key, currentTime, couponId)  -- 添加优惠券 ID 到 ZSet 中
-            end
-            """;
+    private static final String BATCH_SAVE_USER_COUPON_LUA_PATH = "lua/batch_user_coupon_list.lua";
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -191,6 +184,7 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
             JSONObject userIdAndRowNumJsonObject = JSON.parseObject(each);
             DateTime validEndTime = DateUtil.offsetHour(now, JSON.parseObject(event.getCouponTemplateConsumeRule()).getInteger("validityPeriod"));
             UserCouponDO userCouponDO = UserCouponDO.builder()
+                    .id(IdUtil.getSnowflakeNextId())
                     .couponTemplateId(event.getCouponTemplateId())
                     .rowNum(userIdAndRowNumJsonObject.getInteger("rowNum"))
                     .userId(userIdAndRowNumJsonObject.getLong("userId"))
@@ -208,26 +202,37 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
         }
 
         // 平台优惠券每个用户限领一次。批量新增用户优惠券记录，底层通过递归方式直到全部新增成功
-        try {
-            batchSaveUserCouponList(event.getCouponTemplateId(), event.getCouponTaskBatchId(), userCouponDOList);
-        } catch (Exception ex) {
-            // 如果这里抛异常，则将读取的 Redis 集合中数据再放回去
-            stringRedisTemplate.opsForSet().add(batchUserSetKey, batchUserMaps.toArray(new String[0]));
-            throw ex;
-        }
+        batchSaveUserCouponList(event.getCouponTemplateId(), event.getCouponTaskBatchId(), userCouponDOList);
 
         // 将这些优惠券添加到用户的领券记录中
-        String userIdsJson = new ObjectMapper().writeValueAsString(userCouponDOList.stream().map(UserCouponDO::getUserId).map(String::valueOf).toList());
-        DefaultRedisScript<Void> script = new DefaultRedisScript<>();
-        script.setScriptText(BATCH_SAVE_USER_COUPON_LUA_SCRIPT);
-        script.setResultType(Void.class);
+        List<String> userIdList = userCouponDOList.stream()
+                .map(UserCouponDO::getUserId)
+                .map(String::valueOf)
+                .toList();
+        String userIdsJson = new ObjectMapper().writeValueAsString(userIdList);
+
+        List<String> couponIdList = userCouponDOList.stream()
+                .map(each -> StrUtil.builder()
+                        .append(event.getCouponTemplateId())
+                        .append("_")
+                        .append(each.getId())
+                        .toString())
+                .map(String::valueOf)
+                .toList();
+        String couponIdsJson = new ObjectMapper().writeValueAsString(couponIdList);
 
         // 调用 Lua 脚本时，传递参数
         List<String> keys = Arrays.asList(EngineRedisConstant.USER_COUPON_TEMPLATE_LIST_KEY);
-        List<String> args = Arrays.asList(String.valueOf(event.getCouponTemplateId()), userIdsJson, String.valueOf(new Date().getTime()));
+        List<String> args = Arrays.asList(userIdsJson, couponIdsJson, String.valueOf(new Date().getTime()));
 
-        // 执行 Lua 脚本
-        stringRedisTemplate.execute(script, keys, args.toArray());
+        // 获取 LUA 脚本，并保存到 Hutool 的单例管理容器，下次直接获取不需要加载
+        DefaultRedisScript<Void> buildLuaScript = Singleton.get(BATCH_SAVE_USER_COUPON_LUA_PATH, () -> {
+            DefaultRedisScript<Void> redisScript = new DefaultRedisScript<>();
+            redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource(BATCH_SAVE_USER_COUPON_LUA_PATH)));
+            redisScript.setResultType(Void.class);
+            return redisScript;
+        });
+        stringRedisTemplate.execute(buildLuaScript, keys, args.toArray());
     }
 
     private Integer decrementCouponTemplateStock(CouponTemplateExecuteEvent event, Integer decrementStockSize) {
