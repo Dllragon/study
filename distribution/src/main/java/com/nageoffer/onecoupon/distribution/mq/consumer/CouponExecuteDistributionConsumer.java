@@ -62,7 +62,7 @@ import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTaskMapper;
 import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTemplateMapper;
 import com.nageoffer.onecoupon.distribution.dao.mapper.UserCouponMapper;
 import com.nageoffer.onecoupon.distribution.mq.base.MessageWrapper;
-import com.nageoffer.onecoupon.distribution.mq.event.CouponTemplateExecuteEvent;
+import com.nageoffer.onecoupon.distribution.mq.event.CouponTemplateDistributionEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -99,7 +99,7 @@ import java.util.Map;
         consumerGroup = DistributionRocketMQConstant.TEMPLATE_EXECUTE_DISTRIBUTION_CG_KEY
 )
 @Slf4j(topic = "CouponExecuteDistributionConsumer")
-public class CouponExecuteDistributionConsumer implements RocketMQListener<MessageWrapper<CouponTemplateExecuteEvent>> {
+public class CouponExecuteDistributionConsumer implements RocketMQListener<MessageWrapper<CouponTemplateDistributionEvent>> {
 
     private final UserCouponMapper userCouponMapper;
     private final CouponTemplateMapper couponTemplateMapper;
@@ -116,12 +116,12 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void onMessage(MessageWrapper<CouponTemplateExecuteEvent> messageWrapper) {
+    public void onMessage(MessageWrapper<CouponTemplateDistributionEvent> messageWrapper) {
         // 开头打印日志，平常可 Debug 看任务参数，线上可报平安（比如消息是否消费，重新投递时获取参数等）
         log.info("[消费者] 优惠券任务执行推送@分发到用户账号 - 执行消费逻辑，消息体：{}", JSON.toJSONString(messageWrapper));
 
         // 当保存用户优惠券集合达到批量保存数量
-        CouponTemplateExecuteEvent event = messageWrapper.getMessage();
+        CouponTemplateDistributionEvent event = messageWrapper.getMessage();
         if (!event.getDistributionEndFlag() && event.getBatchUserSetSize() % BATCH_USER_COUPON_SIZE == 0) {
             decrementCouponTemplateStockAndSaveUserCouponList(event);
         }
@@ -164,7 +164,7 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
     }
 
     @SneakyThrows
-    private void decrementCouponTemplateStockAndSaveUserCouponList(CouponTemplateExecuteEvent event) {
+    private void decrementCouponTemplateStockAndSaveUserCouponList(CouponTemplateDistributionEvent event) {
         // 如果等于 0 意味着已经没有了库存，直接返回即可
         Integer couponTemplateStock = decrementCouponTemplateStock(event, event.getBatchUserSetSize());
         if (couponTemplateStock <= 0) {
@@ -235,7 +235,7 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
         stringRedisTemplate.execute(buildLuaScript, keys, args.toArray());
     }
 
-    private Integer decrementCouponTemplateStock(CouponTemplateExecuteEvent event, Integer decrementStockSize) {
+    private Integer decrementCouponTemplateStock(CouponTemplateDistributionEvent event, Integer decrementStockSize) {
         // 通过乐观机制自减优惠券库存记录
         Long couponTemplateId = event.getCouponTemplateId();
         int decremented = couponTemplateMapper.decrementCouponTemplateStock(event.getShopNumber(), couponTemplateId, decrementStockSize);
@@ -306,7 +306,7 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
      * @param userId           用户 ID
      * @return 用户优惠券模板领取信息是否已存在
      */
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = true)
     public Boolean hasUserReceivedCoupon(Long couponTemplateId, Long userId) {
         LambdaQueryWrapper<UserCouponDO> queryWrapper = Wrappers.lambdaQuery(UserCouponDO.class)
                 .eq(UserCouponDO::getUserId, userId)

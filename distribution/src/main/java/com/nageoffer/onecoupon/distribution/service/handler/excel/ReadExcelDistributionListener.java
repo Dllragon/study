@@ -48,10 +48,9 @@ import com.nageoffer.onecoupon.distribution.dao.entity.CouponTaskDO;
 import com.nageoffer.onecoupon.distribution.dao.entity.CouponTaskFailDO;
 import com.nageoffer.onecoupon.distribution.dao.entity.CouponTemplateDO;
 import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTaskFailMapper;
-import com.nageoffer.onecoupon.distribution.mq.event.CouponTemplateExecuteEvent;
+import com.nageoffer.onecoupon.distribution.mq.event.CouponTemplateDistributionEvent;
 import com.nageoffer.onecoupon.distribution.mq.producer.CouponExecuteDistributionProducer;
 import com.nageoffer.onecoupon.distribution.toolkit.StockDecrementReturnCombinedUtil;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -77,7 +76,6 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
     private final StringRedisTemplate stringRedisTemplate;
     private final CouponExecuteDistributionProducer couponExecuteDistributionProducer;
 
-    @Getter
     private int rowCount = 1;
     private final static String STOCK_DECREMENT_AND_BATCH_SAVE_USER_RECORD_LUA_PATH = "lua/stock_decrement_and_batch_save_user_record.lua";
     private final static int BATCH_USER_COUPON_SIZE = 5000;
@@ -142,7 +140,7 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
             return;
         }
 
-        CouponTemplateExecuteEvent couponTemplateExecuteEvent = CouponTemplateExecuteEvent.builder()
+        CouponTemplateDistributionEvent couponTemplateDistributionEvent = CouponTemplateDistributionEvent.builder()
                 .userId(data.getUserId())
                 .mail(data.getMail())
                 .phone(data.getPhone())
@@ -155,7 +153,7 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
                 .batchUserSetSize(batchUserSetSize)
                 .distributionEndFlag(Boolean.FALSE)
                 .build();
-        couponExecuteDistributionProducer.sendMessage(couponTemplateExecuteEvent);
+        couponExecuteDistributionProducer.sendMessage(couponTemplateDistributionEvent);
 
         // 同步当前执行进度到缓存
         stringRedisTemplate.opsForValue().set(templateTaskExecuteProgressKey, String.valueOf(rowCount));
@@ -165,7 +163,7 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
     @Override
     public void doAfterAllAnalysed(AnalysisContext context) {
         // 发送 Excel 解析完成标识，即使不满足批量保存的数量也得保存到数据库
-        CouponTemplateExecuteEvent couponTemplateExecuteEvent = CouponTemplateExecuteEvent.builder()
+        CouponTemplateDistributionEvent couponTemplateExecuteEvent = CouponTemplateDistributionEvent.builder()
                 .distributionEndFlag(Boolean.TRUE) // 设置解析完成标识
                 .shopNumber(couponTaskDO.getShopNumber())
                 .couponTemplateId(couponTemplateDO.getId())

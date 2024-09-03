@@ -38,7 +38,7 @@ import cn.hutool.core.util.StrUtil;
 import com.nageoffer.onecoupon.distribution.common.constant.DistributionRocketMQConstant;
 import com.nageoffer.onecoupon.distribution.mq.base.BaseSendExtendDTO;
 import com.nageoffer.onecoupon.distribution.mq.base.MessageWrapper;
-import com.nageoffer.onecoupon.distribution.mq.event.CouponTemplateExecuteEvent;
+import com.nageoffer.onecoupon.distribution.mq.event.CouponTemplateDistributionEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.common.message.MessageConst;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
@@ -59,7 +59,7 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
-public class CouponExecuteDistributionProducer extends AbstractCommonSendProduceTemplate<CouponTemplateExecuteEvent> {
+public class CouponExecuteDistributionProducer extends AbstractCommonSendProduceTemplate<CouponTemplateDistributionEvent> {
 
     private final ConfigurableEnvironment environment;
 
@@ -69,7 +69,7 @@ public class CouponExecuteDistributionProducer extends AbstractCommonSendProduce
     }
 
     @Override
-    protected BaseSendExtendDTO buildBaseSendExtendParam(CouponTemplateExecuteEvent messageSendEvent) {
+    protected BaseSendExtendDTO buildBaseSendExtendParam(CouponTemplateDistributionEvent messageSendEvent) {
         return BaseSendExtendDTO.builder()
                 .eventName("优惠券发放执行")
                 .keys(String.valueOf(messageSendEvent.getCouponTaskId()))
@@ -79,7 +79,7 @@ public class CouponExecuteDistributionProducer extends AbstractCommonSendProduce
     }
 
     @Override
-    protected Message<?> buildMessage(CouponTemplateExecuteEvent event, BaseSendExtendDTO requestParam) {
+    protected Message<?> buildMessage(CouponTemplateDistributionEvent event, BaseSendExtendDTO requestParam) {
         String keys = StrUtil.isEmpty(requestParam.getKeys()) ? UUID.randomUUID().toString() : requestParam.getKeys();
         return MessageBuilder
                 .withPayload(new MessageWrapper(keys, event))

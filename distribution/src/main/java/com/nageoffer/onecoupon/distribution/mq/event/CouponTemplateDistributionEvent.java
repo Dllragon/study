@@ -50,7 +50,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CouponTemplateExecuteEvent {
+public class CouponTemplateDistributionEvent {
 
     /**
      * 优惠券分发任务id
