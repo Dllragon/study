@@ -32,104 +32,58 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.dao.entity;
+package com.nageoffer.onecoupon.distribution.mq.producer;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import cn.hutool.core.util.StrUtil;
+import com.nageoffer.onecoupon.distribution.mq.base.BaseSendExtendDTO;
+import com.nageoffer.onecoupon.distribution.mq.base.MessageWrapper;
+import com.nageoffer.onecoupon.distribution.mq.event.CouponTemplateDistributionEvent;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.common.message.MessageConst;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.stereotype.Component;
 
-import java.util.Date;
+import java.util.UUID;
 
 /**
- * 用户优惠券数据库持久层实体
+ * 优惠券推送任务执行生产者
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-13
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@TableName("t_user_coupon")
-public class UserCouponDO {
+@Slf4j
+@Component
+public class CouponExecuteDistributionProducer extends AbstractCommonSendProduceTemplate<CouponTemplateDistributionEvent> {
 
-    /**
-     * id
-     */
-    private Long id;
+    private final ConfigurableEnvironment environment;
 
-    /**
-     * 用户id
-     */
-    private Long userId;
+    public CouponExecuteDistributionProducer(@Autowired RocketMQTemplate rocketMQTemplate, @Autowired ConfigurableEnvironment environment) {
+        super(rocketMQTemplate);
+        this.environment = environment;
+    }
 
-    /**
-     * 优惠券模板id
-     */
-    private Long couponTemplateId;
+    @Override
+    protected BaseSendExtendDTO buildBaseSendExtendParam(CouponTemplateDistributionEvent messageSendEvent) {
+        return BaseSendExtendDTO.builder()
+                .eventName("优惠券发放执行")
+                .keys(String.valueOf(messageSendEvent.getCouponTaskId()))
+                .topic(environment.resolvePlaceholders("one-coupon_distribution-service_coupon-execute-distribution_topic${unique-name:}"))
+                .sentTimeout(2000L)
+                .build();
+    }
 
-    /**
-     * 领取时间
-     */
-    private Date receiveTime;
-
-    /**
-     * 领取次数
-     */
-    private Integer receiveCount;
-
-    /**
-     * 有效期开始时间
-     */
-    private Date validStartTime;
-
-    /**
-     * 有效期结束时间
-     */
-    private Date validEndTime;
-
-    /**
-     * 使用时间
-     */
-    private Date useTime;
-
-    /**
-     * 券来源 0：领券中心 1：平台发放 2：店铺领取
-     */
-    private Integer source;
-
-    /**
-     * 状态 0：未使用 1：锁定 2：已使用 3：已过期 4：已撤回
-     */
-    private Integer status;
-
-    /**
-     * 创建时间
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 修改时间
-     */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-    /**
-     * 删除标识 0：未删除 1：已删除
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Integer delFlag;
-
-    /**
-     * 分发 Excel 表格中用户所在的行数
-     * 不建议大家这么写，应该再创建一个 DTO，然后进行包装转换。为了避免代码扩散，这里小小的不规范一次
-     */
-    @TableField(exist = false)
-    private Integer rowNum;
+    @Override
+    protected Message<?> buildMessage(CouponTemplateDistributionEvent event, BaseSendExtendDTO requestParam) {
+        String keys = StrUtil.isEmpty(requestParam.getKeys()) ? UUID.randomUUID().toString() : requestParam.getKeys();
+        return MessageBuilder
+                .withPayload(new MessageWrapper(keys, event))
+                .setHeader(MessageConst.PROPERTY_KEYS, keys)
+                .setHeader(MessageConst.PROPERTY_TAGS, requestParam.getTag())
+                .build();
+    }
 }

@@ -32,41 +32,45 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.dao.entity;
+package com.nageoffer.onecoupon.distribution.mq.event;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
 /**
- * 用户优惠券数据库持久层实体
+ * 优惠券模板任务执行事件
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-13
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@TableName("t_user_coupon")
-public class UserCouponDO {
+public class CouponTemplateDistributionEvent {
 
     /**
-     * id
+     * 优惠券分发任务id
      */
-    private Long id;
+    private Long couponTaskId;
 
     /**
-     * 用户id
+     * 优惠券分发任务批量id
      */
-    private Long userId;
+    private Long couponTaskBatchId;
+
+    /**
+     * 通知方式，可组合使用 0：站内信 1：弹框推送 2：邮箱 3：短信
+     */
+    private String notifyType;
+
+    /**
+     * 店铺编号
+     */
+    private Long shopNumber;
 
     /**
      * 优惠券模板id
@@ -74,62 +78,32 @@ public class UserCouponDO {
     private Long couponTemplateId;
 
     /**
-     * 领取时间
+     * 消耗规则
      */
-    private Date receiveTime;
+    private String couponTemplateConsumeRule;
 
     /**
-     * 领取次数
+     * 用户id
      */
-    private Integer receiveCount;
+    private String userId;
 
     /**
-     * 有效期开始时间
+     * 手机号
      */
-    private Date validStartTime;
+    private String phone;
 
     /**
-     * 有效期结束时间
+     * 邮箱
      */
-    private Date validEndTime;
+    private String mail;
 
     /**
-     * 使用时间
+     * 批量保存用户优惠券 Set 长度，默认满 5000 才会批量保存数据库
      */
-    private Date useTime;
+    private Integer batchUserSetSize;
 
     /**
-     * 券来源 0：领券中心 1：平台发放 2：店铺领取
+     * 分发结束标识
      */
-    private Integer source;
-
-    /**
-     * 状态 0：未使用 1：锁定 2：已使用 3：已过期 4：已撤回
-     */
-    private Integer status;
-
-    /**
-     * 创建时间
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 修改时间
-     */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-    /**
-     * 删除标识 0：未删除 1：已删除
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Integer delFlag;
-
-    /**
-     * 分发 Excel 表格中用户所在的行数
-     * 不建议大家这么写，应该再创建一个 DTO，然后进行包装转换。为了避免代码扩散，这里小小的不规范一次
-     */
-    @TableField(exist = false)
-    private Integer rowNum;
+    private Boolean distributionEndFlag;
 }

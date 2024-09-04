@@ -41,11 +41,12 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.onecoupon.distribution.common.enums.CouponTaskStatusEnum;
 import com.nageoffer.onecoupon.distribution.common.enums.CouponTemplateStatusEnum;
 import com.nageoffer.onecoupon.distribution.dao.entity.CouponTemplateDO;
+import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTaskFailMapper;
 import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTaskMapper;
 import com.nageoffer.onecoupon.distribution.dao.mapper.CouponTemplateMapper;
-import com.nageoffer.onecoupon.distribution.dao.mapper.UserCouponMapper;
 import com.nageoffer.onecoupon.distribution.mq.base.MessageWrapper;
 import com.nageoffer.onecoupon.distribution.mq.event.CouponTaskExecuteEvent;
+import com.nageoffer.onecoupon.distribution.mq.producer.CouponExecuteDistributionProducer;
 import com.nageoffer.onecoupon.distribution.service.handler.excel.CouponTaskExcelObject;
 import com.nageoffer.onecoupon.distribution.service.handler.excel.ReadExcelDistributionListener;
 import lombok.RequiredArgsConstructor;
@@ -73,8 +74,10 @@ public class CouponTaskExecuteConsumer implements RocketMQListener<MessageWrappe
 
     private final CouponTaskMapper couponTaskMapper;
     private final CouponTemplateMapper couponTemplateMapper;
+    private final CouponTaskFailMapper couponTaskFailMapper;
+
     private final StringRedisTemplate stringRedisTemplate;
-    private final UserCouponMapper userCouponMapper;
+    private final CouponExecuteDistributionProducer couponExecuteDistributionProducer;
 
     @Override
     public void onMessage(MessageWrapper<CouponTaskExecuteEvent> messageWrapper) {
@@ -102,12 +105,11 @@ public class CouponTaskExecuteConsumer implements RocketMQListener<MessageWrappe
 
         // 正式开始执行优惠券推送任务
         var readExcelDistributionListener = new ReadExcelDistributionListener(
-                couponTaskId,
+                couponTaskDO,
                 couponTemplateDO,
+                couponTaskFailMapper,
                 stringRedisTemplate,
-                couponTemplateMapper,
-                userCouponMapper,
-                couponTaskMapper
+                couponExecuteDistributionProducer
         );
         EasyExcel.read(couponTaskDO.getFileAddress(), CouponTaskExcelObject.class, readExcelDistributionListener).sheet().doRead();
     }

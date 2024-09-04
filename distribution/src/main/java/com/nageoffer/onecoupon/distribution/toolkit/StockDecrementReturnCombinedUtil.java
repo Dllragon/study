@@ -32,104 +32,41 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution.dao.entity;
-
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.Date;
+package com.nageoffer.onecoupon.distribution.toolkit;
 
 /**
- * 用户优惠券数据库持久层实体
+ * 用户优惠券执行 LUA 脚本返回数据｜通过位移形式提高性能，是个小优化
+ * 因为预计每 5000 条记录保存次数据库，2^12 能表示 4096，所以这里采用了 2^13
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 开发时间：2024-07-15
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@TableName("t_user_coupon")
-public class UserCouponDO {
+public class StockDecrementReturnCombinedUtil {
 
     /**
-     * id
+     * 2^13 > 5000, 所以用 13 位来表示第二个字段
      */
-    private Long id;
+    private static final int SECOND_FIELD_BITS = 13;
 
     /**
-     * 用户id
+     * 将两个字段组合成一个int
      */
-    private Long userId;
+    public static int combineFields(boolean decrementFlag, int userRecord) {
+        return (decrementFlag ? 1 : 0) << SECOND_FIELD_BITS | userRecord;
+    }
 
     /**
-     * 优惠券模板id
+     * 从组合的int中提取第一个字段（0或1）
      */
-    private Long couponTemplateId;
+    public static boolean extractFirstField(long combined) {
+        return (combined >> SECOND_FIELD_BITS) != 0;
+    }
 
     /**
-     * 领取时间
+     * 从组合的int中提取第二个字段（1到5000之间的数字）
      */
-    private Date receiveTime;
-
-    /**
-     * 领取次数
-     */
-    private Integer receiveCount;
-
-    /**
-     * 有效期开始时间
-     */
-    private Date validStartTime;
-
-    /**
-     * 有效期结束时间
-     */
-    private Date validEndTime;
-
-    /**
-     * 使用时间
-     */
-    private Date useTime;
-
-    /**
-     * 券来源 0：领券中心 1：平台发放 2：店铺领取
-     */
-    private Integer source;
-
-    /**
-     * 状态 0：未使用 1：锁定 2：已使用 3：已过期 4：已撤回
-     */
-    private Integer status;
-
-    /**
-     * 创建时间
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 修改时间
-     */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-    /**
-     * 删除标识 0：未删除 1：已删除
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Integer delFlag;
-
-    /**
-     * 分发 Excel 表格中用户所在的行数
-     * 不建议大家这么写，应该再创建一个 DTO，然后进行包装转换。为了避免代码扩散，这里小小的不规范一次
-     */
-    @TableField(exist = false)
-    private Integer rowNum;
+    public static int extractSecondField(int combined) {
+        return combined & ((1 << SECOND_FIELD_BITS) - 1);
+    }
 }
