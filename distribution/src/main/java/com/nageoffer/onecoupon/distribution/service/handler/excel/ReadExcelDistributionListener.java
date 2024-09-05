@@ -140,12 +140,9 @@ public class ReadExcelDistributionListener extends AnalysisEventListener<CouponT
             return;
         }
 
+        // 发送消息队列执行用户优惠券模板分发逻辑
         CouponTemplateDistributionEvent couponTemplateDistributionEvent = CouponTemplateDistributionEvent.builder()
-                .userId(data.getUserId())
-                .mail(data.getMail())
-                .phone(data.getPhone())
                 .couponTaskId(couponTaskId)
-                .notifyType(couponTaskDO.getNotifyType())
                 .shopNumber(couponTaskDO.getShopNumber())
                 .couponTemplateId(couponTemplateDO.getId())
                 .couponTaskBatchId(couponTaskDO.getBatchId())
