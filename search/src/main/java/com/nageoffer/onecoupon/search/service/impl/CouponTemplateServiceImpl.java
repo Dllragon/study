@@ -40,7 +40,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nageoffer.onecoupon.framework.errorcode.BaseErrorCode;
 import com.nageoffer.onecoupon.framework.exception.ClientException;
-import com.nageoffer.onecoupon.search.common.context.UserContext;
 import com.nageoffer.onecoupon.search.dao.entity.CouponTemplateDoc;
 import com.nageoffer.onecoupon.search.dto.req.CouponTemplatePageQueryReqDTO;
 import com.nageoffer.onecoupon.search.dto.resp.CouponTemplatePageQueryRespDTO;
@@ -80,7 +79,7 @@ public class CouponTemplateServiceImpl implements CouponTemplateService {
             throw new ClientException(BaseErrorCode.SEARCH_AMOUNT_EXCEEDS_LIMIT);
         }
         // 构建条件分页查询条件
-        Criteria criteria = Criteria.where("shopNumber").is(UserContext.getShopNumber());
+        Criteria criteria = new Criteria();
         if (StrUtil.isNotBlank(requestParam.getName())) {
             criteria = criteria.and("name").matches(requestParam.getName());
         }
