@@ -32,61 +32,103 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.framework.errorcode;
+package com.nageoffer.onecoupon.search.dto.resp;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
+import java.util.Date;
 
 /**
- * 基础错误码定义｜由组件包抽象基础错误码，不用每个服务引入后再定义相同内容
+ * 优惠券模板详情查询接口返回参数实体
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-08
+ * 开发时间：2024-07-26
  */
-public enum BaseErrorCode implements IErrorCode {
+@Data
+@Schema(description = "优惠券模板详情查询返回实体")
+public class CouponTemplateQueryRespDTO {
 
-    // ========== 一级宏观错误码 客户端错误 ==========
-    CLIENT_ERROR("A000001", "用户端错误"),
 
-    // ========== 二级宏观错误码 用户注册错误 ==========
-    USER_REGISTER_ERROR("A000100", "用户注册错误"),
-    USER_NAME_VERIFY_ERROR("A000110", "用户名校验失败"),
-    USER_NAME_EXIST_ERROR("A000111", "用户名已存在"),
-    USER_NAME_SENSITIVE_ERROR("A000112", "用户名包含敏感词"),
-    USER_NAME_SPECIAL_CHARACTER_ERROR("A000113", "用户名包含特殊字符"),
-    PASSWORD_VERIFY_ERROR("A000120", "密码校验失败"),
-    PASSWORD_SHORT_ERROR("A000121", "密码长度不够"),
-    PHONE_VERIFY_ERROR("A000151", "手机格式校验失败"),
+    /**
+     * 优惠券id
+     */
+    @Schema(description = "优惠券id")
+    private String id;
 
-    // ========== 二级宏观错误码 系统请求缺少幂等Token ==========
-    IDEMPOTENT_TOKEN_NULL_ERROR("A000200", "幂等Token为空"),
-    IDEMPOTENT_TOKEN_DELETE_ERROR("A000201", "幂等Token已被使用或失效"),
+    /**
+     * 优惠券名称
+     */
+    @Schema(description = "优惠券名称")
+    private String name;
 
-    // ========== 二级宏观错误码 查询参数错误 ==========
-    SEARCH_AMOUNT_EXCEEDS_LIMIT("A000300", "查询数据量超过最大限制"),
+    /**
+     * 店铺编号
+     */
+    @Schema(description = "店铺编号")
+    private String shopNumber;
 
-    // ========== 一级宏观错误码 系统执行出错 ==========
-    SERVICE_ERROR("B000001", "系统执行出错"),
-    // ========== 二级宏观错误码 系统执行超时 ==========
-    SERVICE_TIMEOUT_ERROR("B000100", "系统执行超时"),
+    /**
+     * 优惠券来源 0：店铺券 1：平台券
+     */
+    @Schema(description = "优惠券来源 0：店铺券 1：平台券")
+    private Integer source;
 
-    // ========== 一级宏观错误码 调用第三方服务出错 ==========
-    REMOTE_ERROR("C000001", "调用第三方服务出错");
+    /**
+     * 优惠对象 0：商品专属 1：全店通用
+     */
+    @Schema(description = "优惠对象 0：商品专属 1：全店通用")
+    private Integer target;
 
-    private final String code;
+    /**
+     * 优惠商品编码
+     */
+    @Schema(description = "优惠商品编码")
+    private String goods;
 
-    private final String message;
+    /**
+     * 优惠类型 0：立减券 1：满减券 2：折扣券
+     */
+    @Schema(description = "优惠类型 0：立减券 1：满减券 2：折扣券")
+    private Integer type;
 
-    BaseErrorCode(String code, String message) {
-        this.code = code;
-        this.message = message;
-    }
+    /**
+     * 有效期开始时间
+     */
+    @Schema(description = "有效期开始时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date validStartTime;
 
-    @Override
-    public String code() {
-        return code;
-    }
+    /**
+     * 有效期结束时间
+     */
+    @Schema(description = "有效期结束时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date validEndTime;
 
-    @Override
-    public String message() {
-        return message;
-    }
+    /**
+     * 库存
+     */
+    @Schema(description = "库存")
+    private Integer stock;
+
+    /**
+     * 领取规则
+     */
+    @Schema(description = "领取规则")
+    private String receiveRule;
+
+    /**
+     * 消耗规则
+     */
+    @Schema(description = "消耗规则")
+    private String consumeRule;
+
+    /**
+     * 优惠券状态 0：生效中 1：已结束
+     */
+    @Schema(description = "优惠券状态 0：生效中 1：已结束")
+    private Integer status;
 }
