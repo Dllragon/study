@@ -43,8 +43,7 @@ import com.nageoffer.onecoupon.framework.exception.ClientException;
 import com.nageoffer.onecoupon.search.dao.entity.CouponTemplateDoc;
 import com.nageoffer.onecoupon.search.dto.req.CouponTemplatePageQueryReqDTO;
 import com.nageoffer.onecoupon.search.dto.resp.CouponTemplatePageQueryRespDTO;
-import com.nageoffer.onecoupon.search.dto.resp.CouponTemplateQueryRespDTO;
-import com.nageoffer.onecoupon.search.service.CouponTemplateService;
+import com.nageoffer.onecoupon.search.service.CouponTemplateSearchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -59,7 +58,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * 优惠券模板业务逻辑实现层
+ * 优惠券模板搜索业务逻辑实现层
  * <p>
  * 作者：蛋仔
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
@@ -68,14 +67,14 @@ import java.util.Objects;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CouponTemplateServiceImpl implements CouponTemplateService {
+public class CouponTemplateSearchServiceImpl implements CouponTemplateSearchService {
 
     private final ElasticsearchTemplate elasticsearchTemplate;
 
     @Override
     public IPage<CouponTemplatePageQueryRespDTO> pageQueryCouponTemplate(CouponTemplatePageQueryReqDTO requestParam) {
         // ES 不支持跳页式的深分页，如果不考虑跳页，可使用 Search After 分页方式提高性能
-        if (requestParam.getCurrent() * requestParam.getSize() > 10_000) {
+        if (requestParam.getCurrent() * requestParam.getSize() > 10000) {
             throw new ClientException(BaseErrorCode.SEARCH_AMOUNT_EXCEEDS_LIMIT);
         }
         // 构建条件分页查询条件
@@ -105,11 +104,5 @@ public class CouponTemplateServiceImpl implements CouponTemplateService {
         pageResult.setTotal(couponTemplatePageResult.getTotalHits());
         pageResult.setPages((long) Math.ceil(couponTemplatePageResult.getTotalHits() * 1.0 / requestParam.getSize()));
         return pageResult;
-    }
-
-    @Override
-    public CouponTemplateQueryRespDTO findCouponTemplateById(String couponTemplateId) {
-        CouponTemplateDoc couponTemplateDoc = elasticsearchTemplate.get(couponTemplateId, CouponTemplateDoc.class);
-        return BeanUtil.toBean(couponTemplateDoc, CouponTemplateQueryRespDTO.class);
     }
 }

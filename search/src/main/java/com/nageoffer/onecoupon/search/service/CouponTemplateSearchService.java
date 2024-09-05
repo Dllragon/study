@@ -37,16 +37,15 @@ package com.nageoffer.onecoupon.search.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.onecoupon.search.dto.req.CouponTemplatePageQueryReqDTO;
 import com.nageoffer.onecoupon.search.dto.resp.CouponTemplatePageQueryRespDTO;
-import com.nageoffer.onecoupon.search.dto.resp.CouponTemplateQueryRespDTO;
 
 /**
- * 优惠券模板业务逻辑层
+ * 优惠券模板搜索业务逻辑层
  * <p>
  * 作者：蛋仔
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-08-02
  */
-public interface CouponTemplateService {
+public interface CouponTemplateSearchService {
 
     /**
      * 分页查询商家优惠券模板
@@ -55,13 +54,4 @@ public interface CouponTemplateService {
      * @return 商家优惠券模板分页数据
      */
     IPage<CouponTemplatePageQueryRespDTO> pageQueryCouponTemplate(CouponTemplatePageQueryReqDTO requestParam);
-
-    /**
-     * 查询优惠券模板详情
-     * 后管接口并不存在并发，直接查询数据库即可
-     *
-     * @param couponTemplateId 优惠券模板 ID
-     * @return 优惠券模板详情
-     */
-    CouponTemplateQueryRespDTO findCouponTemplateById(String couponTemplateId);
 }
