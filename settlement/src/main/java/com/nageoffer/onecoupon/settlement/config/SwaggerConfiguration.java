@@ -34,35 +34,55 @@
 
 package com.nageoffer.onecoupon.settlement.config;
 
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.mybatis.spring.SqlSessionFactoryBean;
-import org.mybatis.spring.annotation.MapperScan;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import javax.sql.DataSource;
-
 /**
- * MyBatis 配置类
+ * 设置文档 API Swagger 配置信息，为了让 <a href="http://127.0.0.1:{server.port}{server.servlet.context-path}/doc.html" /> 中的信息看着更饱满
  * <p>
- * 作者：Henry Wan
+ * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-27
+ * 开发时间：2024-07-09
  */
+@Slf4j
 @Configuration
-@MapperScan("com.nageoffer.onecoupon.settlement.dao.mapper")
-public class MyBatisConfig {
+public class SwaggerConfiguration implements ApplicationRunner {
+
+    @Value("${server.port:8080}")
+    private String serverPort;
+    @Value("${server.servlet.context-path:}")
+    private String contextPath;
 
     /**
-     * 创建并配置 SqlSessionFactory 实例
-     *
-     * @param dataSource 数据源
-     * @return 配置好的 SqlSessionFactory 实例
+     * 自定义 openAPI 个性化信息
      */
     @Bean
-    public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
-        SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
-        sessionFactory.setDataSource(dataSource);
-        return sessionFactory.getObject();
+    public OpenAPI openAPI() {
+        return new OpenAPI()
+                .info(new Info() // 基本信息配置
+                        .title("牛券-结算系统") // 标题
+                        .description("负责用户下单时订单金额计算功能，因和订单相关联，该服务流量较大") // 描述 Api 接口文档的基本信息
+                        .version("v1.0.0") // 版本
+                        // 设置 OpenAPI 文档的联系信息，包括联系人姓名为"ding.ma"，邮箱为"machen@apache.org"
+                        .contact(new Contact().name("ding.ma").email("machen@apache.org"))
+                        // 设置 OpenAPI 文档的许可证信息，包括许可证名称和许可证URL
+                        .license(new License().name("山东流年网络科技有限公司").url("https://gitcode.net/nageoffer/onecoupon/-/blob/main/LICENSE"))
+                );
+    }
+
+    /**
+     * 方便大家启动项目后可以直接点击链接跳转，而不用自己到浏览器输入路径
+     */
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+        log.info("API Document: http://127.0.0.1:{}{}/doc.html", serverPort, contextPath);
     }
 }

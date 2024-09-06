@@ -36,7 +36,6 @@ package com.nageoffer.onecoupon.settlement.dao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.nageoffer.onecoupon.settlement.dao.entity.CouponTemplateDO;
-import org.apache.ibatis.annotations.Param;
 
 /**
  * 优惠券模板数据访问接口
@@ -46,13 +45,4 @@ import org.apache.ibatis.annotations.Param;
  * 开发时间：2024-07-14
  */
 public interface CouponTemplateMapper extends BaseMapper<CouponTemplateDO> {
-
-    /**
-     * 自减优惠券模板库存
-     *
-     * @param couponTemplateId 优惠券模板 ID
-     * @return 是否发生记录变更
-     */
-
-    int decrementCouponTemplateStock(@Param("shopNumber") Long shopNumber, @Param("couponTemplateId") Long couponTemplateId, @Param("decrementStock") Long decrementStock);
 }

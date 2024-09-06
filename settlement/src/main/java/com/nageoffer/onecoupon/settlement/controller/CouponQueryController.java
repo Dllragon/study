@@ -58,7 +58,7 @@ import java.util.concurrent.CompletableFuture;
  */
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "查询用户优惠券")
+@Tag(name = "查询用户优惠券管理")
 public class CouponQueryController {
 
     private final CouponQueryService couponQueryService;
@@ -67,7 +67,6 @@ public class CouponQueryController {
     @Operation(summary = "查询用户可用的优惠券列表")
     @GetMapping("/api/settlement/coupon-query")
     public DeferredResult<Result<List<QueryCouponsRespDTO>>> pageQueryAvailableCoupons(QueryCouponsReqDTO requestParam) {
-
         // 调用服务方法，获取异步结果
         CompletableFuture<List<QueryCouponsRespDTO>> couponsFuture = couponQueryService.queryUserCoupons(requestParam);
 

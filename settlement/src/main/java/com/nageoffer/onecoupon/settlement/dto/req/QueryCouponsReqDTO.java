@@ -61,5 +61,4 @@ public class QueryCouponsReqDTO {
 
     @Schema(description = "最大返回条数", required = true)
     private Integer limit = 50;
-
 }

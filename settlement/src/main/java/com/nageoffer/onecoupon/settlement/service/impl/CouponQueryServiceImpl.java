@@ -36,6 +36,7 @@ package com.nageoffer.onecoupon.settlement.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nageoffer.onecoupon.settlement.dao.entity.CouponTemplateDO;
 import com.nageoffer.onecoupon.settlement.dao.entity.UserCouponDO;
 import com.nageoffer.onecoupon.settlement.dao.mapper.CouponTemplateMapper;
@@ -44,17 +45,18 @@ import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
 import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
 import com.nageoffer.onecoupon.settlement.service.CouponCalculationService;
 import com.nageoffer.onecoupon.settlement.service.CouponQueryService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nageoffer.onecoupon.settlement.toolkit.CouponFactory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -69,28 +71,15 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CouponQueryServiceImpl implements CouponQueryService {
 
-    @Autowired
-    private UserCouponMapper userCouponMapper;
+    private final UserCouponMapper userCouponMapper;
+    private final CouponTemplateMapper couponTemplateMapper;
+    private final CouponCalculationService couponCalculationService;
 
-    @Autowired
-    private CouponTemplateMapper couponTemplateMapper;
-
-    @Autowired
-    private CouponCalculationService couponCalculationService;
-
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-
-    private final ObjectMapper objectMapper; // 用于 JSON 序列化和反序列化
+    private final ObjectMapper objectMapper;
     private final StringRedisTemplate stringRedisTemplate;
+
     private static final String COUPON_CACHE_KEY_PREFIX = "user:coupons:";
 
-    /**
-     * 查询用户可用的优惠券列表，返回 CouponsRespDTO 对象
-     *
-     * @param requestParam 查询参数
-     * @return CompletableFuture<CouponsRespDTO> 包含可用优惠券的分页结果
-     */
     @Override
     public CompletableFuture<List<QueryCouponsRespDTO>> queryUserCoupons(QueryCouponsReqDTO requestParam) {
         return CompletableFuture.supplyAsync(() -> {
@@ -171,8 +160,14 @@ public class CouponQueryServiceImpl implements CouponQueryService {
         });
     }
 
+    /**
+     * 判断优惠券是否适用于当前订单：店铺匹配或全店通用，且订单金额满足消费规则
+     *
+     * @param template     优惠券模板
+     * @param requestParam 查询用户优惠券参数
+     * @return 优惠券是否适用当前订单
+     */
     private boolean isCouponApplicable(CouponTemplateDO template, QueryCouponsReqDTO requestParam) {
-        // 判断优惠券是否适用于当前订单：店铺匹配或全店通用，且订单金额满足消费规则
         return template.getShopNumber().equals(requestParam.getShopNumber()) || template.getTarget() == 1;
     }
 
@@ -183,7 +178,6 @@ public class CouponQueryServiceImpl implements CouponQueryService {
      * @return 用户优惠券的结果列表
      */
     private List<UserCouponDO> queryAllUserCoupons(QueryCouponsReqDTO requestParam) {
-
         // 创建查询条件
         QueryWrapper<UserCouponDO> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", requestParam.getUserId()).orderByDesc("id");
@@ -199,7 +193,6 @@ public class CouponQueryServiceImpl implements CouponQueryService {
      * @return 响应DTO
      */
     private QueryCouponsRespDTO convertToRespDTO(UserCouponDO userCoupon, CouponTemplateDO template, BigDecimal couponAmount) {
-
         return QueryCouponsRespDTO.builder()
                 .couponTemplateId(template.getId())
                 .couponName(template.getName())

@@ -66,6 +66,7 @@ public class UserCouponDO {
     /**
      * 用户id
      */
+    private Long userId;
 
     /**
      * 优惠券模板id

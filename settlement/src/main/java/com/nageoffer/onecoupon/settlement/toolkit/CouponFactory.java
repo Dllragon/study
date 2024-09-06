@@ -58,9 +58,9 @@ public class CouponFactory {
     /**
      * 创建优惠券对象，根据传入的 CouponTemplateDO 对象和附加参数生成具体的优惠券实例。
      *
-     * @param coupon            基础优惠券模板对象
-     * @param additionalParams  附加参数，包含优惠券类型所需的额外信息
-     * @return                  具体的优惠券实例
+     * @param coupon           基础优惠券模板对象
+     * @param additionalParams 附加参数，包含优惠券类型所需的额外信息
+     * @return 具体的优惠券实例
      */
     public static CouponTemplateDO createCoupon(CouponTemplateDO coupon, Map<String, Object> additionalParams) {
         // 检查优惠券类型是否有效

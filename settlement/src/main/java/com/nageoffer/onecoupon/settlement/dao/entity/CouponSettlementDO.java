@@ -109,5 +109,4 @@ public class CouponSettlementDO {
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
-
 }

@@ -50,10 +50,10 @@ import java.util.concurrent.CompletableFuture;
 public interface CouponQueryService {
 
     /**
-     * 查询用户可用的优惠券列表
+     * 查询用户可用的优惠券列表，返回 CouponsRespDTO 对象
      *
-     * @param requestParam
-     * @return 可用的优惠券列表
+     * @param requestParam 查询参数
+     * @return CompletableFuture<CouponsRespDTO> 包含可用优惠券的分页结果
      */
     CompletableFuture<List<QueryCouponsRespDTO>> queryUserCoupons(QueryCouponsReqDTO requestParam);
 }

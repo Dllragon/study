@@ -87,5 +87,4 @@ public class QueryCouponsRespDTO {
 
     @Schema(description = "状态 0：未使用 1：锁定 2：已使用 3：已过期 4：已撤回")
     private Integer status;
-
 }

@@ -40,6 +40,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.concurrent.CompletableFuture;
+
 /**
  * 异步响应处理器，负责处理异步请求的超时、结果和异常。
  * <p>
@@ -60,7 +61,6 @@ public class AsyncResponseHandler {
      * @return 一个封装了异步处理结果的 DeferredResult 对象
      */
     public <T> DeferredResult<Result<T>> createDeferredResult(CompletableFuture<T> future) {
-
         // 创建一个DeferredResult对象，设置超时时间为5000毫秒
         DeferredResult<Result<T>> deferredResult = new DeferredResult<>(5000L);
 
