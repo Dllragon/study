@@ -32,36 +32,36 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.framework.config;
+package com.nageoffer.onecoupon.framework.idempotent;
 
-import com.nageoffer.onecoupon.framework.idempotent.NoDuplicateSubmitAspect;
-import com.nageoffer.onecoupon.framework.idempotent.NoMQDuplicateConsumeAspect;
-import org.redisson.api.RedissonClient;
-import org.springframework.context.annotation.Bean;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * 幂等组件相关配置类
+ * 幂等注解，防止消息队列消费者重复消费消息
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-10
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-26
  */
-public class IdempotentConfiguration {
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface NoMQDuplicateConsume {
 
     /**
-     * 防止用户重复提交表单信息切面控制器
+     * 设置防重令牌 Key 前缀
      */
-    @Bean
-    public NoDuplicateSubmitAspect noDuplicateSubmitAspect(RedissonClient redissonClient) {
-        return new NoDuplicateSubmitAspect(redissonClient);
-    }
+    String keyPrefix() default "";
 
     /**
-     * 防止消息队列消费者重复消费消息切面控制器
+     * 通过 SpEL 表达式生成的唯一 Key
      */
-    @Bean
-    public NoMQDuplicateConsumeAspect noMQDuplicateConsumeAspect(StringRedisTemplate stringRedisTemplate) {
-        return new NoMQDuplicateConsumeAspect(stringRedisTemplate);
-    }
+    String key();
+
+    /**
+     * 设置防重令牌 Key 过期时间，单位秒，默认 1 小时
+     */
+    long keyTimeout() default 3600L;
 }

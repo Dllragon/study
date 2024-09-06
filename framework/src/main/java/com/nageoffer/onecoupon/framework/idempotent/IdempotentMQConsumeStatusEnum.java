@@ -32,36 +32,43 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.framework.config;
+package com.nageoffer.onecoupon.framework.idempotent;
 
-import com.nageoffer.onecoupon.framework.idempotent.NoDuplicateSubmitAspect;
-import com.nageoffer.onecoupon.framework.idempotent.NoMQDuplicateConsumeAspect;
-import org.redisson.api.RedissonClient;
-import org.springframework.context.annotation.Bean;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+import java.util.Objects;
 
 /**
- * 幂等组件相关配置类
+ * 幂等 MQ 消费状态枚举
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-10
  */
-public class IdempotentConfiguration {
+@RequiredArgsConstructor
+public enum IdempotentMQConsumeStatusEnum {
 
     /**
-     * 防止用户重复提交表单信息切面控制器
+     * 消费中
      */
-    @Bean
-    public NoDuplicateSubmitAspect noDuplicateSubmitAspect(RedissonClient redissonClient) {
-        return new NoDuplicateSubmitAspect(redissonClient);
-    }
+    CONSUMING("0"),
 
     /**
-     * 防止消息队列消费者重复消费消息切面控制器
+     * 已消费
      */
-    @Bean
-    public NoMQDuplicateConsumeAspect noMQDuplicateConsumeAspect(StringRedisTemplate stringRedisTemplate) {
-        return new NoMQDuplicateConsumeAspect(stringRedisTemplate);
+    CONSUMED("1");
+
+    @Getter
+    private final String code;
+
+    /**
+     * 如果消费状态等于消费中，返回失败
+     *
+     * @param consumeStatus 消费状态
+     * @return 是否消费失败
+     */
+    public static boolean isError(String consumeStatus) {
+        return Objects.equals(CONSUMING.code, consumeStatus);
     }
 }

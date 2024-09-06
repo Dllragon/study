@@ -49,6 +49,7 @@ import com.nageoffer.onecoupon.distribution.mq.event.CouponTaskExecuteEvent;
 import com.nageoffer.onecoupon.distribution.mq.producer.CouponExecuteDistributionProducer;
 import com.nageoffer.onecoupon.distribution.service.handler.excel.CouponTaskExcelObject;
 import com.nageoffer.onecoupon.distribution.service.handler.excel.ReadExcelDistributionListener;
+import com.nageoffer.onecoupon.framework.idempotent.NoMQDuplicateConsume;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -79,6 +80,11 @@ public class CouponTaskExecuteConsumer implements RocketMQListener<MessageWrappe
     private final StringRedisTemplate stringRedisTemplate;
     private final CouponExecuteDistributionProducer couponExecuteDistributionProducer;
 
+    @NoMQDuplicateConsume(
+            keyPrefix = "coupon_task_execute:idempotent:",
+            key = "#messageWrapper.message.couponTaskId",
+            keyTimeout = 120
+    )
     @Override
     public void onMessage(MessageWrapper<CouponTaskExecuteEvent> messageWrapper) {
         // 开头打印日志，平常可 Debug 看任务参数，线上可报平安（比如消息是否消费，重新投递时获取参数等）

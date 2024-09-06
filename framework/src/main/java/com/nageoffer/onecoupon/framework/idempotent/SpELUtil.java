@@ -32,36 +32,62 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.framework.config;
+package com.nageoffer.onecoupon.framework.idempotent;
 
-import com.nageoffer.onecoupon.framework.idempotent.NoDuplicateSubmitAspect;
-import com.nageoffer.onecoupon.framework.idempotent.NoMQDuplicateConsumeAspect;
-import org.redisson.api.RedissonClient;
-import org.springframework.context.annotation.Bean;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.util.ArrayUtil;
+import org.springframework.core.DefaultParameterNameDiscoverer;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
+
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Optional;
 
 /**
- * 幂等组件相关配置类
+ * SpEL 表达式解析工具
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-10
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-26
  */
-public class IdempotentConfiguration {
+public final class SpELUtil {
 
     /**
-     * 防止用户重复提交表单信息切面控制器
+     * 校验并返回实际使用的 spEL 表达式
+     *
+     * @param spEl spEL 表达式
+     * @return 实际使用的 spEL 表达式
      */
-    @Bean
-    public NoDuplicateSubmitAspect noDuplicateSubmitAspect(RedissonClient redissonClient) {
-        return new NoDuplicateSubmitAspect(redissonClient);
+    public static Object parseKey(String spEl, Method method, Object[] contextObj) {
+        List<String> spELFlag = ListUtil.of("#", "T(");
+        Optional<String> optional = spELFlag.stream().filter(spEl::contains).findFirst();
+        if (optional.isPresent()) {
+            return parse(spEl, method, contextObj);
+        }
+        return spEl;
     }
 
     /**
-     * 防止消息队列消费者重复消费消息切面控制器
+     * 转换参数为字符串
+     *
+     * @param spEl       spEl 表达式
+     * @param contextObj 上下文对象
+     * @return 解析的字符串值
      */
-    @Bean
-    public NoMQDuplicateConsumeAspect noMQDuplicateConsumeAspect(StringRedisTemplate stringRedisTemplate) {
-        return new NoMQDuplicateConsumeAspect(stringRedisTemplate);
+    public static Object parse(String spEl, Method method, Object[] contextObj) {
+        DefaultParameterNameDiscoverer discoverer = new DefaultParameterNameDiscoverer();
+        ExpressionParser parser = new SpelExpressionParser();
+        Expression exp = parser.parseExpression(spEl);
+        String[] params = discoverer.getParameterNames(method);
+        StandardEvaluationContext context = new StandardEvaluationContext();
+        if (ArrayUtil.isNotEmpty(params)) {
+            for (int len = 0; len < params.length; len++) {
+                context.setVariable(params[len], contextObj[len]);
+            }
+        }
+        return exp.getValue(context);
     }
 }
