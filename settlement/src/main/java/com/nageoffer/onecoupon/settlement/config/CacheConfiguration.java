@@ -32,31 +32,41 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.service;
+package com.nageoffer.onecoupon.settlement.config;
 
-import java.math.BigDecimal;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import java.util.Optional;
 
 /**
+ * 分布式 Redis 缓存配置
  * <p>
- * 作者：Henry Wan
+ * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-21 
+ * 开发时间：2024-07-14
  */
-public interface CouponSettlementService {
+@Configuration
+@RequiredArgsConstructor
+@EnableConfigurationProperties(RedisDistributedProperties.class)
+public class CacheConfiguration {
+
+    private final RedisDistributedProperties redisDistributedProperties;
 
     /**
-     * 计算订单总金额
-     * @param orderId 订单ID
-     * @return 订单总金额
+     * 创建 Redis Key 序列化器，可自定义 Key Prefix
      */
-    BigDecimal calculateTotalAmount(Long orderId);
-
-    /**
-     * 应用优惠券，计算最终价格
-     * @param orderId 订单ID
-     * @param couponIds 优惠券ID列表
-     * @return 最终应付金额
-     */
-    BigDecimal applyCoupons(Long orderId, List<Long> couponIds);
+    @Bean
+    public RedisKeySerializer redisKeySerializer() {
+        String prefix = Optional.ofNullable(redisDistributedProperties.getPrefix()).orElse("");
+        String prefixCharset = redisDistributedProperties.getPrefixCharset();
+        return new RedisKeySerializer(prefix, prefixCharset);
+    }
 }

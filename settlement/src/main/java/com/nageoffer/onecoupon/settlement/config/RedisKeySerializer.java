@@ -32,46 +32,44 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.controller;
+package com.nageoffer.onecoupon.settlement.config;
 
-import com.nageoffer.onecoupon.framework.result.Result;
-import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
-import com.nageoffer.onecoupon.settlement.handler.AsyncResponseHandler;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
-import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
-import com.nageoffer.onecoupon.settlement.service.CouponQueryService;
-import org.springframework.web.context.request.async.DeferredResult;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.data.redis.serializer.SerializationException;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.nio.charset.Charset;
 
 /**
- * 查询用户优惠券控制层
+ * Redis Key 序列化｜定义全局统一前缀
  * <p>
- * 作者：Henry Wan
+ * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-24
+ * 开发时间：2024-07-14
  */
-@RestController
 @RequiredArgsConstructor
-@Tag(name = "查询用户优惠券")
-public class CouponQueryController {
+public class RedisKeySerializer implements InitializingBean, RedisSerializer<String> {
 
-    private final CouponQueryService couponQueryService;
-    private final AsyncResponseHandler asyncResponseHandler;
+    private final String keyPrefix;
 
-    @Operation(summary = "查询用户可用的优惠券列表")
-    @GetMapping("/api/settlement/coupon-query")
-    public DeferredResult<Result<List<QueryCouponsRespDTO>>> pageQueryAvailableCoupons(QueryCouponsReqDTO requestParam) {
+    private final String charsetName;
 
-        // 调用服务方法，获取异步结果
-        CompletableFuture<List<QueryCouponsRespDTO>> couponsFuture = couponQueryService.queryUserCoupons(requestParam);
+    private Charset charset;
 
-        // 使用异步响应处理器返回结果
-        return asyncResponseHandler.createDeferredResult(couponsFuture);
+    @Override
+    public byte[] serialize(String key) throws SerializationException {
+        String builderKey = keyPrefix + key;
+        return builderKey.getBytes();
+    }
+
+    @Override
+    public String deserialize(byte[] bytes) throws SerializationException {
+        return new String(bytes, charset);
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        charset = Charset.forName(charsetName);
     }
 }

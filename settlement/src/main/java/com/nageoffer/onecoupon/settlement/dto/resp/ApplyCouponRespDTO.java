@@ -32,32 +32,33 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.dto.resp;
-
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 /**
- * 查询用户可/不可用券返回对象
  * <p>
  * 作者：Henry Wan
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-08-07
+ * 开发时间：2024-08-29
  */
+package com.nageoffer.onecoupon.settlement.dto.resp;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+import lombok.Data;
+
+import java.math.BigDecimal;
+
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
-@Schema(description = "查询用户可/不可用优惠券响应参数")
-public class CouponsRespDTO {
+public class ApplyCouponRespDTO {
 
-    @Schema(description = "查询用户可用优惠券响应参数")
-    private IPage<QueryCouponsRespDTO> availableCoupons;
+    @Schema(description = "订单ID", required = true)
+    private Long orderId;
 
-    @Schema(description = "查询用户不可用优惠券响应参数")
-    private IPage<QueryCouponsRespDTO> unavailableCoupons;
+    @Schema(description = "订单原始金额", required = true)
+    private BigDecimal originalAmount;
+
+    @Schema(description = "订单折后金额", required = true)
+    private BigDecimal finalAmount;
+
+    @Schema(description = "待应用的优惠券ID", required = true)
+    private Long appliedCouponId;
 }

@@ -34,15 +34,14 @@
 
 package com.nageoffer.onecoupon.settlement.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
-import com.nageoffer.onecoupon.settlement.dto.resp.CouponsRespDTO;
 import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * 查询用户可用 / 不可用优惠券列表接口
+ * 查询用户可用优惠券列表接口
  * <p>
  * 作者：Henry Wan
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
@@ -51,11 +50,11 @@ import java.util.concurrent.CompletableFuture;
 public interface CouponQueryService {
 
     /**
-     * 查询用户可/不可用的优惠券列表
+     * 查询用户可用的优惠券列表
      *
      * @param requestParam
-     * @return 可/不可用的优惠券列表
+     * @return 可用的优惠券列表
      */
-    CompletableFuture<CouponsRespDTO> pageQueryUserCoupons(QueryCouponsReqDTO requestParam);
+    CompletableFuture<List<QueryCouponsRespDTO>> queryUserCoupons(QueryCouponsReqDTO requestParam);
 }
 
