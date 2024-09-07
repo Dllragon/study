@@ -110,6 +110,7 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
     @Autowired
     private CouponExecuteDistributionConsumer couponExecuteDistributionConsumer;
 
+    private final static int BATCH_USER_COUPON_SIZE = 5000;
     private static final String BATCH_SAVE_USER_COUPON_LUA_PATH = "lua/batch_user_coupon_list.lua";
 
     @Transactional(rollbackFor = Exception.class)
@@ -120,45 +121,47 @@ public class CouponExecuteDistributionConsumer implements RocketMQListener<Messa
 
         // 当保存用户优惠券集合达到批量保存数量
         CouponTemplateDistributionEvent event = messageWrapper.getMessage();
-        if (!event.getDistributionEndFlag()) {
+        if (!event.getDistributionEndFlag() && event.getBatchUserSetSize() % BATCH_USER_COUPON_SIZE == 0) {
             decrementCouponTemplateStockAndSaveUserCouponList(event);
             return;
         }
 
         // 分发任务结束标识为 TRUE，代表已经没有 Excel 记录了
-        String batchUserSetKey = String.format(DistributionRedisConstant.TEMPLATE_TASK_EXECUTE_BATCH_USER_KEY, event.getCouponTaskId());
-        Long batchUserIdsSize = stringRedisTemplate.opsForSet().size(batchUserSetKey);
-        event.setBatchUserSetSize(batchUserIdsSize.intValue());
+        if (event.getDistributionEndFlag()) {
+            String batchUserSetKey = String.format(DistributionRedisConstant.TEMPLATE_TASK_EXECUTE_BATCH_USER_KEY, event.getCouponTaskId());
+            Long batchUserIdsSize = stringRedisTemplate.opsForSet().size(batchUserSetKey);
+            event.setBatchUserSetSize(batchUserIdsSize.intValue());
 
-        decrementCouponTemplateStockAndSaveUserCouponList(event);
-        List<String> batchUserMaps = stringRedisTemplate.opsForSet().pop(batchUserSetKey, Integer.MAX_VALUE);
-        // 此时待保存入库用户优惠券列表如果还有值，就意味着可能库存不足引起的
-        if (CollUtil.isNotEmpty(batchUserMaps)) {
-            // 添加到 t_coupon_task_fail 并标记错误原因，方便后续查看未成功发送的原因和记录
-            List<CouponTaskFailDO> couponTaskFailDOList = new ArrayList<>(batchUserMaps.size());
-            for (String batchUserMapStr : batchUserMaps) {
-                Map<Object, Object> objectMap = MapUtil.builder()
-                        .put("rowNum", JSON.parseObject(batchUserMapStr).get("rowNum"))
-                        .put("cause", "用户已领取该优惠券")
-                        .build();
-                CouponTaskFailDO couponTaskFailDO = CouponTaskFailDO.builder()
-                        .batchId(event.getCouponTaskBatchId())
-                        .jsonObject(com.alibaba.fastjson.JSON.toJSONString(objectMap))
-                        .build();
-                couponTaskFailDOList.add(couponTaskFailDO);
+            decrementCouponTemplateStockAndSaveUserCouponList(event);
+            List<String> batchUserMaps = stringRedisTemplate.opsForSet().pop(batchUserSetKey, Integer.MAX_VALUE);
+            // 此时待保存入库用户优惠券列表如果还有值，就意味着可能库存不足引起的
+            if (CollUtil.isNotEmpty(batchUserMaps)) {
+                // 添加到 t_coupon_task_fail 并标记错误原因，方便后续查看未成功发送的原因和记录
+                List<CouponTaskFailDO> couponTaskFailDOList = new ArrayList<>(batchUserMaps.size());
+                for (String batchUserMapStr : batchUserMaps) {
+                    Map<Object, Object> objectMap = MapUtil.builder()
+                            .put("rowNum", JSON.parseObject(batchUserMapStr).get("rowNum"))
+                            .put("cause", "用户已领取该优惠券")
+                            .build();
+                    CouponTaskFailDO couponTaskFailDO = CouponTaskFailDO.builder()
+                            .batchId(event.getCouponTaskBatchId())
+                            .jsonObject(com.alibaba.fastjson.JSON.toJSONString(objectMap))
+                            .build();
+                    couponTaskFailDOList.add(couponTaskFailDO);
+                }
+
+                // 添加到 t_coupon_task_fail 并标记错误原因
+                couponTaskFailMapper.insert(couponTaskFailDOList);
             }
 
-            // 添加到 t_coupon_task_fail 并标记错误原因
-            couponTaskFailMapper.insert(couponTaskFailDOList);
+            // 确保所有用户都已经接到优惠券后，设置优惠券推送任务完成时间
+            CouponTaskDO couponTaskDO = CouponTaskDO.builder()
+                    .id(event.getCouponTaskId())
+                    .status(CouponTaskStatusEnum.SUCCESS.getStatus())
+                    .completionTime(new Date())
+                    .build();
+            couponTaskMapper.updateById(couponTaskDO);
         }
-
-        // 确保所有用户都已经接到优惠券后，设置优惠券推送任务完成时间
-        CouponTaskDO couponTaskDO = CouponTaskDO.builder()
-                .id(event.getCouponTaskId())
-                .status(CouponTaskStatusEnum.SUCCESS.getStatus())
-                .completionTime(new Date())
-                .build();
-        couponTaskMapper.updateById(couponTaskDO);
     }
 
     @SneakyThrows
