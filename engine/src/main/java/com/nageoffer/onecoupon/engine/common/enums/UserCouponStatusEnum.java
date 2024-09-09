@@ -32,31 +32,46 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.config;
+package com.nageoffer.onecoupon.engine.common.enums;
 
-import org.redisson.api.RBloomFilter;
-import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
- * 布隆过滤器配置类
+ * 用户优惠券状态枚举
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-08-27
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-18
  */
-@Configuration
-public class RBloomFilterConfiguration {
+@RequiredArgsConstructor
+public enum UserCouponStatusEnum {
 
     /**
-     * 优惠券查询缓存穿透布隆过滤器
+     * 未使用
      */
-    @Bean
-    public RBloomFilter<String> couponTemplateQueryBloomFilter(RedissonClient redissonClient, @Value("${framework.cache.redis.prefix:}") String cachePrefix) {
-        RBloomFilter<String> bloomFilter = redissonClient.getBloomFilter(cachePrefix + "couponTemplateQueryBloomFilter");
-        bloomFilter.tryInit(640L, 0.001);
-        return bloomFilter;
-    }
+    UNUSED(0),
+
+    /**
+     * 锁定
+     */
+    LOCKING(1),
+
+    /**
+     * 已使用
+     */
+    USED(2),
+
+    /**
+     * 已过期
+     */
+    EXPIRED(3),
+
+    /**
+     * 已撤回
+     */
+    REVOKED(4);
+
+    @Getter
+    private final int code;
 }

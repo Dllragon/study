@@ -32,31 +32,87 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.config;
+package com.nageoffer.onecoupon.engine.mq.event;
 
-import org.redisson.api.RBloomFilter;
-import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import lombok.Data;
+
+import java.util.List;
+import java.util.Map;
 
 /**
- * 布隆过滤器配置类
+ * Canal Binlog 监听触发事件
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-08-27
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-25
  */
-@Configuration
-public class RBloomFilterConfiguration {
+@Data
+public class CanalBinlogEvent {
 
     /**
-     * 优惠券查询缓存穿透布隆过滤器
+     * 变更数据
      */
-    @Bean
-    public RBloomFilter<String> couponTemplateQueryBloomFilter(RedissonClient redissonClient, @Value("${framework.cache.redis.prefix:}") String cachePrefix) {
-        RBloomFilter<String> bloomFilter = redissonClient.getBloomFilter(cachePrefix + "couponTemplateQueryBloomFilter");
-        bloomFilter.tryInit(640L, 0.001);
-        return bloomFilter;
-    }
+    private List<Map<String, Object>> data;
+
+    /**
+     * 数据库名称
+     */
+    private String database;
+
+    /**
+     * es 是指 Mysql Binlog 里原始的时间戳，也就是数据原始变更的时间
+     * Canal 的消费延迟 = ts - es
+     */
+    private Long es;
+
+    /**
+     * 递增 ID，从 1 开始
+     */
+    private Long id;
+
+    /**
+     * 当前变更是否是 DDL 语句
+     */
+    private Boolean isDdl;
+
+    /**
+     * 表结构字段类型
+     */
+    private Map<String, Object> mysqlType;
+
+    /**
+     * UPDATE 模式下旧数据
+     */
+    private List<Map<String, Object>> old;
+
+    /**
+     * 主键名称
+     */
+    private List<String> pkNames;
+
+    /**
+     * SQL 语句
+     */
+    private String sql;
+
+    /**
+     * SQL 类型
+     */
+    private Map<String, Object> sqlType;
+
+    /**
+     * 表名
+     */
+    private String table;
+
+    /**
+     * ts 是指 Canal 收到这个 Binlog，构造为自己协议对象的时间
+     * 应用消费的延迟 = now - ts
+     */
+    private Long ts;
+
+    /**
+     * INSERT（新增）、UPDATE（更新）、DELETE（删除）等等
+     */
+    private String type;
 }

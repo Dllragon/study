@@ -32,31 +32,44 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.config;
+package com.nageoffer.onecoupon.framework.config;
 
-import org.redisson.api.RBloomFilter;
-import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.data.redis.serializer.SerializationException;
+
+import java.nio.charset.Charset;
 
 /**
- * 布隆过滤器配置类
+ * Redis Key 序列化｜定义全局统一前缀
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-08-27
+ * 开发时间：2024-07-14
  */
-@Configuration
-public class RBloomFilterConfiguration {
+@RequiredArgsConstructor
+public class RedisKeySerializer implements InitializingBean, RedisSerializer<String> {
 
-    /**
-     * 优惠券查询缓存穿透布隆过滤器
-     */
-    @Bean
-    public RBloomFilter<String> couponTemplateQueryBloomFilter(RedissonClient redissonClient, @Value("${framework.cache.redis.prefix:}") String cachePrefix) {
-        RBloomFilter<String> bloomFilter = redissonClient.getBloomFilter(cachePrefix + "couponTemplateQueryBloomFilter");
-        bloomFilter.tryInit(640L, 0.001);
-        return bloomFilter;
+    private final String keyPrefix;
+
+    private final String charsetName;
+
+    private Charset charset;
+
+    @Override
+    public byte[] serialize(String key) throws SerializationException {
+        String builderKey = keyPrefix + key;
+        return builderKey.getBytes();
+    }
+
+    @Override
+    public String deserialize(byte[] bytes) throws SerializationException {
+        return new String(bytes, charset);
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        charset = Charset.forName(charsetName);
     }
 }

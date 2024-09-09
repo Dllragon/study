@@ -32,31 +32,53 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.config;
+package com.nageoffer.onecoupon.engine.mq.base;
 
-import org.redisson.api.RBloomFilter;
-import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+
+import java.io.Serializable;
+import java.util.UUID;
 
 /**
- * 布隆过滤器配置类
+ * 消息体包装器
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-08-27
+ * 开发时间：2024-07-18
  */
-@Configuration
-public class RBloomFilterConfiguration {
+@Data
+@Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
+@RequiredArgsConstructor
+public final class MessageWrapper<T> implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
-     * 优惠券查询缓存穿透布隆过滤器
+     * 消息发送 Keys
      */
-    @Bean
-    public RBloomFilter<String> couponTemplateQueryBloomFilter(RedissonClient redissonClient, @Value("${framework.cache.redis.prefix:}") String cachePrefix) {
-        RBloomFilter<String> bloomFilter = redissonClient.getBloomFilter(cachePrefix + "couponTemplateQueryBloomFilter");
-        bloomFilter.tryInit(640L, 0.001);
-        return bloomFilter;
-    }
+    @NonNull
+    private String keys;
+
+    /**
+     * 消息体
+     */
+    @NonNull
+    private T message;
+
+    /**
+     * 唯一标识，用于客户端幂等验证
+     */
+    private String uuid = UUID.randomUUID().toString();
+
+    /**
+     * 消息发送时间
+     */
+    private Long timestamp = System.currentTimeMillis();
 }

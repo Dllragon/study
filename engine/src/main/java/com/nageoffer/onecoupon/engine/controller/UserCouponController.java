@@ -32,31 +32,37 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.config;
+package com.nageoffer.onecoupon.engine.controller;
 
-import org.redisson.api.RBloomFilter;
-import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRedeemReqDTO;
+import com.nageoffer.onecoupon.engine.service.UserCouponService;
+import com.nageoffer.onecoupon.framework.result.Result;
+import com.nageoffer.onecoupon.framework.web.Results;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 布隆过滤器配置类
+ * 用户优惠券控制层
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-08-27
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-25
  */
-@Configuration
-public class RBloomFilterConfiguration {
+@RestController
+@RequiredArgsConstructor
+@Tag(name = "用户优惠券管理")
+public class UserCouponController {
 
-    /**
-     * 优惠券查询缓存穿透布隆过滤器
-     */
-    @Bean
-    public RBloomFilter<String> couponTemplateQueryBloomFilter(RedissonClient redissonClient, @Value("${framework.cache.redis.prefix:}") String cachePrefix) {
-        RBloomFilter<String> bloomFilter = redissonClient.getBloomFilter(cachePrefix + "couponTemplateQueryBloomFilter");
-        bloomFilter.tryInit(640L, 0.001);
-        return bloomFilter;
+    private final UserCouponService userCouponService;
+
+    @Operation(summary = "兑换优惠券模板", description = "存在较高流量场景，可类比“秒杀”业务")
+    @PostMapping("/api/engine/user-coupon/redeem")
+    public Result<Void> redeemUserCoupon(@RequestBody CouponTemplateRedeemReqDTO requestParam) {
+        userCouponService.redeemUserCoupon(requestParam);
+        return Results.success();
     }
 }

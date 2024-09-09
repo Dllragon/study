@@ -30,3 +30,4 @@
 
 com.nageoffer.onecoupon.framework.config.WebAutoConfiguration
 com.nageoffer.onecoupon.framework.config.IdempotentConfiguration
+com.nageoffer.onecoupon.framework.config.CacheConfiguration
