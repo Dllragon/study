@@ -204,7 +204,7 @@ public class UserCouponServiceImpl implements UserCouponService {
                 }
             } catch (Exception ex) {
                 status.setRollbackOnly();
-                // 自减用户领取的优惠券记录 xxx_优惠券ID_用户ID Value 是领取次数
+                // 优惠券已被领取完业务异常
                 if (ex instanceof ServiceException) {
                     throw (ServiceException) ex;
                 }
@@ -216,5 +216,4 @@ public class UserCouponServiceImpl implements UserCouponService {
             }
         });
     }
-
 }
