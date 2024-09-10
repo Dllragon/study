@@ -84,10 +84,3 @@ one-coupon:
   user-coupon-list:
     save-cache:
       type: direct # 有两个选项：direct 在流程里直接操作，binlog 通过解析数据库日志后操作
-
-engine:
-  cache:
-    redis:
-      bloom-filter:
-        cancel-remind:
-          name: cancel_remind_cache_penetration_bloom_filter${unique-name:}
