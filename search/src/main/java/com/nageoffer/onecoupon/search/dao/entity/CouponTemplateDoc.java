@@ -69,12 +69,6 @@ public class CouponTemplateDoc {
     private Long id;
 
     /**
-     * 店铺编号
-     */
-    @Field(type = FieldType.Long, index = false)
-    private Long shopNumber;
-
-    /**
      * 优惠券名称，参与分词与搜索
      */
     @Field(type = FieldType.Text, store = true)

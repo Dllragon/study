@@ -39,7 +39,6 @@ import com.nageoffer.onecoupon.framework.result.Result;
 import com.nageoffer.onecoupon.framework.web.Results;
 import com.nageoffer.onecoupon.search.dto.req.CouponTemplatePageQueryReqDTO;
 import com.nageoffer.onecoupon.search.dto.resp.CouponTemplatePageQueryRespDTO;
-import com.nageoffer.onecoupon.search.dto.resp.CouponTemplateQueryRespDTO;
 import com.nageoffer.onecoupon.search.service.CouponTemplateSearchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
