@@ -32,54 +32,45 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.common.constant;
+package com.nageoffer.onecoupon.engine.mq.event;
+
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRedeemReqDTO;
+import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * 优惠券引擎层服务 RocketMQ 常量类
+ * 用户兑换优惠券事件
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-09-10
  */
-public final class EngineRockerMQConstant {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserCouponRedeemEvent {
 
     /**
-     * 用户优惠券到期后关闭 Topic Key
+     * Web 请求参数
      */
-    public static final String USER_COUPON_DELAY_CLOSE_TOPIC_KEY = "one-coupon_engine-service_user-coupon-delay-close_topic${unique-name:}";
+    private CouponTemplateRedeemReqDTO requestParam;
 
     /**
-     * 用户优惠券到期后关闭消费者组 Key
+     * 领取次数
      */
-    public static final String USER_COUPON_DELAY_CLOSE_CG_KEY = "one-coupon_engine-service_user-coupon-delay-close_cg${unique-name:}";
+    private Integer receiveCount;
 
     /**
-     * 提醒用户抢券 Topic Key
+     * 优惠券模板
      */
-    public static final String COUPON_TEMPLATE_REMIND_TOPIC_KEY = "one-coupon_engine-service_coupon-remind_topic${unique-name:}";
+    private CouponTemplateQueryRespDTO couponTemplate;
 
     /**
-     * 提醒用户抢券消费者组 Key
+     * 用户 ID
      */
-    public static final String COUPON_TEMPLATE_REMIND_CG_KEY = "one-coupon_engine-service_coupon-remind_cg${unique-name:}";
-
-    /**
-     * Canal 监听用户优惠券表 Binlog Topic Key
-     */
-    public static final String USER_COUPON_BINLOG_SYNC_TOPIC_KEY = "one-coupon_canal_engine-service_common-sync_topic${unique-name:}";
-
-    /**
-     * Canal 监听用户优惠券表 Binlog 消费者组 Key
-     */
-    public static final String USER_COUPON_BINLOG_SYNC_CG_KEY = "one-coupon_canal_engine-service_common-sync_cg${unique-name:}";
-
-    /**
-     * 用户兑换优惠券 Topic Key
-     */
-    public static final String COUPON_TEMPLATE_REDEEM_TOPIC_KEY = "one-coupon_engine-service_coupon-redeem_topic${unique-name:}";
-
-    /**
-     * 用户兑换优惠券消费者组 Key
-     */
-    public static final String COUPON_TEMPLATE_REDEEM_CG_KEY = "one-coupon_engine-service_coupon-redeem_cg${unique-name:}";
+    private String userId;
 }

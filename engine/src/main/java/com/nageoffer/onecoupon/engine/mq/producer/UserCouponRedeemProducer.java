@@ -32,54 +32,58 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.common.constant;
+package com.nageoffer.onecoupon.engine.mq.producer;
+
+import cn.hutool.core.util.StrUtil;
+import com.nageoffer.onecoupon.engine.common.constant.EngineRockerMQConstant;
+import com.nageoffer.onecoupon.engine.mq.base.BaseSendExtendDTO;
+import com.nageoffer.onecoupon.engine.mq.base.MessageWrapper;
+import com.nageoffer.onecoupon.engine.mq.event.UserCouponRedeemEvent;
+import org.apache.rocketmq.common.message.MessageConst;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 /**
- * 优惠券引擎层服务 RocketMQ 常量类
+ * 用户兑换优惠券消息生产者
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-09-10
  */
-public final class EngineRockerMQConstant {
+@Component
+public class UserCouponRedeemProducer extends AbstractCommonSendProduceTemplate<UserCouponRedeemEvent> {
 
-    /**
-     * 用户优惠券到期后关闭 Topic Key
-     */
-    public static final String USER_COUPON_DELAY_CLOSE_TOPIC_KEY = "one-coupon_engine-service_user-coupon-delay-close_topic${unique-name:}";
+    private final ConfigurableEnvironment environment;
 
-    /**
-     * 用户优惠券到期后关闭消费者组 Key
-     */
-    public static final String USER_COUPON_DELAY_CLOSE_CG_KEY = "one-coupon_engine-service_user-coupon-delay-close_cg${unique-name:}";
+    public UserCouponRedeemProducer(@Autowired RocketMQTemplate rocketMQTemplate, @Autowired ConfigurableEnvironment environment) {
+        super(rocketMQTemplate);
+        this.environment = environment;
+    }
 
-    /**
-     * 提醒用户抢券 Topic Key
-     */
-    public static final String COUPON_TEMPLATE_REMIND_TOPIC_KEY = "one-coupon_engine-service_coupon-remind_topic${unique-name:}";
+    @Override
+    protected BaseSendExtendDTO buildBaseSendExtendParam(UserCouponRedeemEvent messageSendEvent) {
+        return BaseSendExtendDTO.builder()
+                .eventName("用户兑换优惠券")
+                .keys(UUID.randomUUID().toString())
+                .topic(environment.resolvePlaceholders(EngineRockerMQConstant.COUPON_TEMPLATE_REDEEM_TOPIC_KEY))
+                .sentTimeout(2000L)
+                .build();
+    }
 
-    /**
-     * 提醒用户抢券消费者组 Key
-     */
-    public static final String COUPON_TEMPLATE_REMIND_CG_KEY = "one-coupon_engine-service_coupon-remind_cg${unique-name:}";
-
-    /**
-     * Canal 监听用户优惠券表 Binlog Topic Key
-     */
-    public static final String USER_COUPON_BINLOG_SYNC_TOPIC_KEY = "one-coupon_canal_engine-service_common-sync_topic${unique-name:}";
-
-    /**
-     * Canal 监听用户优惠券表 Binlog 消费者组 Key
-     */
-    public static final String USER_COUPON_BINLOG_SYNC_CG_KEY = "one-coupon_canal_engine-service_common-sync_cg${unique-name:}";
-
-    /**
-     * 用户兑换优惠券 Topic Key
-     */
-    public static final String COUPON_TEMPLATE_REDEEM_TOPIC_KEY = "one-coupon_engine-service_coupon-redeem_topic${unique-name:}";
-
-    /**
-     * 用户兑换优惠券消费者组 Key
-     */
-    public static final String COUPON_TEMPLATE_REDEEM_CG_KEY = "one-coupon_engine-service_coupon-redeem_cg${unique-name:}";
+    @Override
+    protected Message<?> buildMessage(UserCouponRedeemEvent messageSendEvent, BaseSendExtendDTO requestParam) {
+        String keys = StrUtil.isEmpty(requestParam.getKeys()) ? UUID.randomUUID().toString() : requestParam.getKeys();
+        return MessageBuilder
+                .withPayload(new MessageWrapper(requestParam.getKeys(), messageSendEvent))
+                .setHeader(MessageConst.PROPERTY_KEYS, keys)
+                .setHeader(MessageConst.PROPERTY_TAGS, requestParam.getTag())
+                .build();
+    }
 }
+
