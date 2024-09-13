@@ -32,31 +32,45 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.service;
+package com.nageoffer.onecoupon.engine.mq.event;
 
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRedeemReqDTO;
+import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * 用户优惠券业务逻辑层
+ * 用户兑换优惠券事件
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-25
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-09-10
  */
-public interface UserCouponService {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserCouponRedeemEvent {
 
     /**
-     * 用户兑换优惠券
-     *
-     * @param requestParam 请求参数
+     * Web 请求参数
      */
-    void redeemUserCoupon(CouponTemplateRedeemReqDTO requestParam);
+    private CouponTemplateRedeemReqDTO requestParam;
 
     /**
-     * 用户兑换优惠券消息队列版本
-     * 支持更高的并发，完全依赖缓存做前置校验，如果缓存认为没问题，直接返回用户请求成功，在消息队列中做扣减等一系列流程
-     *
-     * @param requestParam 请求参数
+     * 领取次数
      */
-    void redeemUserCouponByMQ(CouponTemplateRedeemReqDTO requestParam);
+    private Integer receiveCount;
+
+    /**
+     * 优惠券模板
+     */
+    private CouponTemplateQueryRespDTO couponTemplate;
+
+    /**
+     * 用户 ID
+     */
+    private String userId;
 }

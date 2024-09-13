@@ -47,6 +47,7 @@ import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
 import com.nageoffer.onecoupon.engine.common.constant.EngineRedisConstant;
 import com.nageoffer.onecoupon.engine.common.context.UserContext;
 import com.nageoffer.onecoupon.engine.common.enums.RedisStockDecrementErrorEnum;
+import com.nageoffer.onecoupon.engine.common.enums.UserCouponStatusEnum;
 import com.nageoffer.onecoupon.engine.dao.entity.UserCouponDO;
 import com.nageoffer.onecoupon.engine.dao.mapper.CouponTemplateMapper;
 import com.nageoffer.onecoupon.engine.dao.mapper.UserCouponMapper;
@@ -54,7 +55,9 @@ import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateQueryReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRedeemReqDTO;
 import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
 import com.nageoffer.onecoupon.engine.mq.event.UserCouponDelayCloseEvent;
+import com.nageoffer.onecoupon.engine.mq.event.UserCouponRedeemEvent;
 import com.nageoffer.onecoupon.engine.mq.producer.UserCouponDelayCloseProducer;
+import com.nageoffer.onecoupon.engine.mq.producer.UserCouponRedeemProducer;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateService;
 import com.nageoffer.onecoupon.engine.service.UserCouponService;
 import com.nageoffer.onecoupon.engine.toolkit.StockDecrementReturnCombinedUtil;
@@ -90,6 +93,7 @@ public class UserCouponServiceImpl implements UserCouponService {
     private final UserCouponMapper userCouponMapper;
     private final CouponTemplateMapper couponTemplateMapper;
     private final UserCouponDelayCloseProducer couponDelayCloseProducer;
+    private final UserCouponRedeemProducer userCouponRedeemProducer;
 
     private final StringRedisTemplate stringRedisTemplate;
     private final TransactionTemplate transactionTemplate;
@@ -155,7 +159,7 @@ public class UserCouponServiceImpl implements UserCouponService {
                         .userId(Long.parseLong(UserContext.getUserId()))
                         .source(requestParam.getSource())
                         .receiveCount(Long.valueOf(extractSecondField).intValue())
-                        .status(0)
+                        .status(UserCouponStatusEnum.UNUSED.getCode())
                         .receiveTime(now)
                         .validStartTime(now)
                         .validEndTime(validEndTime)
@@ -215,5 +219,57 @@ public class UserCouponServiceImpl implements UserCouponService {
                 throw new ServiceException("优惠券领取异常，请稍候再试");
             }
         });
+    }
+
+    @Override
+    public void redeemUserCouponByMQ(CouponTemplateRedeemReqDTO requestParam) {
+        // 验证缓存是否存在，保障数据存在并且缓存中存在
+        CouponTemplateQueryRespDTO couponTemplate = couponTemplateService.findCouponTemplate(BeanUtil.toBean(requestParam, CouponTemplateQueryReqDTO.class));
+
+        // 验证领取的优惠券是否在活动有效时间
+        boolean isInTime = DateUtil.isIn(new Date(), couponTemplate.getValidStartTime(), couponTemplate.getValidEndTime());
+        if (!isInTime) {
+            // 一般来说优惠券领取时间不到的时候，前端不会放开调用请求，可以理解这是用户调用接口在“攻击”
+            throw new ClientException("不满足优惠券领取时间");
+        }
+
+        // 获取 LUA 脚本，并保存到 Hutool 的单例管理容器，下次直接获取不需要加载
+        DefaultRedisScript<Long> buildLuaScript = Singleton.get(STOCK_DECREMENT_AND_SAVE_USER_RECEIVE_LUA_PATH, () -> {
+            DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
+            redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource(STOCK_DECREMENT_AND_SAVE_USER_RECEIVE_LUA_PATH)));
+            redisScript.setResultType(Long.class);
+            return redisScript;
+        });
+
+        // 验证用户是否符合优惠券领取条件
+        JSONObject receiveRule = JSON.parseObject(couponTemplate.getReceiveRule());
+        String limitPerPerson = receiveRule.getString("limitPerPerson");
+
+        // 执行 LUA 脚本进行扣减库存以及增加 Redis 用户领券记录次数
+        String couponTemplateCacheKey = String.format(EngineRedisConstant.COUPON_TEMPLATE_KEY, requestParam.getCouponTemplateId());
+        String userCouponTemplateLimitCacheKey = String.format(EngineRedisConstant.USER_COUPON_TEMPLATE_LIMIT_KEY, UserContext.getUserId(), requestParam.getCouponTemplateId());
+        Long stockDecrementLuaResult = stringRedisTemplate.execute(
+                buildLuaScript,
+                ListUtil.of(couponTemplateCacheKey, userCouponTemplateLimitCacheKey),
+                String.valueOf(couponTemplate.getValidEndTime().getTime()), limitPerPerson
+        );
+
+        // 判断 LUA 脚本执行返回类，如果失败根据类型返回报错提示
+        long firstField = StockDecrementReturnCombinedUtil.extractFirstField(stockDecrementLuaResult);
+        if (RedisStockDecrementErrorEnum.isFail(firstField)) {
+            throw new ServiceException(RedisStockDecrementErrorEnum.fromType(firstField));
+        }
+
+        UserCouponRedeemEvent userCouponRedeemEvent = UserCouponRedeemEvent.builder()
+                .requestParam(requestParam)
+                .receiveCount((int) StockDecrementReturnCombinedUtil.extractSecondField(stockDecrementLuaResult))
+                .couponTemplate(couponTemplate)
+                .userId(UserContext.getUserId())
+                .build();
+        SendResult sendResult = userCouponRedeemProducer.sendMessage(userCouponRedeemEvent);
+        // 发送消息失败解决方案简单且高效的逻辑之一：打印日志并报警，通过日志搜集并重新投递
+        if (ObjectUtil.notEqual(sendResult.getSendStatus().name(), "SEND_OK")) {
+            log.warn("发送优惠券兑换消息失败，消息参数：{}", JSON.toJSONString(userCouponRedeemEvent));
+        }
     }
 }
