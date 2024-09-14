@@ -60,7 +60,6 @@ public class RedisBlockingDequeTest {
     public void test() throws InterruptedException {
         RemindCouponTemplateDTO remindDTO = new RemindCouponTemplateDTO();
         remindDTO.setCouponTemplateId("111");
-        remindDTO.setName("shop");
         remindDTO.setShopNumber("1111");
         remindDTO.setUserId("888");
         remindDTO.setContact("123@qq.com");

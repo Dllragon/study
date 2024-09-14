@@ -34,12 +34,11 @@
 
 package com.nageoffer.onecoupon.engine.mq.producer;
 
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nageoffer.onecoupon.engine.common.constant.EngineRockerMQConstant;
 import com.nageoffer.onecoupon.engine.mq.base.BaseSendExtendDTO;
 import com.nageoffer.onecoupon.engine.mq.base.MessageWrapper;
-import com.nageoffer.onecoupon.engine.mq.event.CouponRemindEvent;
+import com.nageoffer.onecoupon.engine.mq.event.CouponRemindDelayEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.common.message.MessageConst;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
@@ -60,31 +59,31 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
-public class CouponRemindProducer extends AbstractCommonSendProduceTemplate<CouponRemindEvent> {
+public class CouponRemindDelayProducer extends AbstractCommonSendProduceTemplate<CouponRemindDelayEvent> {
 
     private final ConfigurableEnvironment environment;
 
-    public CouponRemindProducer(@Autowired RocketMQTemplate rocketMQTemplate, @Autowired ConfigurableEnvironment environment) {
+    public CouponRemindDelayProducer(@Autowired RocketMQTemplate rocketMQTemplate, @Autowired ConfigurableEnvironment environment) {
         super(rocketMQTemplate);
         this.environment = environment;
     }
 
     @Override
-    protected BaseSendExtendDTO buildBaseSendExtendParam(CouponRemindEvent messageSendEvent) {
+    protected BaseSendExtendDTO buildBaseSendExtendParam(CouponRemindDelayEvent messageSendEvent) {
         return BaseSendExtendDTO.builder()
                 .eventName("提醒用户抢券")
                 .keys(messageSendEvent.getUserId() + ":" + messageSendEvent.getCouponTemplateId())
                 .topic(environment.resolvePlaceholders(EngineRockerMQConstant.COUPON_TEMPLATE_REMIND_TOPIC_KEY))
                 .sentTimeout(2000L)
-                .delayTime(DateUtil.offsetMinute(messageSendEvent.getStartTime(), -messageSendEvent.getRemindTime()).getTime())
+                .delayTime(messageSendEvent.getDelayTime())
                 .build();
     }
 
     @Override
-    protected Message<?> buildMessage(CouponRemindEvent messageSendEvent, BaseSendExtendDTO requestParam) {
+    protected Message<?> buildMessage(CouponRemindDelayEvent messageSendEvent, BaseSendExtendDTO requestParam) {
         String keys = StrUtil.isEmpty(requestParam.getKeys()) ? UUID.randomUUID().toString() : requestParam.getKeys();
         return MessageBuilder
-                .withPayload(new MessageWrapper(requestParam.getKeys(), messageSendEvent))
+                .withPayload(new MessageWrapper(keys, messageSendEvent))
                 .setHeader(MessageConst.PROPERTY_KEYS, keys)
                 .setHeader(MessageConst.PROPERTY_TAGS, requestParam.getTag())
                 .build();

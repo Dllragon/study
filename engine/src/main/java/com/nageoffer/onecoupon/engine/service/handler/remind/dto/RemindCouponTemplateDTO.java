@@ -58,12 +58,6 @@ public class RemindCouponTemplateDTO {
     private String couponTemplateId;
 
     /**
-     * 优惠券名称
-     */
-    @Schema(description = "优惠券名称")
-    private String name;
-
-    /**
      * 店铺编号
      */
     @Schema(description = "店铺编号", example = "1810714735922956666", required = true)

@@ -80,7 +80,7 @@ public class UserCouponRedeemProducer extends AbstractCommonSendProduceTemplate<
     protected Message<?> buildMessage(UserCouponRedeemEvent messageSendEvent, BaseSendExtendDTO requestParam) {
         String keys = StrUtil.isEmpty(requestParam.getKeys()) ? UUID.randomUUID().toString() : requestParam.getKeys();
         return MessageBuilder
-                .withPayload(new MessageWrapper(requestParam.getKeys(), messageSendEvent))
+                .withPayload(new MessageWrapper(keys, messageSendEvent))
                 .setHeader(MessageConst.PROPERTY_KEYS, keys)
                 .setHeader(MessageConst.PROPERTY_TAGS, requestParam.getTag())
                 .build();

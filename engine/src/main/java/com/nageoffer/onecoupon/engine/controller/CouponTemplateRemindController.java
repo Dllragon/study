@@ -69,8 +69,9 @@ public class CouponTemplateRemindController {
     @Operation(summary = "发出优惠券预约提醒请求")
     @NoDuplicateSubmit(message = "请勿短时间内重复提交预约提醒请求")
     @PostMapping("/api/engine/coupon-template-remind/create")
-    public Result<Boolean> createCouponRemind(@RequestBody CouponTemplateRemindCreateReqDTO requestParam) {
-        return Results.success(couponTemplateRemindService.createCouponRemind(requestParam));
+    public Result<Void> createCouponRemind(@RequestBody CouponTemplateRemindCreateReqDTO requestParam) {
+        couponTemplateRemindService.createCouponRemind(requestParam);
+        return Results.success();
     }
 
     @Operation(summary = "查询优惠券预约提醒")
@@ -82,7 +83,8 @@ public class CouponTemplateRemindController {
     @Operation(summary = "取消优惠券预约提醒")
     @NoDuplicateSubmit(message = "请勿短时间内重复提交取消预约提醒请求")
     @PostMapping("/api/engine/coupon-template-remind/cancel")
-    public Result<Boolean> cancelCouponRemind(@RequestBody CouponTemplateRemindCancelReqDTO requestParam) {
-        return Results.success(couponTemplateRemindService.cancelCouponRemind(requestParam));
+    public Result<Void> cancelCouponRemind(@RequestBody CouponTemplateRemindCancelReqDTO requestParam) {
+        couponTemplateRemindService.cancelCouponRemind(requestParam);
+        return Results.success();
     }
 }

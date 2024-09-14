@@ -32,72 +32,48 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.mq.event;
+package com.nageoffer.onecoupon.engine.mq.consumer;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.Date;
+import cn.hutool.core.bean.BeanUtil;
+import com.alibaba.fastjson2.JSON;
+import com.nageoffer.onecoupon.engine.common.constant.EngineRockerMQConstant;
+import com.nageoffer.onecoupon.engine.mq.base.MessageWrapper;
+import com.nageoffer.onecoupon.engine.mq.event.CouponRemindDelayEvent;
+import com.nageoffer.onecoupon.engine.service.handler.remind.ExecuteRemindCouponTemplate;
+import com.nageoffer.onecoupon.engine.service.handler.remind.dto.RemindCouponTemplateDTO;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.springframework.stereotype.Component;
 
 /**
- * 优惠券提醒抢券事件
+ * 提醒抢券消费者
  * <p>
  * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-21
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class CouponRemindEvent {
+@Component
+@RequiredArgsConstructor
+@RocketMQMessageListener(
+        topic = EngineRockerMQConstant.COUPON_TEMPLATE_REMIND_TOPIC_KEY,
+        consumerGroup = EngineRockerMQConstant.COUPON_TEMPLATE_REMIND_CG_KEY
+)
+@Slf4j(topic = "CouponRemindConsumer")
+public class CouponRemindDelayConsumer implements RocketMQListener<MessageWrapper<CouponRemindDelayEvent>> {
 
-    /**
-     * 优惠券模板id
-     */
-    private String couponTemplateId;
+    private final ExecuteRemindCouponTemplate executeRemindCouponTemplate;
 
-    /**
-     * 优惠券名称
-     */
-    private String name;
+    @Override
+    public void onMessage(MessageWrapper<CouponRemindDelayEvent> messageWrapper) {
+        // 开头打印日志，平常可 Debug 看任务参数，线上可报平安（比如消息是否消费，重新投递时获取参数等）
+        log.info("[消费者] 提醒用户抢券 - 执行消费逻辑，消息体：{}", JSON.toJSONString(messageWrapper));
 
-    /**
-     * 店铺编号
-     */
-    private String shopNumber;
+        CouponRemindDelayEvent event = messageWrapper.getMessage();
+        RemindCouponTemplateDTO remindCouponTemplateDTO = BeanUtil.toBean(event, RemindCouponTemplateDTO.class);
 
-    /**
-     * 用户id
-     */
-    private String userId;
-
-    /**
-     * 用户联系方式，可能是邮箱、手机号、等等
-     */
-    private String contact;
-
-    /**
-     * 提醒方式
-     */
-    private Integer type;
-
-    /**
-     * 提醒时间，比如五分钟，十分钟，十五分钟
-     */
-    private Integer remindTime;
-
-    /**
-     * 开抢时间
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date startTime;
-
-    /**
-     * 具体延迟时间
-     */
-    private Long delayTime;
+        // 根据不同策略向用户发送消息提醒
+        executeRemindCouponTemplate.executeRemindCouponTemplate(remindCouponTemplateDTO);
+    }
 }

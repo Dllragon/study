@@ -82,5 +82,4 @@ public class CouponTemplateRemindDO {
      * 优惠券开抢时间
      */
     private Date startTime;
-
 }
