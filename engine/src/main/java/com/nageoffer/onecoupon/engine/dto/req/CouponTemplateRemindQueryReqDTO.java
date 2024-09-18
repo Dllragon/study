@@ -48,11 +48,9 @@ import lombok.Data;
 @Schema(description = "查询优惠券预约抢券提醒参数实体")
 public class CouponTemplateRemindQueryReqDTO {
 
-
     /**
      * 用户id
      */
-    @Schema(description = "用户id", example = "1810868149847928832", required = true)
+    @Schema(description = "用户id", example = "1810518709471555585", required = true)
     private String userId;
-
 }

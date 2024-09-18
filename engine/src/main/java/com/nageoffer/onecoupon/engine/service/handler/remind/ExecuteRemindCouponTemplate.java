@@ -71,11 +71,12 @@ import static com.nageoffer.onecoupon.engine.common.constant.EngineRedisConstant
 @RequiredArgsConstructor
 public class ExecuteRemindCouponTemplate {
 
-    private final RedissonClient redissonClient;
-    private final StringRedisTemplate stringRedisTemplate;
     private final CouponTemplateRemindService couponTemplateRemindService;
     private final SendEmailRemindCouponTemplate sendEmailRemindCouponTemplate;
     private final SendMessageRemindCouponTemplate sendMessageRemindCouponTemplate;
+
+    private final RedissonClient redissonClient;
+    private final StringRedisTemplate stringRedisTemplate;
 
     // 提醒用户属于 IO 密集型任务
     private final ExecutorService executorService = new ThreadPoolExecutor(
@@ -94,16 +95,16 @@ public class ExecuteRemindCouponTemplate {
      * @param remindDTO 需要的信息
      */
     public void executeRemindCouponTemplate(RemindCouponTemplateDTO remindDTO) {
-        executorService.execute(() -> {
-            if (!couponTemplateRemindService.isCancelRemind(remindDTO)) {
-                // 用户没取消预约，则发出提醒
-                // 假设刚把消息提交到线程池，突然应用宕机了，我们通过延迟队列进行兜底 Refresh
-                RBlockingDeque<String> blockingDeque = redissonClient.getBlockingDeque(REDIS_BLOCKING_DEQUE);
-                RDelayedQueue<String> delayedQueue = redissonClient.getDelayedQueue(blockingDeque);
-                String key = String.format(COUPON_REMIND_CHECK_KEY, remindDTO.getUserId(), remindDTO.getCouponTemplateId(), remindDTO.getRemindTime(), remindDTO.getType());
-                stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(remindDTO));
-                delayedQueue.offer(key, 10, TimeUnit.SECONDS);
+        // 假设刚把消息提交到线程池，突然应用宕机了，我们通过延迟队列进行兜底 Refresh
+        RBlockingDeque<String> blockingDeque = redissonClient.getBlockingDeque(REDIS_BLOCKING_DEQUE);
+        RDelayedQueue<String> delayedQueue = redissonClient.getDelayedQueue(blockingDeque);
+        String key = String.format(COUPON_REMIND_CHECK_KEY, remindDTO.getUserId(), remindDTO.getCouponTemplateId(), remindDTO.getRemindTime(), remindDTO.getType());
+        stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(remindDTO));
+        delayedQueue.offer(key, 10, TimeUnit.SECONDS);
 
+        executorService.execute(() -> {
+            // 用户没取消预约，则发出提醒
+            if (!couponTemplateRemindService.isCancelRemind(remindDTO)) {
                 // 向用户发起消息提醒
                 switch (Objects.requireNonNull(CouponRemindTypeEnum.getByType(remindDTO.getType()))) {
                     case EMAIL -> sendEmailRemindCouponTemplate.remind(remindDTO);

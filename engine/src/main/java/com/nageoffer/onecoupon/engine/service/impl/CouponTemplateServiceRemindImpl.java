@@ -148,17 +148,24 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
         if (couponTemplateRemindDOS == null || couponTemplateRemindDOS.isEmpty())
             return new ArrayList<>();
         // 根据优惠券 ID 查询优惠券信息
-        List<Long> couponIds = couponTemplateRemindDOS.stream().map(CouponTemplateRemindDO::getCouponTemplateId).toList();
-        List<Long> shopNumbers = couponTemplateRemindDOS.stream().map(CouponTemplateRemindDO::getShopNumber).toList();
+        List<Long> couponIds = couponTemplateRemindDOS.stream()
+                .map(CouponTemplateRemindDO::getCouponTemplateId)
+                .toList();
+        List<Long> shopNumbers = couponTemplateRemindDOS.stream()
+                .map(CouponTemplateRemindDO::getShopNumber)
+                .toList();
         List<CouponTemplateDO> couponTemplateDOS = couponTemplateService.listCouponTemplateById(couponIds, shopNumbers);
         List<CouponTemplateRemindQueryRespDTO> resp = BeanUtil.copyToList(couponTemplateDOS, CouponTemplateRemindQueryRespDTO.class);
         // 填充响应结果的其它信息
         resp.forEach(each -> {
             // 找到当前优惠券对应的预约提醒信息
-            couponTemplateRemindDOS.stream().filter(i -> i.getCouponTemplateId().equals(each.getId())).findFirst().ifPresent(i -> {
-                // 解析并填充预约提醒信息
-                CouponTemplateRemindUtil.fillRemindInformation(each, i.getInformation());
-            });
+            couponTemplateRemindDOS.stream()
+                    .filter(i -> i.getCouponTemplateId().equals(each.getId()))
+                    .findFirst()
+                    .ifPresent(i -> {
+                        // 解析并填充预约提醒信息
+                        CouponTemplateRemindUtil.fillRemindInformation(each, i.getInformation());
+                    });
         });
         stringRedisTemplate.opsForValue().set(String.format(USER_COUPON_TEMPLATE_REMIND_INFORMATION, requestParam.getUserId()), JSON.toJSONString(resp), 1, TimeUnit.MINUTES);
         return resp;
@@ -171,10 +178,13 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
                 .eq(CouponTemplateRemindDO::getUserId, requestParam.getUserId())
                 .eq(CouponTemplateRemindDO::getCouponTemplateId, requestParam.getCouponTemplateId());
         CouponTemplateRemindDO couponTemplateRemindDO = couponTemplateRemindMapper.selectOne(queryWrapper);
+        if (couponTemplateRemindDO == null) {
+            throw new ClientException("优惠券模板预约信息不存在");
+        }
         // 计算 BitMap 信息
         Long bitMap = CouponTemplateRemindUtil.calculateBitMap(requestParam.getRemindTime(), requestParam.getType());
         if ((bitMap & couponTemplateRemindDO.getInformation()) == 0L) {
-            throw new ClientException("您没有预约该时间点下的提醒");
+            throw new ClientException("您没有预约该时间点的提醒");
         }
         bitMap ^= couponTemplateRemindDO.getInformation();
         queryWrapper.eq(CouponTemplateRemindDO::getInformation, couponTemplateRemindDO.getInformation());

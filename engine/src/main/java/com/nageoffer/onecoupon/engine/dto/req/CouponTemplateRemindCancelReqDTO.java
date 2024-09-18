@@ -57,13 +57,13 @@ public class CouponTemplateRemindCancelReqDTO {
     /**
      * 用户id
      */
-    @Schema(description = "用户id", example = "1810868149847928832", required = true)
+    @Schema(description = "用户id", example = "1810518709471555585", required = true)
     private String userId;
 
     /**
      * 提醒时间，比如五分钟，十分钟，十五分钟
      */
-    @Schema(description = "提醒时间")
+    @Schema(description = "提醒时间", example = "15")
     private Integer remindTime;
 
     /**
@@ -71,5 +71,4 @@ public class CouponTemplateRemindCancelReqDTO {
      */
     @Schema(description = "提醒方式", example = "0", required = true)
     private Integer type;
-
 }

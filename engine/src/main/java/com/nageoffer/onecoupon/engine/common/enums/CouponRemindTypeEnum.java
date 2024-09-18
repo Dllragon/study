@@ -48,10 +48,14 @@ import lombok.RequiredArgsConstructor;
 public enum CouponRemindTypeEnum {
 
     /**
+     * App 通知
+     */
+    EMAIL(0, "App通知"),
+
+    /**
      * 邮件提醒
      */
-    EMAIL(0, "邮件提醒"),
-    MESSAGE(1, "短信提醒");
+    MESSAGE(1, "邮件提醒");
 
     @Getter
     private final int type;
@@ -59,7 +63,7 @@ public enum CouponRemindTypeEnum {
     private final String describe;
 
     public static CouponRemindTypeEnum getByType(Integer type) {
-        for(CouponRemindTypeEnum remindEnum : values()){
+        for (CouponRemindTypeEnum remindEnum : values()) {
             if (remindEnum.getType() == type) {
                 return remindEnum;
             }
@@ -68,7 +72,7 @@ public enum CouponRemindTypeEnum {
     }
 
     public static String getDescribeByType(Integer type) {
-        for(CouponRemindTypeEnum remindEnum : values()){
+        for (CouponRemindTypeEnum remindEnum : values()) {
             if (remindEnum.getType() == type) {
                 return remindEnum.getDescribe();
             }

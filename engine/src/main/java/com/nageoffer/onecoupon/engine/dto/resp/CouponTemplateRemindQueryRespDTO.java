@@ -53,7 +53,6 @@ import java.util.List;
 @Schema(description = "查询优惠券预约抢券提醒返回实体")
 public class CouponTemplateRemindQueryRespDTO {
 
-
     /**
      * id
      */
