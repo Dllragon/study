@@ -35,22 +35,24 @@
 package com.nageoffer.onecoupon.engine.dto.req;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
- * 优惠券模板查询接口请求参数实体
+ * 创建抢券预约提醒接口请求参数实体
  * <p>
- * 作者：马丁
+ * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 开发时间：2024-07-16
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "优惠券模板查询请求参数实体")
-public class CouponTemplateQueryReqDTO {
+@Schema(description = "优惠券预约抢券提醒请求参数实体")
+public class CouponTemplateRemindCreateReqDTO {
+
+    /**
+     * 优惠券模板id
+     */
+    @Schema(description = "优惠券模板id", example = "1810966706881941507", required = true)
+    private String couponTemplateId;
 
     /**
      * 店铺编号
@@ -59,8 +61,14 @@ public class CouponTemplateQueryReqDTO {
     private String shopNumber;
 
     /**
-     * 优惠券模板id
+     * 提醒方式
      */
-    @Schema(description = "优惠券模板id", example = "1810966706881941507", required = true)
-    private String couponTemplateId;
+    @Schema(description = "提醒方式", example = "0", required = true)
+    private Integer type;
+
+    /**
+     * 提醒时间，比如五分钟，十分钟，十五分钟
+     */
+    @Schema(description = "提醒时间", example = "5", required = true)
+    private Integer remindTime;
 }

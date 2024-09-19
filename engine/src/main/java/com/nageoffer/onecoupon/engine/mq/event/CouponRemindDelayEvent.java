@@ -32,35 +32,67 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.dto.req;
+package com.nageoffer.onecoupon.engine.mq.event;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 /**
- * 优惠券模板查询接口请求参数实体
+ * 优惠券提醒抢券事件
  * <p>
- * 作者：马丁
+ * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 开发时间：2024-07-21
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "优惠券模板查询请求参数实体")
-public class CouponTemplateQueryReqDTO {
-
-    /**
-     * 店铺编号
-     */
-    @Schema(description = "店铺编号", example = "1810714735922956666", required = true)
-    private String shopNumber;
+public class CouponRemindDelayEvent {
 
     /**
      * 优惠券模板id
      */
-    @Schema(description = "优惠券模板id", example = "1810966706881941507", required = true)
     private String couponTemplateId;
+
+    /**
+     * 店铺编号
+     */
+    private String shopNumber;
+
+    /**
+     * 用户id
+     */
+    private String userId;
+
+    /**
+     * 用户联系方式，可能是邮箱、手机号、等等
+     */
+    private String contact;
+
+    /**
+     * 提醒方式
+     */
+    private Integer type;
+
+    /**
+     * 提醒时间，比如五分钟，十分钟，十五分钟
+     */
+    private Integer remindTime;
+
+    /**
+     * 开抢时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date startTime;
+
+    /**
+     * 具体延迟时间
+     */
+    private Long delayTime;
 }

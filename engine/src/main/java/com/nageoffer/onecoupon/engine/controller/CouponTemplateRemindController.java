@@ -32,35 +32,39 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.dto.req;
+package com.nageoffer.onecoupon.engine.controller;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
+import com.nageoffer.onecoupon.engine.service.CouponTemplateRemindService;
+import com.nageoffer.onecoupon.framework.idempotent.NoDuplicateSubmit;
+import com.nageoffer.onecoupon.framework.result.Result;
+import com.nageoffer.onecoupon.framework.web.Results;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 优惠券模板查询接口请求参数实体
+ * 优惠券模板控制层
  * <p>
- * 作者：马丁
+ * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 开发时间：2024-07-16
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "优惠券模板查询请求参数实体")
-public class CouponTemplateQueryReqDTO {
+@RestController
+@RequiredArgsConstructor
+@Tag(name = "优惠券预约提醒管理")
+public class CouponTemplateRemindController {
 
-    /**
-     * 店铺编号
-     */
-    @Schema(description = "店铺编号", example = "1810714735922956666", required = true)
-    private String shopNumber;
+    private final CouponTemplateRemindService couponTemplateRemindService;
 
-    /**
-     * 优惠券模板id
-     */
-    @Schema(description = "优惠券模板id", example = "1810966706881941507", required = true)
-    private String couponTemplateId;
+    @Operation(summary = "发出优惠券预约提醒请求")
+    @NoDuplicateSubmit(message = "请勿短时间内重复提交预约提醒请求")
+    @PostMapping("/api/engine/coupon-template-remind/create")
+    public Result<Void> createCouponRemind(@RequestBody CouponTemplateRemindCreateReqDTO requestParam) {
+        couponTemplateRemindService.createCouponRemind(requestParam);
+        return Results.success();
+    }
 }

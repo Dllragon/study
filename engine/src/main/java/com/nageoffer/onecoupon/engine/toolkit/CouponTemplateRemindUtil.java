@@ -32,35 +32,36 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.dto.req;
+package com.nageoffer.onecoupon.engine.toolkit;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.nageoffer.onecoupon.framework.exception.ClientException;
 
 /**
- * 优惠券模板查询接口请求参数实体
+ * 优惠券预约提醒工具类
  * <p>
- * 作者：马丁
+ * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 开发时间：2024-07-20
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "优惠券模板查询请求参数实体")
-public class CouponTemplateQueryReqDTO {
+public class CouponTemplateRemindUtil {
 
     /**
-     * 店铺编号
+     * 下一个类型的位移量，每个类型占用12个bit位，共计60分钟
      */
-    @Schema(description = "店铺编号", example = "1810714735922956666", required = true)
-    private String shopNumber;
+    private static final int NEXT_TYPE_BITS = 12;
 
     /**
-     * 优惠券模板id
+     * 5分钟为一个间隔
      */
-    @Schema(description = "优惠券模板id", example = "1810966706881941507", required = true)
-    private String couponTemplateId;
+    private static final int TIME_INTERVAL = 5;
+
+    /**
+     * 根据预约时间和预约类型计算bitmap
+     */
+    public static Long calculateBitMap(Integer remindTime, Integer type) {
+        if (remindTime > TIME_INTERVAL * NEXT_TYPE_BITS) {
+            throw new ClientException("预约提醒的时间不能早于开票前" + TIME_INTERVAL * NEXT_TYPE_BITS + "分钟");
+        }
+        return 1L << (type * NEXT_TYPE_BITS + Math.max(0, remindTime / TIME_INTERVAL - 1));
+    }
 }

@@ -32,35 +32,52 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.dto.req;
+package com.nageoffer.onecoupon.engine.dao.entity;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 /**
- * 优惠券模板查询接口请求参数实体
+ * 用户预约提醒信息存储数据库持久层实体
  * <p>
- * 作者：马丁
+ * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 开发时间：2024-07-15
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "优惠券模板查询请求参数实体")
-public class CouponTemplateQueryReqDTO {
+@Builder
+@TableName("t_coupon_template_remind")
+public class CouponTemplateRemindDO {
+
+    /**
+     * 用户id
+     */
+    private Long userId;
+
+    /**
+     * 券id
+     */
+    private Long couponTemplateId;
+
+    /**
+     * 用户预约信息，用位图存储信息
+     */
+    private Long information;
 
     /**
      * 店铺编号
      */
-    @Schema(description = "店铺编号", example = "1810714735922956666", required = true)
-    private String shopNumber;
+    private Long shopNumber;
 
     /**
-     * 优惠券模板id
+     * 优惠券开抢时间
      */
-    @Schema(description = "优惠券模板id", example = "1810966706881941507", required = true)
-    private String couponTemplateId;
+    private Date startTime;
 }
