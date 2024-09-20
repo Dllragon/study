@@ -34,7 +34,7 @@
 
 package com.nageoffer.onecoupon.engine.service.handler.remind;
 
-import com.nageoffer.onecoupon.engine.service.handler.remind.dto.RemindCouponTemplateDTO;
+import com.nageoffer.onecoupon.engine.service.handler.remind.dto.CouponTemplateRemindDTO;
 
 /**
  * 优惠券抢券提醒接口
@@ -50,5 +50,5 @@ public interface RemindCouponTemplate {
      *
      * @param remindCouponTemplateDTO 提醒所需要的信息
      */
-    boolean remind(RemindCouponTemplateDTO remindCouponTemplateDTO);
+    boolean remind(CouponTemplateRemindDTO remindCouponTemplateDTO);
 }

@@ -34,7 +34,6 @@
 
 package com.nageoffer.onecoupon.engine.dao.entity;
 
-
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,7 +41,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
-
 
 /**
  * 用户预约提醒信息存储数据库持久层实体

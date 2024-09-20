@@ -40,7 +40,7 @@ import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCancelReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindQueryReqDTO;
 import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindQueryRespDTO;
-import com.nageoffer.onecoupon.engine.service.handler.remind.dto.RemindCouponTemplateDTO;
+import com.nageoffer.onecoupon.engine.service.handler.remind.dto.CouponTemplateRemindDTO;
 
 import java.util.List;
 
@@ -79,5 +79,5 @@ public interface CouponTemplateRemindService extends IService<CouponTemplateRemi
      *
      * @param requestParam 请求参数
      */
-    boolean isCancelRemind(RemindCouponTemplateDTO requestParam);
+    boolean isCancelRemind(CouponTemplateRemindDTO requestParam);
 }

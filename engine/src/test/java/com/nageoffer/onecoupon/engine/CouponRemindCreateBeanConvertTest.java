@@ -37,9 +37,7 @@ package com.nageoffer.onecoupon.engine;
 import cn.hutool.core.bean.BeanUtil;
 import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateRemindDO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
-import com.nageoffer.onecoupon.engine.mq.event.CouponRemindDelayEvent;
-
-import java.util.Date;
+import com.nageoffer.onecoupon.engine.mq.event.CouponTemplateRemindDelayEvent;
 
 public class CouponRemindCreateBeanConvertTest {
 
@@ -53,7 +51,7 @@ public class CouponRemindCreateBeanConvertTest {
         CouponTemplateRemindDO couponTemplateRemindDO = BeanUtil.toBean(dto, CouponTemplateRemindDO.class);
         System.out.println(couponTemplateRemindDO.toString());
 
-        CouponRemindDelayEvent couponRemindEvent = BeanUtil.toBean(dto, CouponRemindDelayEvent.class);
+        CouponTemplateRemindDelayEvent couponRemindEvent = BeanUtil.toBean(dto, CouponTemplateRemindDelayEvent.class);
         System.out.println(couponRemindEvent.toString());
     }
 }

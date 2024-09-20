@@ -50,11 +50,11 @@ import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindQueryReqDTO;
 import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
 import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateRemindQueryRespDTO;
-import com.nageoffer.onecoupon.engine.mq.event.CouponRemindDelayEvent;
-import com.nageoffer.onecoupon.engine.mq.producer.CouponRemindDelayProducer;
+import com.nageoffer.onecoupon.engine.mq.event.CouponTemplateRemindDelayEvent;
+import com.nageoffer.onecoupon.engine.mq.producer.CouponTemplateRemindDelayProducer;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateRemindService;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateService;
-import com.nageoffer.onecoupon.engine.service.handler.remind.dto.RemindCouponTemplateDTO;
+import com.nageoffer.onecoupon.engine.service.handler.remind.dto.CouponTemplateRemindDTO;
 import com.nageoffer.onecoupon.engine.toolkit.CouponTemplateRemindUtil;
 import com.nageoffer.onecoupon.framework.exception.ClientException;
 import lombok.RequiredArgsConstructor;
@@ -84,7 +84,7 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
     private final CouponTemplateRemindMapper couponTemplateRemindMapper;
     private final CouponTemplateService couponTemplateService;
     private final RBloomFilter<String> cancelRemindBloomFilter;
-    private final CouponRemindDelayProducer couponRemindDelayProducer;
+    private final CouponTemplateRemindDelayProducer couponTemplateRemindDelayProducer;
     private final StringRedisTemplate stringRedisTemplate;
 
     @Override
@@ -122,7 +122,7 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
         }
 
         // 发送预约提醒抢购优惠券延时消息
-        CouponRemindDelayEvent couponRemindDelayEvent = CouponRemindDelayEvent.builder()
+        CouponTemplateRemindDelayEvent couponRemindDelayEvent = CouponTemplateRemindDelayEvent.builder()
                 .couponTemplateId(couponTemplate.getId())
                 .userId(UserContext.getUserId())
                 .contact(UserContext.getUserId())
@@ -132,7 +132,7 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
                 .startTime(couponTemplate.getValidStartTime())
                 .delayTime(DateUtil.offsetMinute(couponTemplate.getValidStartTime(), -requestParam.getRemindTime()).getTime())
                 .build();
-        couponRemindDelayProducer.sendMessage(couponRemindDelayEvent);
+        couponTemplateRemindDelayProducer.sendMessage(couponRemindDelayEvent);
     }
 
     @Override
@@ -207,23 +207,26 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
     }
 
     @Override
-    public boolean isCancelRemind(RemindCouponTemplateDTO requestParam) {
+    public boolean isCancelRemind(CouponTemplateRemindDTO requestParam) {
         if (!cancelRemindBloomFilter.contains(String.valueOf(Objects.hash(requestParam.getCouponTemplateId(), requestParam.getUserId(), requestParam.getRemindTime(), requestParam.getType())))) {
             // 布隆过滤器中不存在，说明没取消提醒，此时已经能挡下大部分请求
             return false;
         }
+
         // 对于少部分的“取消了预约”，可能是误判，此时需要去数据库中查找
         LambdaQueryWrapper<CouponTemplateRemindDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateRemindDO.class)
                 .eq(CouponTemplateRemindDO::getUserId, requestParam.getUserId())
                 .eq(CouponTemplateRemindDO::getCouponTemplateId, requestParam.getCouponTemplateId());
         CouponTemplateRemindDO couponTemplateRemindDO = couponTemplateRemindMapper.selectOne(queryWrapper);
-        if (null == couponTemplateRemindDO) {
+        if (couponTemplateRemindDO == null) {
             // 数据库中没该条预约提醒，说明被取消
             return true;
         }
+
         // 即使存在数据，也要检查该类型的该时间点是否有提醒
         Long information = couponTemplateRemindDO.getInformation();
         Long bitMap = CouponTemplateRemindUtil.calculateBitMap(requestParam.getRemindTime(), requestParam.getType());
+
         // 按位与等于 0 说明用户取消了预约
         return (bitMap & information) == 0L;
     }

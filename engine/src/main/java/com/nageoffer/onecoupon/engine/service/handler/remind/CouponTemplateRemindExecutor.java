@@ -36,12 +36,12 @@ package com.nageoffer.onecoupon.engine.service.handler.remind;
 
 import cn.hutool.json.JSONUtil;
 import com.nageoffer.onecoupon.engine.common.enums.CouponRemindTypeEnum;
-import com.nageoffer.onecoupon.engine.mq.event.CouponRemindDelayEvent;
-import com.nageoffer.onecoupon.engine.mq.producer.CouponRemindDelayProducer;
+import com.nageoffer.onecoupon.engine.mq.event.CouponTemplateRemindDelayEvent;
+import com.nageoffer.onecoupon.engine.mq.producer.CouponTemplateRemindDelayProducer;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateRemindService;
-import com.nageoffer.onecoupon.engine.service.handler.remind.dto.RemindCouponTemplateDTO;
+import com.nageoffer.onecoupon.engine.service.handler.remind.dto.CouponTemplateRemindDTO;
 import com.nageoffer.onecoupon.engine.service.handler.remind.impl.SendEmailRemindCouponTemplate;
-import com.nageoffer.onecoupon.engine.service.handler.remind.impl.SendMessageRemindCouponTemplate;
+import com.nageoffer.onecoupon.engine.service.handler.remind.impl.SendAppMessageRemindCouponTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBlockingDeque;
@@ -54,7 +54,7 @@ import org.springframework.stereotype.Component;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -69,22 +69,22 @@ import static com.nageoffer.onecoupon.engine.common.constant.EngineRedisConstant
  */
 @Component
 @RequiredArgsConstructor
-public class ExecuteRemindCouponTemplate {
+public class CouponTemplateRemindExecutor {
 
     private final CouponTemplateRemindService couponTemplateRemindService;
     private final SendEmailRemindCouponTemplate sendEmailRemindCouponTemplate;
-    private final SendMessageRemindCouponTemplate sendMessageRemindCouponTemplate;
+    private final SendAppMessageRemindCouponTemplate sendAppMessageRemindCouponTemplate;
 
     private final RedissonClient redissonClient;
     private final StringRedisTemplate stringRedisTemplate;
 
     // 提醒用户属于 IO 密集型任务
     private final ExecutorService executorService = new ThreadPoolExecutor(
-            Runtime.getRuntime().availableProcessors(),
             Runtime.getRuntime().availableProcessors() << 1,
+            Runtime.getRuntime().availableProcessors() << 2,
             60,
             TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(),
+            new SynchronousQueue<>(),
             new ThreadPoolExecutor.CallerRunsPolicy()
     );
     public static final String REDIS_BLOCKING_DEQUE = "COUPON_REMIND_QUEUE";
@@ -92,23 +92,23 @@ public class ExecuteRemindCouponTemplate {
     /**
      * 执行提醒
      *
-     * @param remindDTO 需要的信息
+     * @param couponTemplateRemindDTO 用户预约提醒请求信息
      */
-    public void executeRemindCouponTemplate(RemindCouponTemplateDTO remindDTO) {
+    public void executeRemindCouponTemplate(CouponTemplateRemindDTO couponTemplateRemindDTO) {
         // 假设刚把消息提交到线程池，突然应用宕机了，我们通过延迟队列进行兜底 Refresh
         RBlockingDeque<String> blockingDeque = redissonClient.getBlockingDeque(REDIS_BLOCKING_DEQUE);
         RDelayedQueue<String> delayedQueue = redissonClient.getDelayedQueue(blockingDeque);
-        String key = String.format(COUPON_REMIND_CHECK_KEY, remindDTO.getUserId(), remindDTO.getCouponTemplateId(), remindDTO.getRemindTime(), remindDTO.getType());
-        stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(remindDTO));
+        String key = String.format(COUPON_REMIND_CHECK_KEY, couponTemplateRemindDTO.getUserId(), couponTemplateRemindDTO.getCouponTemplateId(), couponTemplateRemindDTO.getRemindTime(), couponTemplateRemindDTO.getType());
+        stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(couponTemplateRemindDTO));
         delayedQueue.offer(key, 10, TimeUnit.SECONDS);
 
         executorService.execute(() -> {
             // 用户没取消预约，则发出提醒
-            if (!couponTemplateRemindService.isCancelRemind(remindDTO)) {
+            if (!couponTemplateRemindService.isCancelRemind(couponTemplateRemindDTO)) {
                 // 向用户发起消息提醒
-                switch (Objects.requireNonNull(CouponRemindTypeEnum.getByType(remindDTO.getType()))) {
-                    case EMAIL -> sendEmailRemindCouponTemplate.remind(remindDTO);
-                    case MESSAGE -> sendMessageRemindCouponTemplate.remind(remindDTO);
+                switch (Objects.requireNonNull(CouponRemindTypeEnum.getByType(couponTemplateRemindDTO.getType()))) {
+                    case APP -> sendAppMessageRemindCouponTemplate.remind(couponTemplateRemindDTO);
+                    case EMAIL -> sendEmailRemindCouponTemplate.remind(couponTemplateRemindDTO);
                     default -> {
                     }
                 }
@@ -124,7 +124,7 @@ public class ExecuteRemindCouponTemplate {
     @RequiredArgsConstructor
     static class RefreshCouponRemindDelayQueueRunner implements CommandLineRunner {
 
-        private final CouponRemindDelayProducer couponRemindProducer;
+        private final CouponTemplateRemindDelayProducer couponTemplateRemindDelayProducer;
         private final RedissonClient redissonClient;
         private final StringRedisTemplate stringRedisTemplate;
 
@@ -143,11 +143,14 @@ public class ExecuteRemindCouponTemplate {
                             try {
                                 // 获取延迟队列待消费 Key
                                 String key = blockingDeque.take();
-                                log.info("检查向用户发送的通知消息Key：{} 是否被消费", key);
                                 if (stringRedisTemplate.hasKey(key)) {
+                                    log.info("检查用户发送的通知消息Key：{} 未消费完成，开启重新投递", key);
+
                                     // Redis 中还存在该 Key，说明任务没被消费完，则可能是消费机器宕机了，重新投递消息
-                                    CouponRemindDelayEvent couponRemindEvent = JSONUtil.toBean(stringRedisTemplate.opsForValue().get(key), CouponRemindDelayEvent.class);
-                                    couponRemindProducer.sendMessage(couponRemindEvent);
+                                    CouponTemplateRemindDelayEvent couponRemindEvent = JSONUtil.toBean(stringRedisTemplate.opsForValue().get(key), CouponTemplateRemindDelayEvent.class);
+                                    couponTemplateRemindDelayProducer.sendMessage(couponRemindEvent);
+
+                                    // 提醒用户后删除 Key
                                     stringRedisTemplate.delete(key);
                                 }
                             } catch (Throwable ignored) {

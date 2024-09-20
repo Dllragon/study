@@ -35,7 +35,7 @@
 package com.nageoffer.onecoupon.engine;
 
 import cn.hutool.json.JSONUtil;
-import com.nageoffer.onecoupon.engine.service.handler.remind.dto.RemindCouponTemplateDTO;
+import com.nageoffer.onecoupon.engine.service.handler.remind.dto.CouponTemplateRemindDTO;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RBlockingDeque;
@@ -58,7 +58,7 @@ public class RedisBlockingDequeTest {
 
     @Test
     public void test() throws InterruptedException {
-        RemindCouponTemplateDTO remindDTO = new RemindCouponTemplateDTO();
+        CouponTemplateRemindDTO remindDTO = new CouponTemplateRemindDTO();
         remindDTO.setCouponTemplateId("111");
         remindDTO.setShopNumber("1111");
         remindDTO.setUserId("888");

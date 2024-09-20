@@ -149,7 +149,7 @@
 代码入口：
 
 - 创建预约提醒请求：com.nageoffer.onecoupon.engine.controller.CouponTemplateRemindController#createCouponRemind
-- 消费用户提醒消息：com.nageoffer.onecoupon.engine.mq.consumer.CouponRemindDelayConsumer#onMessage
+- 消费用户提醒消息：com.nageoffer.onecoupon.engine.mq.consumer.CouponTemplateRemindDelayConsumer#onMessage
 
 业务亮点：
 
