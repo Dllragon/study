@@ -49,16 +49,16 @@ import lombok.Data;
 public class CouponTemplateRemindCancelReqDTO {
 
     /**
+     * 店铺编号
+     */
+    @Schema(description = "店铺编号", example = "1810714735922956666", required = true)
+    private String shopNumber;
+
+    /**
      * 优惠券模板id
      */
     @Schema(description = "优惠券模板id", example = "1810966706881941507", required = true)
     private String couponTemplateId;
-
-    /**
-     * 用户id
-     */
-    @Schema(description = "用户id", example = "1810518709471555585", required = true)
-    private String userId;
 
     /**
      * 提醒时间，比如五分钟，十分钟，十五分钟

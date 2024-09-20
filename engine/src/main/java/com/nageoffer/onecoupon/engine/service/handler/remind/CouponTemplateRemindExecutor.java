@@ -35,6 +35,7 @@
 package com.nageoffer.onecoupon.engine.service.handler.remind;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson2.JSON;
 import com.nageoffer.onecoupon.engine.common.enums.CouponRemindTypeEnum;
 import com.nageoffer.onecoupon.engine.mq.event.CouponTemplateRemindDelayEvent;
 import com.nageoffer.onecoupon.engine.mq.producer.CouponTemplateRemindDelayProducer;
@@ -67,6 +68,7 @@ import static com.nageoffer.onecoupon.engine.common.constant.EngineRedisConstant
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
  * 开发时间：2024-07-18
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class CouponTemplateRemindExecutor {
@@ -95,6 +97,12 @@ public class CouponTemplateRemindExecutor {
      * @param couponTemplateRemindDTO 用户预约提醒请求信息
      */
     public void executeRemindCouponTemplate(CouponTemplateRemindDTO couponTemplateRemindDTO) {
+        // 用户没取消预约，则发出提醒
+        if (couponTemplateRemindService.isCancelRemind(couponTemplateRemindDTO)) {
+            log.info("用户已取消优惠券预约提醒，参数：{}", JSON.toJSONString(couponTemplateRemindDTO));
+            return;
+        }
+
         // 假设刚把消息提交到线程池，突然应用宕机了，我们通过延迟队列进行兜底 Refresh
         RBlockingDeque<String> blockingDeque = redissonClient.getBlockingDeque(REDIS_BLOCKING_DEQUE);
         RDelayedQueue<String> delayedQueue = redissonClient.getDelayedQueue(blockingDeque);
@@ -103,19 +111,16 @@ public class CouponTemplateRemindExecutor {
         delayedQueue.offer(key, 10, TimeUnit.SECONDS);
 
         executorService.execute(() -> {
-            // 用户没取消预约，则发出提醒
-            if (!couponTemplateRemindService.isCancelRemind(couponTemplateRemindDTO)) {
-                // 向用户发起消息提醒
-                switch (Objects.requireNonNull(CouponRemindTypeEnum.getByType(couponTemplateRemindDTO.getType()))) {
-                    case APP -> sendAppMessageRemindCouponTemplate.remind(couponTemplateRemindDTO);
-                    case EMAIL -> sendEmailRemindCouponTemplate.remind(couponTemplateRemindDTO);
-                    default -> {
-                    }
+            // 向用户发起消息提醒
+            switch (Objects.requireNonNull(CouponRemindTypeEnum.getByType(couponTemplateRemindDTO.getType()))) {
+                case APP -> sendAppMessageRemindCouponTemplate.remind(couponTemplateRemindDTO);
+                case EMAIL -> sendEmailRemindCouponTemplate.remind(couponTemplateRemindDTO);
+                default -> {
                 }
-
-                // 提醒用户后删除 Key
-                stringRedisTemplate.delete(key);
             }
+
+            // 提醒用户后删除 Key
+            stringRedisTemplate.delete(key);
         });
     }
 

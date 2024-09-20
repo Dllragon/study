@@ -35,6 +35,7 @@
 package com.nageoffer.onecoupon.engine.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -64,6 +65,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -93,6 +95,9 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
         // 验证优惠券是否存在，避免缓存穿透问题并获取优惠券开抢时间
         CouponTemplateQueryRespDTO couponTemplate = couponTemplateService
                 .findCouponTemplate(new CouponTemplateQueryReqDTO(requestParam.getShopNumber(), requestParam.getCouponTemplateId()));
+        if (couponTemplate.getValidStartTime().before(new Date())) {
+            throw new ClientException("无法预约已开始领取的优惠券");
+        }
 
         // 查询用户是否已经预约过优惠券的提醒信息
         LambdaQueryWrapper<CouponTemplateRemindDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateRemindDO.class)
@@ -141,25 +146,28 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
         if (value != null) {
             return JSON.parseArray(value, CouponTemplateRemindQueryRespDTO.class);
         }
+
+        // 查出用户预约的信息
         LambdaQueryWrapper<CouponTemplateRemindDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateRemindDO.class)
                 .eq(CouponTemplateRemindDO::getUserId, requestParam.getUserId());
-        // 查出用户预约的信息
-        List<CouponTemplateRemindDO> couponTemplateRemindDOS = couponTemplateRemindMapper.selectList(queryWrapper);
-        if (couponTemplateRemindDOS == null || couponTemplateRemindDOS.isEmpty())
+        List<CouponTemplateRemindDO> couponTemplateRemindDOlist = couponTemplateRemindMapper.selectList(queryWrapper);
+        if (CollUtil.isEmpty(couponTemplateRemindDOlist))
             return new ArrayList<>();
+
         // 根据优惠券 ID 查询优惠券信息
-        List<Long> couponIds = couponTemplateRemindDOS.stream()
+        List<Long> couponIds = couponTemplateRemindDOlist.stream()
                 .map(CouponTemplateRemindDO::getCouponTemplateId)
                 .toList();
-        List<Long> shopNumbers = couponTemplateRemindDOS.stream()
+        List<Long> shopNumbers = couponTemplateRemindDOlist.stream()
                 .map(CouponTemplateRemindDO::getShopNumber)
                 .toList();
-        List<CouponTemplateDO> couponTemplateDOS = couponTemplateService.listCouponTemplateById(couponIds, shopNumbers);
-        List<CouponTemplateRemindQueryRespDTO> resp = BeanUtil.copyToList(couponTemplateDOS, CouponTemplateRemindQueryRespDTO.class);
+        List<CouponTemplateDO> couponTemplateDOList = couponTemplateService.listCouponTemplateByIds(couponIds, shopNumbers);
+        List<CouponTemplateRemindQueryRespDTO> actualResult = BeanUtil.copyToList(couponTemplateDOList, CouponTemplateRemindQueryRespDTO.class);
+
         // 填充响应结果的其它信息
-        resp.forEach(each -> {
+        actualResult.forEach(each -> {
             // 找到当前优惠券对应的预约提醒信息
-            couponTemplateRemindDOS.stream()
+            couponTemplateRemindDOlist.stream()
                     .filter(i -> i.getCouponTemplateId().equals(each.getId()))
                     .findFirst()
                     .ifPresent(i -> {
@@ -167,25 +175,35 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
                         CouponTemplateRemindUtil.fillRemindInformation(each, i.getInformation());
                     });
         });
-        stringRedisTemplate.opsForValue().set(String.format(USER_COUPON_TEMPLATE_REMIND_INFORMATION, requestParam.getUserId()), JSON.toJSONString(resp), 1, TimeUnit.MINUTES);
-        return resp;
+
+        stringRedisTemplate.opsForValue().set(String.format(USER_COUPON_TEMPLATE_REMIND_INFORMATION, requestParam.getUserId()), JSON.toJSONString(actualResult), 1, TimeUnit.MINUTES);
+        return actualResult;
     }
 
     @Override
     @Transactional
     public void cancelCouponRemind(CouponTemplateRemindCancelReqDTO requestParam) {
+        // 验证优惠券是否存在，避免缓存穿透问题并获取优惠券开抢时间
+        CouponTemplateQueryRespDTO couponTemplate = couponTemplateService
+                .findCouponTemplate(new CouponTemplateQueryReqDTO(requestParam.getShopNumber(), requestParam.getCouponTemplateId()));
+        if (couponTemplate.getValidStartTime().before(new Date())) {
+            throw new ClientException("无法取消已开始领取的优惠券预约");
+        }
+
         LambdaQueryWrapper<CouponTemplateRemindDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateRemindDO.class)
-                .eq(CouponTemplateRemindDO::getUserId, requestParam.getUserId())
+                .eq(CouponTemplateRemindDO::getUserId, UserContext.getUserId())
                 .eq(CouponTemplateRemindDO::getCouponTemplateId, requestParam.getCouponTemplateId());
         CouponTemplateRemindDO couponTemplateRemindDO = couponTemplateRemindMapper.selectOne(queryWrapper);
         if (couponTemplateRemindDO == null) {
             throw new ClientException("优惠券模板预约信息不存在");
         }
+
         // 计算 BitMap 信息
         Long bitMap = CouponTemplateRemindUtil.calculateBitMap(requestParam.getRemindTime(), requestParam.getType());
         if ((bitMap & couponTemplateRemindDO.getInformation()) == 0L) {
             throw new ClientException("您没有预约该时间点的提醒");
         }
+
         bitMap ^= couponTemplateRemindDO.getInformation();
         queryWrapper.eq(CouponTemplateRemindDO::getInformation, couponTemplateRemindDO.getInformation());
         if (bitMap.equals(0L)) {
@@ -202,8 +220,9 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
                 throw new ClientException("取消提醒失败，请刷新页面后重试");
             }
         }
+
         // 取消提醒这个信息添加到布隆过滤器中
-        cancelRemindBloomFilter.add(String.valueOf(Objects.hash(requestParam.getCouponTemplateId(), requestParam.getUserId(), requestParam.getRemindTime(), requestParam.getType())));
+        cancelRemindBloomFilter.add(String.valueOf(Objects.hash(requestParam.getCouponTemplateId(), UserContext.getUserId(), requestParam.getRemindTime(), requestParam.getType())));
     }
 
     @Override

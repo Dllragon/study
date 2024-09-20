@@ -59,7 +59,7 @@ public final class DBShardingUtil {
      * @param shopNumber 分片键 shopNumber
      * @return 返回 shopNumber 所在的数据源
      */
-    public static int doCouponCouponSharding(Long shopNumber) {
+    public static int doCouponSharding(Long shopNumber) {
         return dbShardingAlgorithm.getShardingMod(shopNumber, getAvailableDatabases().size());
     }
 

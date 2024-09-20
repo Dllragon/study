@@ -172,40 +172,41 @@ public class CouponTemplateServiceImpl extends ServiceImpl<CouponTemplateMapper,
     }
 
     @Override
-    public List<CouponTemplateDO> listCouponTemplateById(List<Long> couponTemplateIds, List<Long> shopNumbers) {
+    public List<CouponTemplateDO> listCouponTemplateByIds(List<Long> couponTemplateIds, List<Long> shopNumbers) {
         // 1. 将 shopNumbers集合 对应的index拆分到数据库中
-        Map<Integer, List<Integer>> databaseIndexMap = splitIndexByDatabase(shopNumbers);
+        Map<Integer, List<Long>> databaseIndexMap = splitIndexByDatabase(shopNumbers);
 
         List<CouponTemplateDO> result = new ArrayList<>();
         // 2. 对每个数据库执行查询
-        for (List<Integer> index : databaseIndexMap.values()) {
+        for (Map.Entry<Integer, List<Long>> entry : databaseIndexMap.entrySet()) {
+            List<Long> shopNumbersSubset = entry.getValue();
+
             // 执行查询
-            List<CouponTemplateDO> couponTemplateDOS = queryDatabase(couponTemplateIds, shopNumbers, index);
-            result.addAll(couponTemplateDOS);
+            List<CouponTemplateDO> couponTemplateDOList = queryDatabase(couponTemplateIds, shopNumbersSubset);
+            result.addAll(couponTemplateDOList);
         }
+
         return result;
     }
 
-    private List<CouponTemplateDO> queryDatabase(List<Long> couponTemplateIds, List<Long> shopNumbers, List<Integer> index) {
+    private List<CouponTemplateDO> queryDatabase(List<Long> couponTemplateIds, List<Long> shopNumbers) {
         LambdaQueryWrapper<CouponTemplateDO> queryWrapper = Wrappers.lambdaQuery(CouponTemplateDO.class)
-                .and(wrapper -> {
-                    for (int i : index) {
-                        wrapper.or(innerWrapper -> innerWrapper.eq(CouponTemplateDO::getShopNumber, shopNumbers.get(i))
-                                .eq(CouponTemplateDO::getId, couponTemplateIds.get(i)));
-                    }
-                });
+                .in(CouponTemplateDO::getShopNumber, shopNumbers)
+                .in(CouponTemplateDO::getId, couponTemplateIds);
         return couponTemplateMapper.selectList(queryWrapper);
     }
 
-    private Map<Integer, List<Integer>> splitIndexByDatabase(List<Long> shopNumbers) {
-        Map<Integer, List<Integer>> map = new HashMap<>();
+    private Map<Integer, List<Long>> splitIndexByDatabase(List<Long> shopNumbers) {
+        Map<Integer, List<Long>> databaseShopNumberMap = new HashMap<>();
 
-        for (int i = 0; i < shopNumbers.size(); i++) {
-            int databaseMod = DBShardingUtil.doCouponCouponSharding(shopNumbers.get(i));
-            map.computeIfAbsent(databaseMod, k -> new ArrayList<>()).add(i);
+        for (Long shopNumber : shopNumbers) {
+            int databaseMod = DBShardingUtil.doCouponSharding(shopNumber);
+            databaseShopNumberMap
+                    .computeIfAbsent(databaseMod, k -> new ArrayList<>())
+                    .add(shopNumber);
         }
 
-        return map;
+        return databaseShopNumberMap;
     }
 
     /**
