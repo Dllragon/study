@@ -32,51 +32,65 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.common.enums;
+package com.nageoffer.onecoupon.engine.service.handler.remind.dto;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
+import java.util.Date;
 
 /**
- * 预约提醒方式枚举类，值必须是0，1，2，3......
+ * 发送抢券提醒实体
  * <p>
  * 作者：优雅
- * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-16
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-18
  */
-@RequiredArgsConstructor
-public enum CouponRemindTypeEnum {
+@Data
+@Schema(description = "发送抢券提醒实体")
+public class CouponTemplateRemindDTO {
 
     /**
-     * App 通知
+     * 优惠券模板id
      */
-    APP(0, "App通知"),
+    @Schema(description = " ", example = "1810966706881941507", required = true)
+    private String couponTemplateId;
 
     /**
-     * 邮件提醒
+     * 店铺编号
      */
-    EMAIL(1, "邮件提醒");
+    @Schema(description = "店铺编号", example = "1810714735922956666", required = true)
+    private String shopNumber;
 
-    @Getter
-    private final int type;
-    @Getter
-    private final String describe;
+    /**
+     * 用户id
+     */
+    @Schema(description = "用户id", example = "1810868149847928832", required = true)
+    private String userId;
 
-    public static CouponRemindTypeEnum getByType(Integer type) {
-        for (CouponRemindTypeEnum remindEnum : values()) {
-            if (remindEnum.getType() == type) {
-                return remindEnum;
-            }
-        }
-        return null;
-    }
+    /**
+     * 用户联系方式，可能是邮箱、手机号、等等
+     */
+    @Schema(description = "用户联系方式")
+    private String contact;
 
-    public static String getDescribeByType(Integer type) {
-        for (CouponRemindTypeEnum remindEnum : values()) {
-            if (remindEnum.getType() == type) {
-                return remindEnum.getDescribe();
-            }
-        }
-        return null;
-    }
+    /**
+     * 提醒方式
+     */
+    @Schema(description = "提醒方式", example = "0", required = true)
+    private Integer type;
+
+    /**
+     * 提醒时间，比如五分钟，十分钟，十五分钟
+     */
+    @Schema(description = "提醒时间")
+    private Integer remindTime;
+
+    /**
+     * 开抢时间
+     */
+    @Schema(description = "开抢时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date startTime;
 }

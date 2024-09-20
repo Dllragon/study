@@ -37,7 +37,7 @@ package com.nageoffer.onecoupon.engine.mq.producer;
 import cn.hutool.core.util.StrUtil;
 import com.nageoffer.onecoupon.engine.mq.base.BaseSendExtendDTO;
 import com.nageoffer.onecoupon.engine.mq.base.MessageWrapper;
-import com.nageoffer.onecoupon.engine.mq.event.CouponRemindDelayEvent;
+import com.nageoffer.onecoupon.engine.mq.event.CouponTemplateRemindDelayEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.common.message.MessageConst;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
@@ -58,17 +58,17 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
-public class CouponRemindDelayProducer extends AbstractCommonSendProduceTemplate<CouponRemindDelayEvent> {
+public class CouponTemplateRemindDelayProducer extends AbstractCommonSendProduceTemplate<CouponTemplateRemindDelayEvent> {
 
     private final ConfigurableEnvironment environment;
 
-    public CouponRemindDelayProducer(@Autowired RocketMQTemplate rocketMQTemplate, @Autowired ConfigurableEnvironment environment) {
+    public CouponTemplateRemindDelayProducer(@Autowired RocketMQTemplate rocketMQTemplate, @Autowired ConfigurableEnvironment environment) {
         super(rocketMQTemplate);
         this.environment = environment;
     }
 
     @Override
-    protected BaseSendExtendDTO buildBaseSendExtendParam(CouponRemindDelayEvent messageSendEvent) {
+    protected BaseSendExtendDTO buildBaseSendExtendParam(CouponTemplateRemindDelayEvent messageSendEvent) {
         return BaseSendExtendDTO.builder()
                 .eventName("提醒用户抢券")
                 .keys(messageSendEvent.getUserId() + ":" + messageSendEvent.getCouponTemplateId())
@@ -79,7 +79,7 @@ public class CouponRemindDelayProducer extends AbstractCommonSendProduceTemplate
     }
 
     @Override
-    protected Message<?> buildMessage(CouponRemindDelayEvent messageSendEvent, BaseSendExtendDTO requestParam) {
+    protected Message<?> buildMessage(CouponTemplateRemindDelayEvent messageSendEvent, BaseSendExtendDTO requestParam) {
         String keys = StrUtil.isEmpty(requestParam.getKeys()) ? UUID.randomUUID().toString() : requestParam.getKeys();
         return MessageBuilder
                 .withPayload(new MessageWrapper(keys, messageSendEvent))

@@ -32,51 +32,67 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.common.enums;
+package com.nageoffer.onecoupon.engine.mq.event;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.Date;
 
 /**
- * 预约提醒方式枚举类，值必须是0，1，2，3......
+ * 优惠券提醒抢券事件
  * <p>
  * 作者：优雅
- * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-16
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-21
  */
-@RequiredArgsConstructor
-public enum CouponRemindTypeEnum {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CouponTemplateRemindDelayEvent {
 
     /**
-     * App 通知
+     * 优惠券模板id
      */
-    APP(0, "App通知"),
+    private String couponTemplateId;
 
     /**
-     * 邮件提醒
+     * 店铺编号
      */
-    EMAIL(1, "邮件提醒");
+    private String shopNumber;
 
-    @Getter
-    private final int type;
-    @Getter
-    private final String describe;
+    /**
+     * 用户id
+     */
+    private String userId;
 
-    public static CouponRemindTypeEnum getByType(Integer type) {
-        for (CouponRemindTypeEnum remindEnum : values()) {
-            if (remindEnum.getType() == type) {
-                return remindEnum;
-            }
-        }
-        return null;
-    }
+    /**
+     * 用户联系方式，可能是邮箱、手机号、等等
+     */
+    private String contact;
 
-    public static String getDescribeByType(Integer type) {
-        for (CouponRemindTypeEnum remindEnum : values()) {
-            if (remindEnum.getType() == type) {
-                return remindEnum.getDescribe();
-            }
-        }
-        return null;
-    }
+    /**
+     * 提醒方式
+     */
+    private Integer type;
+
+    /**
+     * 提醒时间，比如五分钟，十分钟，十五分钟
+     */
+    private Integer remindTime;
+
+    /**
+     * 开抢时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date startTime;
+
+    /**
+     * 具体延迟时间
+     */
+    private Long delayTime;
 }

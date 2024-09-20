@@ -32,67 +32,30 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.mq.event;
+package com.nageoffer.onecoupon.engine.service.handler.remind.impl;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.Date;
+import com.nageoffer.onecoupon.engine.service.handler.remind.RemindCouponTemplate;
+import com.nageoffer.onecoupon.engine.service.handler.remind.dto.CouponTemplateRemindDTO;
+import org.springframework.stereotype.Component;
 
 /**
- * 优惠券提醒抢券事件
+ * 发送邮件的方式提醒用户抢券
  * <p>
  * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-21
+ * 开发时间：2024-07-18
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class CouponRemindDelayEvent {
+@Component
+public class SendEmailRemindCouponTemplate implements RemindCouponTemplate {
 
     /**
-     * 优惠券模板id
+     * 以邮件方式提醒用户抢券
+     *
+     * @param couponTemplateRemindDTO 提醒所需要的信息
      */
-    private String couponTemplateId;
-
-    /**
-     * 店铺编号
-     */
-    private String shopNumber;
-
-    /**
-     * 用户id
-     */
-    private String userId;
-
-    /**
-     * 用户联系方式，可能是邮箱、手机号、等等
-     */
-    private String contact;
-
-    /**
-     * 提醒方式
-     */
-    private Integer type;
-
-    /**
-     * 提醒时间，比如五分钟，十分钟，十五分钟
-     */
-    private Integer remindTime;
-
-    /**
-     * 开抢时间
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date startTime;
-
-    /**
-     * 具体延迟时间
-     */
-    private Long delayTime;
+    @Override
+    public boolean remind(CouponTemplateRemindDTO couponTemplateRemindDTO) {
+        // 空实现
+        return true;
+    }
 }

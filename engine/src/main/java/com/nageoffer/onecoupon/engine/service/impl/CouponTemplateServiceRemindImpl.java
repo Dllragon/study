@@ -45,8 +45,8 @@ import com.nageoffer.onecoupon.engine.dao.mapper.CouponTemplateRemindMapper;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateQueryReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRemindCreateReqDTO;
 import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
-import com.nageoffer.onecoupon.engine.mq.event.CouponRemindDelayEvent;
-import com.nageoffer.onecoupon.engine.mq.producer.CouponRemindDelayProducer;
+import com.nageoffer.onecoupon.engine.mq.event.CouponTemplateRemindDelayEvent;
+import com.nageoffer.onecoupon.engine.mq.producer.CouponTemplateRemindDelayProducer;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateRemindService;
 import com.nageoffer.onecoupon.engine.service.CouponTemplateService;
 import com.nageoffer.onecoupon.engine.toolkit.CouponTemplateRemindUtil;
@@ -68,7 +68,7 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
 
     private final CouponTemplateRemindMapper couponTemplateRemindMapper;
     private final CouponTemplateService couponTemplateService;
-    private final CouponRemindDelayProducer couponRemindDelayProducer;
+    private final CouponTemplateRemindDelayProducer couponRemindDelayProducer;
 
     @Override
     @Transactional
@@ -105,7 +105,7 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
         }
 
         // 发送预约提醒抢购优惠券延时消息
-        CouponRemindDelayEvent couponRemindDelayEvent = CouponRemindDelayEvent.builder()
+        CouponTemplateRemindDelayEvent couponTemplateRemindDelayEvent = CouponTemplateRemindDelayEvent.builder()
                 .couponTemplateId(couponTemplate.getId())
                 .userId(UserContext.getUserId())
                 .contact(UserContext.getUserId())
@@ -115,6 +115,6 @@ public class CouponTemplateServiceRemindImpl extends ServiceImpl<CouponTemplateR
                 .startTime(couponTemplate.getValidStartTime())
                 .delayTime(DateUtil.offsetMinute(couponTemplate.getValidStartTime(), -requestParam.getRemindTime()).getTime())
                 .build();
-        couponRemindDelayProducer.sendMessage(couponRemindDelayEvent);
+        couponRemindDelayProducer.sendMessage(couponTemplateRemindDelayEvent);
     }
 }
