@@ -32,36 +32,43 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.service;
+package com.nageoffer.onecoupon.engine.dto.req;
 
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateDO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateQueryReqDTO;
-import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
-
-import java.util.List;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 /**
- * 优惠券模板业务逻辑层
+ * 取消抢券预约提醒接口请求参数实体
  * <p>
- * 作者：马丁
+ * 作者：优雅
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 开发时间：2024-07-18
  */
-public interface CouponTemplateService extends IService<CouponTemplateDO> {
+@Data
+@Schema(description = "取消优惠券预约抢券提醒参数实体")
+public class CouponTemplateRemindCancelReqDTO {
 
     /**
-     * 查询优惠券模板
-     *
-     * @param requestParam 请求参数
-     * @return 优惠券模板信息
+     * 店铺编号
      */
-    CouponTemplateQueryRespDTO findCouponTemplate(CouponTemplateQueryReqDTO requestParam);
+    @Schema(description = "店铺编号", example = "1810714735922956666", required = true)
+    private String shopNumber;
 
     /**
-     * 根据优惠券id集合查询出券信息
-     *
-     * @param couponTemplateIds 优惠券id集合
+     * 优惠券模板id
      */
-    List<CouponTemplateDO> listCouponTemplateByIds(List<Long> couponTemplateIds, List<Long> shopNumbers);
+    @Schema(description = "优惠券模板id", example = "1810966706881941507", required = true)
+    private String couponTemplateId;
+
+    /**
+     * 提醒时间，比如五分钟，十分钟，十五分钟
+     */
+    @Schema(description = "提醒时间", example = "15")
+    private Integer remindTime;
+
+    /**
+     * 提醒方式
+     */
+    @Schema(description = "提醒方式", example = "0", required = true)
+    private Integer type;
 }

@@ -32,36 +32,41 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.service;
+package com.nageoffer.onecoupon.engine.dao.sharding;
 
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.nageoffer.onecoupon.engine.dao.entity.CouponTemplateDO;
-import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateQueryReqDTO;
-import com.nageoffer.onecoupon.engine.dto.resp.CouponTemplateQueryRespDTO;
+import cn.hutool.core.lang.Singleton;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
- * 优惠券模板业务逻辑层
+ * 针对项目中 IN 操作跨数据库场景进行拆分数据源
  * <p>
- * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 作者：优雅
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-27
  */
-public interface CouponTemplateService extends IService<CouponTemplateDO> {
+public final class DBShardingUtil {
 
     /**
-     * 查询优惠券模板
-     *
-     * @param requestParam 请求参数
-     * @return 优惠券模板信息
+     * 获取数据库分片算法类，在该类初始化时向 Singleton 放入实例
      */
-    CouponTemplateQueryRespDTO findCouponTemplate(CouponTemplateQueryReqDTO requestParam);
+    private static final DBHashModShardingAlgorithm dbShardingAlgorithm = Singleton.get(DBHashModShardingAlgorithm.class);
 
     /**
-     * 根据优惠券id集合查询出券信息
+     * 解决查询商家优惠券 IN 场景跨库表不存在问题
      *
-     * @param couponTemplateIds 优惠券id集合
+     * @param shopNumber 分片键 shopNumber
+     * @return 返回 shopNumber 所在的数据源
      */
-    List<CouponTemplateDO> listCouponTemplateByIds(List<Long> couponTemplateIds, List<Long> shopNumbers);
+    public static int doCouponSharding(Long shopNumber) {
+        return dbShardingAlgorithm.getShardingMod(shopNumber, getAvailableDatabases().size());
+    }
+
+    /**
+     * 获取可用的数据源列表
+     */
+    private static Collection<String> getAvailableDatabases() {
+        return List.of("ds0", "ds1");
+    }
 }
