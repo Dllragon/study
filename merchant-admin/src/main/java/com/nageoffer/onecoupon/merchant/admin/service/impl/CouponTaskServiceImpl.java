@@ -59,11 +59,11 @@ import com.nageoffer.onecoupon.merchant.admin.mq.producer.CouponTaskActualExecut
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTaskService;
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
 import com.nageoffer.onecoupon.merchant.admin.service.handler.excel.RowCountListener;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBlockingDeque;
 import org.redisson.api.RDelayedQueue;
 import org.redisson.api.RedissonClient;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -188,6 +188,15 @@ public class CouponTaskServiceImpl extends ServiceImpl<CouponTaskMapper, CouponT
     }
 
     /**
+     * 因为静态内部类的 Bean 注入有问题，所以我们这里直接 new 对象运行即可
+     * 如果按照上一版本的方式写，refreshCouponTaskSendNum 方法中 couponTaskMapper 为空
+     */
+    @PostConstruct
+    public void init() {
+        new RefreshCouponTaskDelayQueueRunner(this, couponTaskMapper, redissonClient).run();
+    }
+
+    /**
      * 优惠券延迟刷新发送条数兜底消费者｜这是兜底策略，一般来说不会执行这段逻辑
      * 如果延迟消息没有持久化成功，或者 Redis 挂了怎么办？后续可以人工处理
      * <p>
@@ -195,15 +204,14 @@ public class CouponTaskServiceImpl extends ServiceImpl<CouponTaskMapper, CouponT
      * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
      * 开发时间：2024-07-12
      */
-    @Service
     @RequiredArgsConstructor
-    class RefreshCouponTaskDelayQueueRunner implements CommandLineRunner {
+    static class RefreshCouponTaskDelayQueueRunner {
 
+        private final CouponTaskServiceImpl couponTaskService;
         private final CouponTaskMapper couponTaskMapper;
         private final RedissonClient redissonClient;
 
-        @Override
-        public void run(String... args) throws Exception {
+        public void run() {
             Executors.newSingleThreadExecutor(
                             runnable -> {
                                 Thread thread = new Thread(runnable);
@@ -221,7 +229,7 @@ public class CouponTaskServiceImpl extends ServiceImpl<CouponTaskMapper, CouponT
                                     // 获取优惠券推送记录，查看发送条数是否已经有值，有的话代表上面线程池已经处理完成，无需再处理
                                     CouponTaskDO couponTaskDO = couponTaskMapper.selectById(delayJsonObject.getLong("couponTaskId"));
                                     if (couponTaskDO.getSendNum() == null) {
-                                        refreshCouponTaskSendNum(delayJsonObject);
+                                        couponTaskService.refreshCouponTaskSendNum(delayJsonObject);
                                     }
                                 }
                             } catch (Throwable ignored) {
