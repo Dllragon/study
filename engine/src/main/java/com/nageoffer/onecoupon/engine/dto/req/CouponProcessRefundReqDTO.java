@@ -32,23 +32,24 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.service;
+package com.nageoffer.onecoupon.engine.dto.req;
 
-import java.math.BigDecimal;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 /**
- * 优惠券退款服务接口
+ * 处理优惠券结算单退款请求参数实体
  * <p>
- * 作者：Henry Wan
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-21  
+ * 作者：马丁
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-09-24
  */
-public interface CouponRefundService{
+@Data
+public class CouponProcessRefundReqDTO {
 
     /**
-     * 处理订单的优惠券退款
-     *
-     * @param orderId       订单ID
+     * 订单ID
      */
-    boolean processRefund(Long orderId, BigDecimal refundAmount);
+    @Schema(description = "订单ID", required = true)
+    private Long orderId;
 }

@@ -34,37 +34,37 @@
 
 package com.nageoffer.onecoupon.engine.service;
 
-import com.nageoffer.onecoupon.engine.dao.entity.CunponPaymentDO;
-
-import java.math.BigDecimal;
+import com.nageoffer.onecoupon.engine.dto.req.CouponCreatePaymentReqDTO;
+import com.nageoffer.onecoupon.engine.dto.req.CouponProcessPaymentReqDTO;
+import com.nageoffer.onecoupon.engine.dto.req.CouponProcessRefundReqDTO;
 
 /**
- * 优惠券支付服务接口
+ * 优惠券支付服务相关接口层
  * <p>
- * 作者：Henry Wan
+ * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-21
+ * 开发时间：2024-09-24
  */
 public interface CouponPayService {
 
     /**
-     * 创建优惠券支付记录
-     * @param orderId        订单ID
-     * @param userId         用户ID
-     * @param paymentAmount  支付金额
-     * @param paymentMethod  支付方式
-     * @return               创建的优惠券支付记录对象
+     * 创建优惠券结算单记录
+     *
+     * @param requestParam 创建优惠券结算单请求参数
      */
-    CunponPaymentDO createPaymentRecord(Long orderId, Long userId, BigDecimal paymentAmount, String paymentMethod);
-
-    // TODO   PaymentGateway paymentGateway
+    void createPaymentRecord(CouponCreatePaymentReqDTO requestParam);
 
     /**
-     * 处理支付操作
-     * 根据支付ID，处理相应的支付操作。
+     * 处理订单支付操作，修改结算单为已支付
      *
-     * @param paymentId  支付ID
-     * @return           如果支付处理成功，返回 true；否则返回 false
+     * @param requestParam 处理优惠券结算单请求参数
      */
-    boolean processPayment(Long paymentId);
+    void processPayment(CouponProcessPaymentReqDTO requestParam);
+
+    /**
+     * 处理订单退款操作，修改结算单为已退款并回滚优惠券
+     *
+     * @param requestParam 处理优惠券结算单退款请求参数
+     */
+    void processRefund(CouponProcessRefundReqDTO requestParam);
 }

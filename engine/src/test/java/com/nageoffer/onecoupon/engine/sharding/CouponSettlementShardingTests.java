@@ -32,54 +32,44 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.common.constant;
+package com.nageoffer.onecoupon.engine.sharding;
+
+import org.junit.jupiter.api.Test;
 
 /**
- * 分布式 Redis 缓存引擎层常量类
+ * 优惠券结算分片单元测试
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-09-24
  */
-public final class EngineRedisConstant {
+public class CouponSettlementShardingTests {
 
-    /**
-     * 优惠券模板缓存 Key
-     */
-    public static final String COUPON_TEMPLATE_KEY = "one-coupon_engine:template:%s";
+    public static final String SQL = """
+            CREATE TABLE `t_coupon_settlement_%d` (
+              `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID',
+              `order_id` bigint(20) DEFAULT NULL COMMENT '订单ID',
+              `user_id` bigint(20) DEFAULT NULL COMMENT '用户ID',
+              `coupon_id` bigint(20) DEFAULT NULL COMMENT '优惠券ID',
+              `status` int(11) DEFAULT NULL COMMENT '结算单状态 0：锁定 1：已取消 2：已支付 3：已退款',
+              `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+              `update_time` datetime DEFAULT NULL COMMENT '修改时间',
+              PRIMARY KEY (`id`),
+              KEY `idx_user_id` (`user_id`) USING BTREE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='优惠券结算单表';
+            """;
 
-    /**
-     * 优惠券模板缓存分布式锁 Key
-     */
-    public static final String LOCK_COUPON_TEMPLATE_KEY = "one-coupon_engine:lock:template:%s";
+    @Test
+    public void sharding0Test() {
+        for (int i = 0; i < 8; i++) {
+            System.out.println(String.format(SQL, i));
+        }
+    }
 
-    /**
-     * 优惠券模板缓存空值 Key
-     */
-    public static final String COUPON_TEMPLATE_IS_NULL_KEY = "one-coupon_engine:template_is_null:%s";
-
-    /**
-     * 限制用户领取优惠券模板次数缓存 Key
-     */
-    public static final String USER_COUPON_TEMPLATE_LIMIT_KEY = "one-coupon_engine:user-template-limit:%s_%s";
-
-    /**
-     * 用户已领取优惠券列表模板 Key
-     */
-    public static final String USER_COUPON_TEMPLATE_LIST_KEY = "one-coupon_engine:user-template-list:%s";
-
-    /**
-     * 检查用户是否已提醒 Key
-     */
-    public static final String COUPON_REMIND_CHECK_KEY = "one-coupon_engine:coupon-remind-check:%s_%s_%d_%d";
-
-    /**
-     * 用户预约提醒信息 Key
-     */
-    public static final String USER_COUPON_TEMPLATE_REMIND_INFORMATION = "one-coupon_engine:coupon-remind-information:%s";
-
-    /**
-     * 创建优惠券结算单分布式锁 Key
-     */
-    public static final String LOCK_CREATE_PAYMENT_RECORD_KEY = "one-coupon_engine:lock:create-payment-record:%d";
+    @Test
+    public void sharding1Test() {
+        for (int i = 8; i < 16; i++) {
+            System.out.println(String.format(SQL, i));
+        }
+    }
 }

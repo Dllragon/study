@@ -32,54 +32,66 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine.common.constant;
+package com.nageoffer.onecoupon.engine.dao.entity;
+
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.Date;
 
 /**
- * 分布式 Redis 缓存引擎层常量类
+ * 优惠券结算实体
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-14
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-09-24
  */
-public final class EngineRedisConstant {
+@Data
+@TableName("t_coupon_settlement")
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class CouponSettlementDO {
 
     /**
-     * 优惠券模板缓存 Key
+     * id
      */
-    public static final String COUPON_TEMPLATE_KEY = "one-coupon_engine:template:%s";
+    private Long id;
 
     /**
-     * 优惠券模板缓存分布式锁 Key
+     * 订单id
      */
-    public static final String LOCK_COUPON_TEMPLATE_KEY = "one-coupon_engine:lock:template:%s";
+    private Long orderId;
 
     /**
-     * 优惠券模板缓存空值 Key
+     * 用户id
      */
-    public static final String COUPON_TEMPLATE_IS_NULL_KEY = "one-coupon_engine:template_is_null:%s";
+    private Long userId;
 
     /**
-     * 限制用户领取优惠券模板次数缓存 Key
+     * 优惠券id
      */
-    public static final String USER_COUPON_TEMPLATE_LIMIT_KEY = "one-coupon_engine:user-template-limit:%s_%s";
+    private Long couponId;
 
     /**
-     * 用户已领取优惠券列表模板 Key
+     * 结算单状态 0：锁定 1：已取消 2：已支付 3：已退款
      */
-    public static final String USER_COUPON_TEMPLATE_LIST_KEY = "one-coupon_engine:user-template-list:%s";
+    private Integer status;
 
     /**
-     * 检查用户是否已提醒 Key
+     * 创建时间
      */
-    public static final String COUPON_REMIND_CHECK_KEY = "one-coupon_engine:coupon-remind-check:%s_%s_%d_%d";
+    @TableField(fill = FieldFill.INSERT)
+    private Date createTime;
 
     /**
-     * 用户预约提醒信息 Key
+     * 修改时间
      */
-    public static final String USER_COUPON_TEMPLATE_REMIND_INFORMATION = "one-coupon_engine:coupon-remind-information:%s";
-
-    /**
-     * 创建优惠券结算单分布式锁 Key
-     */
-    public static final String LOCK_CREATE_PAYMENT_RECORD_KEY = "one-coupon_engine:lock:create-payment-record:%d";
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Date updateTime;
 }
