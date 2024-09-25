@@ -48,8 +48,8 @@ import lombok.Data;
 public class CouponProcessPaymentReqDTO {
 
     /**
-     * 订单ID
+     * 优惠券ID
      */
-    @Schema(description = "订单ID", required = true)
-    private Long orderId;
+    @Schema(description = "优惠券ID", required = true)
+    private Long couponId;
 }
