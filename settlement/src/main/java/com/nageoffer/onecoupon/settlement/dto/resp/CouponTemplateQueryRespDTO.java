@@ -32,34 +32,49 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.service;
+package com.nageoffer.onecoupon.settlement.dto.resp;
 
-import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
-import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 /**
- * 查询用户可用优惠券列表接口
+ * 优惠券模板查询接口返回参数实体
  * <p>
- * 作者：Henry Wan
+ * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-23
+ * 开发时间：2024-07-14
  */
-public interface CouponQueryService {
+@Data
+@Schema(description = "优惠券模板查询返回实体")
+public class CouponTemplateQueryRespDTO {
 
     /**
-     * 查询用户可用/不可用的优惠券列表，返回 CouponsRespDTO 对象
-     *
-     * @param requestParam 查询参数
-     * @return 包含可用/不可用优惠券的查询结果
+     * 优惠券id
      */
-    QueryCouponsRespDTO listQueryUserCoupons(QueryCouponsReqDTO requestParam);
+    @Schema(description = "优惠券id")
+    private String id;
 
     /**
-     * 查询用户可用/不可用的优惠券列表，返回 CouponsRespDTO 对象
-     *
-     * @param requestParam 查询参数
-     * @return 包含可用/不可用优惠券的查询结果
+     * 优惠对象 0：商品专属 1：全店通用
      */
-    QueryCouponsRespDTO listQueryUserCouponsBySync(QueryCouponsReqDTO requestParam);
+    @Schema(description = "优惠对象 0：商品专属 1：全店通用")
+    private Integer target;
+
+    /**
+     * 优惠商品编码
+     */
+    @Schema(description = "优惠商品编码")
+    private String goods;
+
+    /**
+     * 优惠类型 0：立减券 1：满减券 2：折扣券
+     */
+    @Schema(description = "优惠类型 0：立减券 1：满减券 2：折扣券")
+    private Integer type;
+
+    /**
+     * 消耗规则
+     */
+    @Schema(description = "消耗规则")
+    private String consumeRule;
 }
-

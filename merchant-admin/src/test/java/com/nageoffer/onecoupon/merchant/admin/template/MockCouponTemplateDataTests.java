@@ -43,6 +43,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -89,7 +90,7 @@ public class MockCouponTemplateDataTests {
         while (count.get() < maxNum) {
             executorService.execute(() -> {
                 ThreadUtil.sleep(RandomUtil.randomInt(10));
-                CouponTemplateDO couponTemplateDO = couponTemplateTest.buildCouponTemplateDO();
+                CouponTemplateDO couponTemplateDO = couponTemplateTest.buildCouponTemplateDO(new BigDecimal("10"), new BigDecimal("3"), 1, 0, null);
                 couponTemplateDO.setShopNumber(snowflakes.get(RandomUtil.randomInt(20)).nextId());
                 couponTemplateMapper.insert(couponTemplateDO);
                 count.incrementAndGet();

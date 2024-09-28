@@ -32,34 +32,24 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.service;
-
-import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
-import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
+package com.nageoffer.onecoupon.settlement.common.constant;
 
 /**
- * 查询用户可用优惠券列表接口
+ * 分布式 Redis 缓存引擎层常量类
  * <p>
- * 作者：Henry Wan
+ * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-23
+ * 开发时间：2024-07-14
  */
-public interface CouponQueryService {
+public final class EngineRedisConstant {
 
     /**
-     * 查询用户可用/不可用的优惠券列表，返回 CouponsRespDTO 对象
-     *
-     * @param requestParam 查询参数
-     * @return 包含可用/不可用优惠券的查询结果
+     * 优惠券模板缓存 Key
      */
-    QueryCouponsRespDTO listQueryUserCoupons(QueryCouponsReqDTO requestParam);
+    public static final String COUPON_TEMPLATE_KEY = "one-coupon_engine:template:%s";
 
     /**
-     * 查询用户可用/不可用的优惠券列表，返回 CouponsRespDTO 对象
-     *
-     * @param requestParam 查询参数
-     * @return 包含可用/不可用优惠券的查询结果
+     * 用户已领取优惠券列表模板 Key
      */
-    QueryCouponsRespDTO listQueryUserCouponsBySync(QueryCouponsReqDTO requestParam);
+    public static final String USER_COUPON_TEMPLATE_LIST_KEY = "one-coupon_engine:user-template-list:%s";
 }
-

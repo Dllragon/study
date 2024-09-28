@@ -34,61 +34,58 @@
 
 package com.nageoffer.onecoupon.merchant.admin.template;
 
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.lang.Assert;
-import com.alibaba.fastjson2.JSONObject;
-import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTemplateStatusEnum;
+import cn.hutool.core.bean.BeanUtil;
+import com.nageoffer.onecoupon.merchant.admin.common.context.UserContext;
+import com.nageoffer.onecoupon.merchant.admin.common.context.UserInfoDTO;
 import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTemplateDO;
+import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
 import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
-import java.util.Date;
 
+/**
+ * Mock 优惠券模板数据，方便分库分表均衡测试
+ * <p>
+ * 作者：马丁
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-10
+ */
 @SpringBootTest
-public class CouponTemplateTest {
+public class MockSettlementCouponTemplateDataTests {
 
     @Autowired
     private CouponTemplateService couponTemplateService;
 
-    public CouponTemplateDO buildCouponTemplateDO(BigDecimal termsOfUse, BigDecimal maximumDiscountAmount, Integer target, Integer type, String goods) {
-        JSONObject receiveRule = new JSONObject();
-        receiveRule.put("limitPerPerson", 1); // 每人限领
-        receiveRule.put("usageInstructions", "3"); // 使用说明
-        JSONObject consumeRule = new JSONObject();
-        consumeRule.put("termsOfUse", termsOfUse); // 使用条件 满 x 元可用
-        consumeRule.put("maximumDiscountAmount", maximumDiscountAmount); // 最大优惠金额
-        consumeRule.put("explanationOfUnmetConditions", "3"); // 不满足使用条件说明
-        if (type == 2) {
-            consumeRule.put("discountRate", "0.6"); // 折扣券专属，折扣率
-        }
-        consumeRule.put("validityPeriod", 48); // 自领取优惠券后有效时间，单位小时
-        CouponTemplateDO couponTemplateDO = CouponTemplateDO.builder()
-                .shopNumber(1810714735922956666L) // 店铺编号
-                .name("商品立减券") // 优惠券名称
-                .source(0) // 优惠券来源 0：店铺券 1：平台券
-                .target(target) // 优惠对象 0：商品专属 1：全店通用
-                .type(type) // 优惠类型 0：立减券 1：满减券 2：折扣券
-                .goods(goods) // 优惠商品编码
-                .validStartTime(new Date()) // 有效期开始时间
-                .validEndTime(DateUtil.offsetMonth(new Date(), 6)) // 有效期结束时间
-                .stock(10) // 库存
-                .receiveRule(receiveRule.toString()) // 领取规则
-                .consumeRule(consumeRule.toString()) // 消耗规则
-                .status(CouponTemplateStatusEnum.ACTIVE.getStatus()) // 优惠券状态 0：生效中 1：已结束
-                .build();
-        return couponTemplateDO;
-    }
+    CouponTemplateTest couponTemplateTest = new CouponTemplateTest();
 
-    /**
-     * 测试新增优惠券模板方法
-     */
     @Test
-    public void testInsertCouponTemplate() {
-        CouponTemplateDO couponTemplateDO = buildCouponTemplateDO(new BigDecimal("10"), new BigDecimal("3"), 1, 0, null);
-        boolean saved = couponTemplateService.save(couponTemplateDO);
-        Assert.isTrue(saved);
+    public void mockCouponTemplateTest() {
+        UserInfoDTO userInfoDTO = new UserInfoDTO("1810518709471555585", "pdd45305558318", 1810714735922956666L);
+        UserContext.setUser(userInfoDTO);
+
+        // 优惠券1
+        CouponTemplateDO couponTemplateDO = couponTemplateTest.buildCouponTemplateDO(null, new BigDecimal("10"), 1, 0, null);
+        couponTemplateService.createCouponTemplate(BeanUtil.toBean(couponTemplateDO, CouponTemplateSaveReqDTO.class));
+
+        // 优惠券2
+        CouponTemplateDO couponTemplateDO2 = couponTemplateTest.buildCouponTemplateDO(null, new BigDecimal("3"), 0, 0, "001");
+        couponTemplateService.createCouponTemplate(BeanUtil.toBean(couponTemplateDO2, CouponTemplateSaveReqDTO.class));
+
+        // 优惠券3
+        CouponTemplateDO couponTemplateDO3 = couponTemplateTest.buildCouponTemplateDO(new BigDecimal("100"), new BigDecimal("10"), 1, 1, null);
+        couponTemplateService.createCouponTemplate(BeanUtil.toBean(couponTemplateDO3, CouponTemplateSaveReqDTO.class));
+
+        // 优惠券4
+        CouponTemplateDO couponTemplateDO4 = couponTemplateTest.buildCouponTemplateDO(new BigDecimal("100"), new BigDecimal("20"), 1, 2, null);
+        couponTemplateService.createCouponTemplate(BeanUtil.toBean(couponTemplateDO4, CouponTemplateSaveReqDTO.class));
+
+        // 优惠券5
+        CouponTemplateDO couponTemplateDO5 = couponTemplateTest.buildCouponTemplateDO(new BigDecimal("300"), new BigDecimal("40"), 1, 2, null);
+        couponTemplateService.createCouponTemplate(BeanUtil.toBean(couponTemplateDO5, CouponTemplateSaveReqDTO.class));
+
+        UserContext.removeUser();
     }
 }

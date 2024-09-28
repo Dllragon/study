@@ -32,50 +32,69 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.handler;
+package com.nageoffer.onecoupon.settlement.common.context;
 
-import com.nageoffer.onecoupon.framework.result.Result;
-import com.nageoffer.onecoupon.framework.web.Results;
-import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.async.DeferredResult;
+import com.alibaba.ttl.TransmittableThreadLocal;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.Optional;
 
 /**
- * 异步响应处理器，负责处理异步请求的超时、结果和异常。
+ * 用户登录信息存储上下文
  * <p>
- * 作者：Henry Wan
+ * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-08-11
+ * 开发时间：2024-07-17
  */
-@Component
-public class AsyncResponseHandler {
+public final class UserContext {
 
     /**
-     * 创建一个 DeferredResult 对象，用于处理异步请求的结果。
-     * <p>
-     * 该方法会将 CompletableFuture 的结果包装成一个 DeferredResult 对象，并为其设置默认的超时和异常处理。
-     *
-     * @param future 包含异步处理结果的 CompletableFuture 对象
-     * @param <T>    返回结果的类型
-     * @return 一个封装了异步处理结果的 DeferredResult 对象
+     * <a href="https://github.com/alibaba/transmittable-thread-local" />
      */
-    public <T> DeferredResult<Result<T>> createDeferredResult(CompletableFuture<T> future) {
-        // 创建一个DeferredResult对象，设置超时时间为5000毫秒
-        DeferredResult<Result<T>> deferredResult = new DeferredResult<>(5000L);
+    private static final ThreadLocal<UserInfoDTO> USER_THREAD_LOCAL = new TransmittableThreadLocal<>();
 
-        future.thenAccept(result -> {
-            // 设置处理成功的结果
-            deferredResult.setResult(Results.success(result));
-        }).exceptionally(ex -> {
-            // 捕获异常，并设置错误结果
-            deferredResult.setErrorResult(Results.failure());
-            return null;
-        });
+    /**
+     * 设置用户至上下文
+     *
+     * @param user 用户详情信息
+     */
+    public static void setUser(UserInfoDTO user) {
+        USER_THREAD_LOCAL.set(user);
+    }
 
-        // 设置默认的超时响应
-        deferredResult.onTimeout(() -> deferredResult.setErrorResult(Results.failure()));
+    /**
+     * 获取上下文中用户 ID
+     *
+     * @return 用户 ID
+     */
+    public static String getUserId() {
+        UserInfoDTO userInfoDTO = USER_THREAD_LOCAL.get();
+        return Optional.ofNullable(userInfoDTO).map(UserInfoDTO::getUserId).orElse(null);
+    }
 
-        return deferredResult;
+    /**
+     * 获取上下文中用户名称
+     *
+     * @return 用户名称
+     */
+    public static String getUsername() {
+        UserInfoDTO userInfoDTO = USER_THREAD_LOCAL.get();
+        return Optional.ofNullable(userInfoDTO).map(UserInfoDTO::getUsername).orElse(null);
+    }
+
+    /**
+     * 获取上下文中用户店铺编号
+     *
+     * @return 用户店铺编号
+     */
+    public static Long getShopNumber() {
+        UserInfoDTO userInfoDTO = USER_THREAD_LOCAL.get();
+        return Optional.ofNullable(userInfoDTO).map(UserInfoDTO::getShopNumber).orElse(null);
+    }
+
+    /**
+     * 清理用户上下文
+     */
+    public static void removeUser() {
+        USER_THREAD_LOCAL.remove();
     }
 }

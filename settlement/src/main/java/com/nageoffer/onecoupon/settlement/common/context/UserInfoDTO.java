@@ -32,34 +32,38 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.settlement.service;
+package com.nageoffer.onecoupon.settlement.common.context;
 
-import com.nageoffer.onecoupon.settlement.dto.req.QueryCouponsReqDTO;
-import com.nageoffer.onecoupon.settlement.dto.resp.QueryCouponsRespDTO;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * 查询用户可用优惠券列表接口
+ * 登录用户信息实体
  * <p>
- * 作者：Henry Wan
+ * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-23
+ * 开发时间：2024-07-17
  */
-public interface CouponQueryService {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserInfoDTO {
 
     /**
-     * 查询用户可用/不可用的优惠券列表，返回 CouponsRespDTO 对象
-     *
-     * @param requestParam 查询参数
-     * @return 包含可用/不可用优惠券的查询结果
+     * 用户 ID
      */
-    QueryCouponsRespDTO listQueryUserCoupons(QueryCouponsReqDTO requestParam);
+    private String userId;
 
     /**
-     * 查询用户可用/不可用的优惠券列表，返回 CouponsRespDTO 对象
-     *
-     * @param requestParam 查询参数
-     * @return 包含可用/不可用优惠券的查询结果
+     * 用户名
      */
-    QueryCouponsRespDTO listQueryUserCouponsBySync(QueryCouponsReqDTO requestParam);
+    private String username;
+
+    /**
+     * 店铺编号
+     */
+    private Long shopNumber;
 }
-

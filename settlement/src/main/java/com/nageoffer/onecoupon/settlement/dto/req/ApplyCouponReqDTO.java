@@ -60,15 +60,4 @@ public class ApplyCouponReqDTO {
 
     @Schema(description = "订单ID", required = true)
     private Long orderId;
-
-    /**
-     * 转换为查询优惠券请求对象的方法
-     */
-    public QueryCouponsReqDTO toQueryCouponsReqDTO() {
-        QueryCouponsReqDTO queryCouponsReqDTO = new QueryCouponsReqDTO();
-        queryCouponsReqDTO.setUserId(this.userId);
-        queryCouponsReqDTO.setShopNumber(this.shopNumber);
-        queryCouponsReqDTO.setOrderAmount(this.orderAmount);
-        return queryCouponsReqDTO;
-    }
 }
