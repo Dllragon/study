@@ -38,7 +38,6 @@ import com.nageoffer.onecoupon.engine.dto.req.CouponCreatePaymentReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponProcessPaymentReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponProcessRefundReqDTO;
 import com.nageoffer.onecoupon.engine.dto.req.CouponTemplateRedeemReqDTO;
-import com.nageoffer.onecoupon.engine.service.CouponPayService;
 import com.nageoffer.onecoupon.engine.service.UserCouponService;
 import com.nageoffer.onecoupon.framework.result.Result;
 import com.nageoffer.onecoupon.framework.web.Results;
@@ -62,7 +61,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserCouponController {
 
     private final UserCouponService userCouponService;
-    private final CouponPayService couponPayService;
 
     @Operation(summary = "兑换优惠券模板", description = "存在较高流量场景，可类比“秒杀”业务")
     @PostMapping("/api/engine/user-coupon/redeem")
@@ -81,21 +79,21 @@ public class UserCouponController {
     @Operation(summary = "创建用户优惠券结算单", description = "用户下单时锁定使用的优惠券，一般由订单系统发起调用")
     @PostMapping("/api/engine/user-coupon/create-payment-record")
     public Result<Void> createPaymentRecord(@RequestBody CouponCreatePaymentReqDTO requestParam) {
-        couponPayService.createPaymentRecord(requestParam);
+        userCouponService.createPaymentRecord(requestParam);
         return Results.success();
     }
 
     @Operation(summary = "核销优惠券结算单", description = "用户支付后核销使用的优惠券，常规来说应该监听支付后的消息队列事件")
     @PostMapping("/api/engine/user-coupon/process-payment")
     public Result<Void> processPayment(@RequestBody CouponProcessPaymentReqDTO requestParam) {
-        couponPayService.processPayment(requestParam);
+        userCouponService.processPayment(requestParam);
         return Results.success();
     }
 
     @Operation(summary = "退款优惠券结算单", description = "用户退款成功后返回使用的优惠券，常规来说应该监听退款成功后的消息队列事件")
     @PostMapping("/api/engine/user-coupon/process-refund")
     public Result<Void> processRefund(@RequestBody CouponProcessRefundReqDTO requestParam) {
-        couponPayService.processRefund(requestParam);
+        userCouponService.processRefund(requestParam);
         return Results.success();
     }
 }
