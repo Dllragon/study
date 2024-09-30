@@ -60,7 +60,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -81,7 +83,21 @@ public class CouponQueryServiceImpl implements CouponQueryService {
     private final RedisDistributedProperties redisDistributedProperties;
     private final StringRedisTemplate stringRedisTemplate;
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
+    // 当前应用基本上没有 CPU 操作，我们可以把这个线程池设置的稍微大一点
+    // CPU核心数 / (1 - 阻塞系数)，阻塞系数看 CPU 处理性能，这个阻塞系数一般为0.8~0.9之间，可以取 0.8 或者 0.9。通过这种形式可以最大限度发挥出服务器 CPU 全部性能
+    private final ExecutorService executorService = new ThreadPoolExecutor(
+            calculateCorePoolSize(),
+            calculateCorePoolSize() + (calculateCorePoolSize() >> 1),
+            9999,
+            TimeUnit.SECONDS,
+            new SynchronousQueue<>(),
+            new ThreadPoolExecutor.CallerRunsPolicy()
+    );
+
+    private Integer calculateCorePoolSize() {
+        int cpuCoreNum = Runtime.getRuntime().availableProcessors();
+        return new BigDecimal(cpuCoreNum).divide(new BigDecimal("0.2")).intValue();
+    }
 
     @Override
     public QueryCouponsRespDTO listQueryUserCoupons(QueryCouponsReqDTO requestParam) {
