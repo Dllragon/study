@@ -107,8 +107,8 @@ public class CouponQueryServiceImpl implements CouponQueryService {
 
         if (rangeUserCoupons == null || rangeUserCoupons.isEmpty()) {
             return QueryCouponsRespDTO.builder()
-                    .availableCoupons(new ArrayList<>())
-                    .notAvailableCoupons(new ArrayList<>())
+                    .availableCouponList(new ArrayList<>())
+                    .notAvailableCouponList(new ArrayList<>())
                     .build();
         }
 
@@ -134,75 +134,75 @@ public class CouponQueryServiceImpl implements CouponQueryService {
         List<CouponTemplateQueryRespDTO> goodsNotEmptyList = partitioned.get(false); // goods 不为空的列表
 
         // 针对当前订单可用/不可用的优惠券列表
-        List<QueryCouponsDetailRespDTO> availableCoupons = Collections.synchronizedList(new ArrayList<>());
-        List<QueryCouponsDetailRespDTO> notAvailableCoupons = Collections.synchronizedList(new ArrayList<>());
+        List<QueryCouponsDetailRespDTO> availableCouponList = Collections.synchronizedList(new ArrayList<>());
+        List<QueryCouponsDetailRespDTO> notAvailableCouponList = Collections.synchronizedList(new ArrayList<>());
 
         // Step 2: 并行处理 goodsEmptyList 和 goodsNotEmptyList
         CompletableFuture<Void> emptyGoodsTask = CompletableFuture.runAsync(() -> {
-            processEmptyGoodsCoupons(goodsEmptyList, requestParam, availableCoupons, notAvailableCoupons);
+            processEmptyGoodsCoupons(goodsEmptyList, requestParam, availableCouponList, notAvailableCouponList);
         }, executorService);
 
         CompletableFuture<Void> notEmptyGoodsTask = CompletableFuture.runAsync(() -> {
             Map<String, QueryCouponGoodsReqDTO> goodsRequestMap = requestParam.getGoodsList().stream()
                     .collect(Collectors.toMap(QueryCouponGoodsReqDTO::getGoodsNumber, Function.identity()));
-            processNonEmptyGoodsCoupons(goodsNotEmptyList, goodsRequestMap, availableCoupons, notAvailableCoupons);
+            processNonEmptyGoodsCoupons(goodsNotEmptyList, goodsRequestMap, availableCouponList, notAvailableCouponList);
         }, executorService);
 
         // Step 3: 等待两个异步任务完成
         CompletableFuture.allOf(emptyGoodsTask, notEmptyGoodsTask).join();
 
         // 与业内标准一致，按最终优惠力度从大到小排序
-        availableCoupons.sort((c1, c2) -> c2.getCouponAmount().compareTo(c1.getCouponAmount()));
+        availableCouponList.sort((c1, c2) -> c2.getCouponAmount().compareTo(c1.getCouponAmount()));
 
         // 构建最终结果并返回
         return QueryCouponsRespDTO.builder()
-                .availableCoupons(availableCoupons)
-                .notAvailableCoupons(notAvailableCoupons)
+                .availableCouponList(availableCouponList)
+                .notAvailableCouponList(notAvailableCouponList)
                 .build();
     }
 
     // 处理空商品列表的优惠券逻辑
     private void processEmptyGoodsCoupons(List<CouponTemplateQueryRespDTO> goodsEmptyList, QueryCouponsReqDTO requestParam,
-                                          List<QueryCouponsDetailRespDTO> availableCoupons, List<QueryCouponsDetailRespDTO> notAvailableCoupons) {
+                                          List<QueryCouponsDetailRespDTO> availableCouponList, List<QueryCouponsDetailRespDTO> notAvailableCouponList) {
         goodsEmptyList.forEach(each -> {
             QueryCouponsDetailRespDTO resultCouponDetail = BeanUtil.toBean(each, QueryCouponsDetailRespDTO.class);
             JSONObject jsonObject = JSON.parseObject(each.getConsumeRule());
-            handleCouponLogic(resultCouponDetail, jsonObject, requestParam.getOrderAmount(), availableCoupons, notAvailableCoupons);
+            handleCouponLogic(resultCouponDetail, jsonObject, requestParam.getOrderAmount(), availableCouponList, notAvailableCouponList);
         });
     }
 
     // 处理非空商品列表的优惠券逻辑
     private void processNonEmptyGoodsCoupons(List<CouponTemplateQueryRespDTO> goodsNotEmptyList, Map<String, QueryCouponGoodsReqDTO> goodsRequestMap,
-                                             List<QueryCouponsDetailRespDTO> availableCoupons, List<QueryCouponsDetailRespDTO> notAvailableCoupons) {
+                                             List<QueryCouponsDetailRespDTO> availableCouponList, List<QueryCouponsDetailRespDTO> notAvailableCouponList) {
         goodsNotEmptyList.forEach(each -> {
             QueryCouponsDetailRespDTO resultCouponDetail = BeanUtil.toBean(each, QueryCouponsDetailRespDTO.class);
             QueryCouponGoodsReqDTO couponGoods = goodsRequestMap.get(each.getGoods());
             if (couponGoods == null) {
-                notAvailableCoupons.add(resultCouponDetail);
+                notAvailableCouponList.add(resultCouponDetail);
             } else {
                 JSONObject jsonObject = JSON.parseObject(each.getConsumeRule());
-                handleCouponLogic(resultCouponDetail, jsonObject, couponGoods.getGoodsAmount(), availableCoupons, notAvailableCoupons);
+                handleCouponLogic(resultCouponDetail, jsonObject, couponGoods.getGoodsAmount(), availableCouponList, notAvailableCouponList);
             }
         });
     }
 
     // 优惠券判断逻辑，根据条件判断放入可用或不可用列表
     private void handleCouponLogic(QueryCouponsDetailRespDTO resultCouponDetail, JSONObject jsonObject, BigDecimal amount,
-                                   List<QueryCouponsDetailRespDTO> availableCoupons, List<QueryCouponsDetailRespDTO> notAvailableCoupons) {
+                                   List<QueryCouponsDetailRespDTO> availableCouponList, List<QueryCouponsDetailRespDTO> notAvailableCouponList) {
         BigDecimal termsOfUse = jsonObject.getBigDecimal("termsOfUse");
         BigDecimal maximumDiscountAmount = jsonObject.getBigDecimal("maximumDiscountAmount");
 
         switch (resultCouponDetail.getType()) {
             case 0: // 立减券
                 resultCouponDetail.setCouponAmount(maximumDiscountAmount);
-                availableCoupons.add(resultCouponDetail);
+                availableCouponList.add(resultCouponDetail);
                 break;
             case 1: // 满减券
                 if (amount.compareTo(termsOfUse) >= 0) {
                     resultCouponDetail.setCouponAmount(maximumDiscountAmount);
-                    availableCoupons.add(resultCouponDetail);
+                    availableCouponList.add(resultCouponDetail);
                 } else {
-                    notAvailableCoupons.add(resultCouponDetail);
+                    notAvailableCouponList.add(resultCouponDetail);
                 }
                 break;
             case 2: // 折扣券
@@ -214,9 +214,9 @@ public class CouponQueryServiceImpl implements CouponQueryService {
                     } else {
                         resultCouponDetail.setCouponAmount(multiply);
                     }
-                    availableCoupons.add(resultCouponDetail);
+                    availableCouponList.add(resultCouponDetail);
                 } else {
-                    notAvailableCoupons.add(resultCouponDetail);
+                    notAvailableCouponList.add(resultCouponDetail);
                 }
                 break;
             default:
@@ -248,8 +248,8 @@ public class CouponQueryServiceImpl implements CouponQueryService {
         List<CouponTemplateQueryRespDTO> goodsNotEmptyList = partitioned.get(false); // goods 不为空的列表
 
         // 针对当前订单可用/不可用的优惠券列表
-        List<QueryCouponsDetailRespDTO> availableCoupons = new ArrayList<>();
-        List<QueryCouponsDetailRespDTO> notAvailableCoupons = new ArrayList<>();
+        List<QueryCouponsDetailRespDTO> availableCouponList = new ArrayList<>();
+        List<QueryCouponsDetailRespDTO> notAvailableCouponList = new ArrayList<>();
 
         goodsEmptyList.forEach(each -> {
             JSONObject jsonObject = JSON.parseObject(each.getConsumeRule());
@@ -258,15 +258,15 @@ public class CouponQueryServiceImpl implements CouponQueryService {
             switch (each.getType()) {
                 case 0: // 立减券
                     resultQueryCouponDetail.setCouponAmount(maximumDiscountAmount);
-                    availableCoupons.add(resultQueryCouponDetail);
+                    availableCouponList.add(resultQueryCouponDetail);
                     break;
                 case 1: // 满减券
                     // orderAmount 大于或等于 termsOfUse
                     if (requestParam.getOrderAmount().compareTo(jsonObject.getBigDecimal("termsOfUse")) >= 0) {
                         resultQueryCouponDetail.setCouponAmount(maximumDiscountAmount);
-                        availableCoupons.add(resultQueryCouponDetail);
+                        availableCouponList.add(resultQueryCouponDetail);
                     } else {
-                        notAvailableCoupons.add(resultQueryCouponDetail);
+                        notAvailableCouponList.add(resultQueryCouponDetail);
                     }
                     break;
                 case 2: // 折扣券
@@ -278,9 +278,9 @@ public class CouponQueryServiceImpl implements CouponQueryService {
                         } else {
                             resultQueryCouponDetail.setCouponAmount(multiply);
                         }
-                        availableCoupons.add(resultQueryCouponDetail);
+                        availableCouponList.add(resultQueryCouponDetail);
                     } else {
-                        notAvailableCoupons.add(resultQueryCouponDetail);
+                        notAvailableCouponList.add(resultQueryCouponDetail);
                     }
                     break;
                 default:
@@ -294,22 +294,22 @@ public class CouponQueryServiceImpl implements CouponQueryService {
         goodsNotEmptyList.forEach(each -> {
             QueryCouponGoodsReqDTO couponGoods = goodsRequestMap.get(each.getGoods());
             if (couponGoods == null) {
-                notAvailableCoupons.add(BeanUtil.toBean(each, QueryCouponsDetailRespDTO.class));
+                notAvailableCouponList.add(BeanUtil.toBean(each, QueryCouponsDetailRespDTO.class));
             }
             JSONObject jsonObject = JSON.parseObject(each.getConsumeRule());
             QueryCouponsDetailRespDTO resultQueryCouponDetail = BeanUtil.toBean(each, QueryCouponsDetailRespDTO.class);
             switch (each.getType()) {
                 case 0: // 立减券
                     resultQueryCouponDetail.setCouponAmount(jsonObject.getBigDecimal("maximumDiscountAmount"));
-                    availableCoupons.add(resultQueryCouponDetail);
+                    availableCouponList.add(resultQueryCouponDetail);
                     break;
                 case 1: // 满减券
                     // goodsAmount 大于或等于 termsOfUse
                     if (couponGoods.getGoodsAmount().compareTo(jsonObject.getBigDecimal("termsOfUse")) >= 0) {
                         resultQueryCouponDetail.setCouponAmount(jsonObject.getBigDecimal("maximumDiscountAmount"));
-                        availableCoupons.add(resultQueryCouponDetail);
+                        availableCouponList.add(resultQueryCouponDetail);
                     } else {
-                        notAvailableCoupons.add(resultQueryCouponDetail);
+                        notAvailableCouponList.add(resultQueryCouponDetail);
                     }
                     break;
                 case 2: // 折扣券
@@ -317,9 +317,9 @@ public class CouponQueryServiceImpl implements CouponQueryService {
                     if (couponGoods.getGoodsAmount().compareTo(jsonObject.getBigDecimal("termsOfUse")) >= 0) {
                         BigDecimal discountRate = jsonObject.getBigDecimal("discountRate");
                         resultQueryCouponDetail.setCouponAmount(couponGoods.getGoodsAmount().multiply(discountRate));
-                        availableCoupons.add(resultQueryCouponDetail);
+                        availableCouponList.add(resultQueryCouponDetail);
                     } else {
-                        notAvailableCoupons.add(resultQueryCouponDetail);
+                        notAvailableCouponList.add(resultQueryCouponDetail);
                     }
                     break;
                 default:
@@ -328,11 +328,11 @@ public class CouponQueryServiceImpl implements CouponQueryService {
         });
 
         // 与业内标准一致，按最终优惠力度从大到小排序
-        availableCoupons.sort((c1, c2) -> c2.getCouponAmount().compareTo(c1.getCouponAmount()));
+        availableCouponList.sort((c1, c2) -> c2.getCouponAmount().compareTo(c1.getCouponAmount()));
 
         return QueryCouponsRespDTO.builder()
-                .availableCoupons(availableCoupons)
-                .notAvailableCoupons(notAvailableCoupons)
+                .availableCouponList(availableCouponList)
+                .notAvailableCouponList(notAvailableCouponList)
                 .build();
     }
 }

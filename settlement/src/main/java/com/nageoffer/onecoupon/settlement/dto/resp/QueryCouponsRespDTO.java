@@ -56,9 +56,15 @@ import java.util.List;
 @Schema(description = "查询用户优惠券响应参数")
 public class QueryCouponsRespDTO {
 
+    /**
+     * 可用优惠券列表
+     */
     @Schema(description = "可用优惠券列表")
-    private List<QueryCouponsDetailRespDTO> availableCoupons;
+    private List<QueryCouponsDetailRespDTO> availableCouponList;
 
+    /**
+     * 不可用优惠券列表
+     */
     @Schema(description = "不可用优惠券列表")
-    private List<QueryCouponsDetailRespDTO> notAvailableCoupons;
+    private List<QueryCouponsDetailRespDTO> notAvailableCouponList;
 }
