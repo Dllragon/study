@@ -83,21 +83,15 @@ public class CouponQueryServiceImpl implements CouponQueryService {
     private final RedisDistributedProperties redisDistributedProperties;
     private final StringRedisTemplate stringRedisTemplate;
 
-    // 当前应用基本上没有 CPU 操作，我们可以把这个线程池设置的稍微大一点
-    // CPU核心数 / (1 - 阻塞系数)，阻塞系数看 CPU 处理性能，这个阻塞系数一般为0.8~0.9之间，可以取 0.8 或者 0.9。通过这种形式可以最大限度发挥出服务器 CPU 全部性能
+    // 在我们本次的业务场景中，属于是 CPU 密集型任务，设置 CPU 的核心数即可
     private final ExecutorService executorService = new ThreadPoolExecutor(
-            calculateCorePoolSize(),
-            calculateCorePoolSize() + (calculateCorePoolSize() >> 1),
+            Runtime.getRuntime().availableProcessors(),
+            Runtime.getRuntime().availableProcessors(),
             9999,
             TimeUnit.SECONDS,
             new SynchronousQueue<>(),
             new ThreadPoolExecutor.CallerRunsPolicy()
     );
-
-    private Integer calculateCorePoolSize() {
-        int cpuCoreNum = Runtime.getRuntime().availableProcessors();
-        return new BigDecimal(cpuCoreNum).divide(new BigDecimal("0.2")).intValue();
-    }
 
     @Override
     public QueryCouponsRespDTO listQueryUserCoupons(QueryCouponsReqDTO requestParam) {
@@ -137,53 +131,47 @@ public class CouponQueryServiceImpl implements CouponQueryService {
         List<QueryCouponsDetailRespDTO> availableCouponList = Collections.synchronizedList(new ArrayList<>());
         List<QueryCouponsDetailRespDTO> notAvailableCouponList = Collections.synchronizedList(new ArrayList<>());
 
-        // Step 2: 并行处理 goodsEmptyList 和 goodsNotEmptyList
-        CompletableFuture<Void> emptyGoodsTask = CompletableFuture.runAsync(() -> {
-            processEmptyGoodsCoupons(goodsEmptyList, requestParam, availableCouponList, notAvailableCouponList);
-        }, executorService);
+        // Step 2: 并行处理 goodsEmptyList 和 goodsNotEmptyList 中的每个元素
+        CompletableFuture<Void> emptyGoodsTasks = CompletableFuture.allOf(
+                goodsEmptyList.stream()
+                        .map(each -> CompletableFuture.runAsync(() -> {
+                            QueryCouponsDetailRespDTO resultCouponDetail = BeanUtil.toBean(each, QueryCouponsDetailRespDTO.class);
+                            JSONObject jsonObject = JSON.parseObject(each.getConsumeRule());
+                            handleCouponLogic(resultCouponDetail, jsonObject, requestParam.getOrderAmount(), availableCouponList, notAvailableCouponList);
+                        }, executorService))
+                        .toArray(CompletableFuture[]::new)
+        );
 
-        CompletableFuture<Void> notEmptyGoodsTask = CompletableFuture.runAsync(() -> {
-            Map<String, QueryCouponGoodsReqDTO> goodsRequestMap = requestParam.getGoodsList().stream()
-                    .collect(Collectors.toMap(QueryCouponGoodsReqDTO::getGoodsNumber, Function.identity()));
-            processNonEmptyGoodsCoupons(goodsNotEmptyList, goodsRequestMap, availableCouponList, notAvailableCouponList);
-        }, executorService);
+        Map<String, QueryCouponGoodsReqDTO> goodsRequestMap = requestParam.getGoodsList().stream()
+                .collect(Collectors.toMap(QueryCouponGoodsReqDTO::getGoodsNumber, Function.identity()));
+        CompletableFuture<Void> notEmptyGoodsTasks = CompletableFuture.allOf(
+                goodsNotEmptyList.stream()
+                        .map(each -> CompletableFuture.runAsync(() -> {
+                            QueryCouponsDetailRespDTO resultCouponDetail = BeanUtil.toBean(each, QueryCouponsDetailRespDTO.class);
+                            QueryCouponGoodsReqDTO couponGoods = goodsRequestMap.get(each.getGoods());
+                            if (couponGoods == null) {
+                                notAvailableCouponList.add(resultCouponDetail);
+                            } else {
+                                JSONObject jsonObject = JSON.parseObject(each.getConsumeRule());
+                                handleCouponLogic(resultCouponDetail, jsonObject, couponGoods.getGoodsAmount(), availableCouponList, notAvailableCouponList);
+                            }
+                        }, executorService))
+                        .toArray(CompletableFuture[]::new)
+        );
 
-        // Step 3: 等待两个异步任务完成
-        CompletableFuture.allOf(emptyGoodsTask, notEmptyGoodsTask).join();
-
-        // 与业内标准一致，按最终优惠力度从大到小排序
-        availableCouponList.sort((c1, c2) -> c2.getCouponAmount().compareTo(c1.getCouponAmount()));
+        // Step 3: 等待两个异步任务集合完成
+        CompletableFuture.allOf(emptyGoodsTasks, notEmptyGoodsTasks)
+                .thenRun(() -> {
+                    // 与业内标准一致，按最终优惠力度从大到小排序
+                    availableCouponList.sort((c1, c2) -> c2.getCouponAmount().compareTo(c1.getCouponAmount()));
+                })
+                .join();
 
         // 构建最终结果并返回
         return QueryCouponsRespDTO.builder()
                 .availableCouponList(availableCouponList)
                 .notAvailableCouponList(notAvailableCouponList)
                 .build();
-    }
-
-    // 处理空商品列表的优惠券逻辑
-    private void processEmptyGoodsCoupons(List<CouponTemplateQueryRespDTO> goodsEmptyList, QueryCouponsReqDTO requestParam,
-                                          List<QueryCouponsDetailRespDTO> availableCouponList, List<QueryCouponsDetailRespDTO> notAvailableCouponList) {
-        goodsEmptyList.forEach(each -> {
-            QueryCouponsDetailRespDTO resultCouponDetail = BeanUtil.toBean(each, QueryCouponsDetailRespDTO.class);
-            JSONObject jsonObject = JSON.parseObject(each.getConsumeRule());
-            handleCouponLogic(resultCouponDetail, jsonObject, requestParam.getOrderAmount(), availableCouponList, notAvailableCouponList);
-        });
-    }
-
-    // 处理非空商品列表的优惠券逻辑
-    private void processNonEmptyGoodsCoupons(List<CouponTemplateQueryRespDTO> goodsNotEmptyList, Map<String, QueryCouponGoodsReqDTO> goodsRequestMap,
-                                             List<QueryCouponsDetailRespDTO> availableCouponList, List<QueryCouponsDetailRespDTO> notAvailableCouponList) {
-        goodsNotEmptyList.forEach(each -> {
-            QueryCouponsDetailRespDTO resultCouponDetail = BeanUtil.toBean(each, QueryCouponsDetailRespDTO.class);
-            QueryCouponGoodsReqDTO couponGoods = goodsRequestMap.get(each.getGoods());
-            if (couponGoods == null) {
-                notAvailableCouponList.add(resultCouponDetail);
-            } else {
-                JSONObject jsonObject = JSON.parseObject(each.getConsumeRule());
-                handleCouponLogic(resultCouponDetail, jsonObject, couponGoods.getGoodsAmount(), availableCouponList, notAvailableCouponList);
-            }
-        });
     }
 
     // 优惠券判断逻辑，根据条件判断放入可用或不可用列表
