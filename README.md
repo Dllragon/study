@@ -70,9 +70,7 @@
 
 ![](https://oss.open8gu.com/image-20240722111319147.png)
 
-## 项目亮点&如何学习？
-
-> 牛券 oneCoupon 先发布代码，文档资料和视频还都在录制中，大家先根据代码功能入口查看逻辑。
+## 如何写到简历？
 
 牛券 oneCoupon 系统拆分了六个模块，分别是引擎模块、分发模块、结算模块、后管模块、搜索模块以及网关模块。
 
@@ -82,7 +80,7 @@
 
 代码入口：
 
-- com.nageoffer.onecoupon.merchant.admin.controller.CouponTemplateController#createCouponTemplate
+- `com.nageoffer.onecoupon.merchant.admin.controller.CouponTemplateController#createCouponTemplate`
 
 业务亮点：
 
@@ -95,7 +93,7 @@
 
 代码入口：
 
-- com.nageoffer.onecoupon.merchant.admin.controller.CouponTaskController#createCouponTask
+- `com.nageoffer.onecoupon.merchant.admin.controller.CouponTaskController#createCouponTask`
 
 业务亮点：
 
@@ -112,66 +110,13 @@
 
 代码入口：
 
-- 用户分发优惠券消费者：com.nageoffer.onecoupon.distribution.mq.consumer.CouponTaskExecuteConsumer#onMessage
+- 延时推送任务消费者：`com.nageoffer.onecoupon.distribution.mq.consumer.CouponTaskSendExecuteConsumer#onMessage`
+- 用户分发优惠券消费者：`com.nageoffer.onecoupon.distribution.mq.consumer.CouponTaskExecuteConsumer#onMessage`
 
 业务亮点：
 
-- 使用 `EasyExcel` 解析百万量级用户优惠券推送 Excel 文件，避免因文件过大导致的内存溢出问题。
 - 通过执行点位和批量处理流程优化优惠券推送业务，可保障项目断电从上次执行位置开始以及更快速度将优惠券分发给用户。
-- 为避免优惠券分发过程中库存不足的问题，通过乐观锁机制确保库存不会被多扣，并采用自旋重试直至成功将优惠券库存扣减至零。
+- 为避免优惠券分发过程中库存不足的问题，通过 MySQL 悲观行记录锁确保库存不会被多扣，并采用自旋重试直至成功将优惠券库存扣减至零。
 - 通过创建用户优惠券表的唯一索引支持幂等逻辑，确保优惠券限制条件（如用户只能领取一次）生效。发放优惠券时，如果用户已领取，捕获数据库重复记录异常，并采用乐观自旋机制反复尝试，直至成功添加不重复的记录。
 
-### 3. 引擎模块
-
-#### 3.1 查询优惠券模板
-
-代码入口：
-
-- com.nageoffer.onecoupon.engine.controller.CouponTemplateController#findCouponTemplate
-
-业务亮点：
-
-- 为防止恶意请求导致的缓存击穿和穿透问题，采用布隆过滤器、缓存空值和分布式锁等方法进行解决。
-
-#### 3.2 兑换优惠券/秒杀
-
-代码入口：
-
-- com.nageoffer.onecoupon.engine.controller.UserCouponController#redeemUserCoupon
-
-业务亮点：
-
-- 通过 Lua 脚本对获取不到优惠券的用户执行快速失败，并采用编程式事务以减少事务时间。底层使用乐观锁机制，避免优惠券模板库存的多扣减。
-- 为避免数据库扣减库存成功后添加用户优惠券缓存失败，基于监听 Binlog 机制异步添加用户优惠券缓存，并采用写后查询策略应对 Redis 持久化或主从复制极端情况下的数据丢失问题。
-
-#### 3.3 优惠券预约提醒
-
-代码入口：
-
-- 创建预约提醒请求：com.nageoffer.onecoupon.engine.controller.CouponTemplateRemindController#createCouponRemind
-- 消费用户提醒消息：com.nageoffer.onecoupon.engine.mq.consumer.CouponTemplateRemindDelayConsumer#onMessage
-
-业务亮点：
-
-- 通过 `RocketMQ 5.x` 的任意延时消息队列，实现对用户推送精准抢券提醒消息。
-- 使用 `ThreadPoolExecutor` 线程池来消费消息，并通过 `Redisson` 延时队列进行兜底复查，防止线程池任务丢失。
-- 使用位图存储用户预约信息，通过移位、按位与、按位或、按位异或等操作进行计算，充分利用 CPU 特性。
-- 使用布隆过滤器存储已取消提醒的用户信息，以便在消费消息时快速判断。
-
-### 4. 结算模块
-
-#### 4.1 订单金额结算
-
-TODO
-
-#### 4.2 用户优惠券列表
-
-TODO
-
-### 5. 搜索模块
-
-TODO
-
-### 6. 网关模块
-
-TODO
+更多内容查看知识星球主题：[如何将牛券oneCoupon写到简历上？](https://t.zsxq.com/gLRzP)
