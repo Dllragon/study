@@ -100,5 +100,45 @@
 
 分支列表如下：
 
-![](https://oss.open8gu.com/image-20240911195940901.png)
+- **main**：主分支，包含最新代码和改动。
+- **20240708_init-code_ding.ma**：初始化分支，包括一些公用代码，比如基础架构规约封装等。
+- **20240814_dev_create-template_chain_ding.ma**：基于责任链模式创建优惠券模板。
+- **20240815_dev_coupon-tablue_shardingsphere_ding.ma**：通过 ShardingSphere 完成优惠券分库分表。
+- **20240816_dev_operation-log_mzt-biz-log_ding.ma**：引入日志组件优雅记录操作日志。
+- **20240817_dev_no-duplicate-submit_lock_ding.ma**：基于注解实现分布式锁防重复提交。
+- **20240818_dev_other-coupon-template_feature_ding.ma**：开发优惠券模板结束、增加发行量等功能
+- **20240821_dev_coupon-template-close_rocketmq5_ding.ma**：RocketMQ5.x 延时消息修改优惠券结束状态。
+- **20240822_dev_create-coupon-task_easyexcel_ding.ma**：通过 EasyExcel 创建优惠券分发任务。
+- **20240823_optimize_create-coupon-task_threadpool-delayqueue_ding.ma**：通过线程池和延迟队列优化分发任务创建流程。
+- **20240824_dev_coupon-task-execute_template-method_ding.ma**：执行优惠券分发任务。
+- **20240825_dev_coupon-task-timing_xxl-job_ding.ma**：通过 XXL-Job 定时执行优惠券分发任务。
+- **20240826_dev_coupon-template-query_cache_ding.ma**：解决缓存击穿、穿透等问题。
+- **20240829_dev_coupon-distribute-v1-4_easyexcel-cache_ding.ma**：一步步优化用户优惠券分发过程，提高执行性能。
+- **20240908_dev_acquire-coupon_seckill_ding.ma**：通过缓存配合数据库以及 Canal 完成秒杀流程。
+- **20240910_dev_acquire-coupon-v2_seckill_ding.ma**：通过缓存配合 RocketMQ 消息队列完成秒杀流程。
+- ......
 
+## 项目开发者
+
+参与项目开发的小伙伴们，欢迎提交 PR，分享你在开发过程中对代码优化、逻辑改进或问题修复的想法。提交的代码将会经过审核，审核通过后会被合并，并为你的贡献进行记录。
+
+```xml
+<developers>
+    <developer>
+        <name>马丁</name>
+        <email>machen@apache.org</email>
+        <url>https://github.com/magestacks</url>
+        <organization>Apache and openGoofy</organization>
+    </developer>
+
+    <developer>
+        <name>优雅</name>
+        <email>elegance520@163.com</email>
+    </developer>
+
+    <developer>
+        <name>Henry</name>
+        <email>yzwh0102@qq.com</email>
+    </developer>
+</developers>
+```
