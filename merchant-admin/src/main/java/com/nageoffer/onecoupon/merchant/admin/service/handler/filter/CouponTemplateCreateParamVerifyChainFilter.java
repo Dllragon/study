@@ -32,24 +32,41 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin;
+package com.nageoffer.onecoupon.merchant.admin.service.handler.filter;
 
-import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import cn.hutool.core.util.ObjectUtil;
+import com.nageoffer.onecoupon.merchant.admin.common.enums.DiscountTargetEnum;
+import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
+import com.nageoffer.onecoupon.merchant.admin.service.basics.chain.MerchantAdminAbstractChainHandler;
+import org.springframework.stereotype.Component;
+
+import static com.nageoffer.onecoupon.merchant.admin.common.enums.ChainBizMarkEnum.MERCHANT_ADMIN_CREATE_COUPON_TEMPLATE_KEY;
 
 /**
- * 商家后管服务｜创建优惠券、店家查看以及管理优惠券、创建优惠券发放批次等
+ * 验证优惠券创建接口参数是否正确责任链｜验证参数数据是否正确
  * <p>
  * 作者：马丁
- * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-08
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-09
  */
-@SpringBootApplication
-@MapperScan("com.nageoffer.onecoupon.merchant.admin.dao.mapper")
-public class MerchantAdminApplication {
+@Component
+public class CouponTemplateCreateParamVerifyChainFilter implements MerchantAdminAbstractChainHandler<CouponTemplateSaveReqDTO> {
 
-    public static void main(String[] args) {
-        SpringApplication.run(MerchantAdminApplication.class, args);
+    @Override
+    public void handler(CouponTemplateSaveReqDTO requestParam) {
+        if (ObjectUtil.equal(requestParam.getTarget(), DiscountTargetEnum.PRODUCT_SPECIFIC)) {
+            // 调用商品中台验证商品是否存在，如果不存在抛出异常
+            // ......
+        }
+    }
+
+    @Override
+    public String mark() {
+        return MERCHANT_ADMIN_CREATE_COUPON_TEMPLATE_KEY.name();
+    }
+
+    @Override
+    public int getOrder() {
+        return 20;
     }
 }

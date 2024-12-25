@@ -32,24 +32,37 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin;
+package com.nageoffer.onecoupon.merchant.admin.controller;
 
-import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import com.nageoffer.onecoupon.framework.result.Result;
+import com.nageoffer.onecoupon.framework.web.Results;
+import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
+import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 商家后管服务｜创建优惠券、店家查看以及管理优惠券、创建优惠券发放批次等
+ * 优惠券模板控制层
  * <p>
  * 作者：马丁
- * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-08
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-09
  */
-@SpringBootApplication
-@MapperScan("com.nageoffer.onecoupon.merchant.admin.dao.mapper")
-public class MerchantAdminApplication {
+@RestController
+@RequiredArgsConstructor
+@Tag(name = "优惠券模板管理")
+public class CouponTemplateController {
 
-    public static void main(String[] args) {
-        SpringApplication.run(MerchantAdminApplication.class, args);
+    private final CouponTemplateService couponTemplateService;
+
+    @Operation(summary = "商家创建优惠券模板")
+    @PostMapping("/api/merchant-admin/coupon-template/create")
+    public Result<Void> createCouponTemplate(@RequestBody CouponTemplateSaveReqDTO requestParam) {
+        couponTemplateService.createCouponTemplate(requestParam);
+        return Results.success();
     }
 }
