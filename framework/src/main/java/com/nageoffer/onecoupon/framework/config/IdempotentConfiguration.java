@@ -32,39 +32,26 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.controller;
+package com.nageoffer.onecoupon.framework.config;
 
-import com.nageoffer.onecoupon.framework.idempotent.NoDuplicateSubmit;
-import com.nageoffer.onecoupon.framework.result.Result;
-import com.nageoffer.onecoupon.framework.web.Results;
-import com.nageoffer.onecoupon.merchant.admin.dto.req.CouponTemplateSaveReqDTO;
-import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import com.nageoffer.onecoupon.framework.idempotent.NoDuplicateSubmitAspect;
+import org.redisson.api.RedissonClient;
+import org.springframework.context.annotation.Bean;
 
 /**
- * 优惠券模板控制层
+ * 幂等组件相关配置类
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-09
+ * 开发时间：2024-07-10
  */
-@RestController
-@RequiredArgsConstructor
-@Tag(name = "优惠券模板管理")
-public class CouponTemplateController {
+public class IdempotentConfiguration {
 
-    private final CouponTemplateService couponTemplateService;
-
-    @NoDuplicateSubmit
-    @Operation(summary = "商家创建优惠券模板")
-    @PostMapping("/api/merchant-admin/coupon-template/create")
-    public Result<Void> createCouponTemplate(@RequestBody CouponTemplateSaveReqDTO requestParam) {
-        couponTemplateService.createCouponTemplate(requestParam);
-        return Results.success();
+    /**
+     * 防止用户重复提交表单信息切面控制器
+     */
+    @Bean
+    public NoDuplicateSubmitAspect noDuplicateSubmitAspect(RedissonClient redissonClient) {
+        return new NoDuplicateSubmitAspect(redissonClient);
     }
 }
