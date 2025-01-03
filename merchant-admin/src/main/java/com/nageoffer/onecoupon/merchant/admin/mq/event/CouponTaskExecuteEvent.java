@@ -32,51 +32,28 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.mq.consumer;
+package com.nageoffer.onecoupon.merchant.admin.mq.event;
 
-import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTemplateStatusEnum;
-import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTemplateDO;
-import com.nageoffer.onecoupon.merchant.admin.mq.base.MessageWrapper;
-import com.nageoffer.onecoupon.merchant.admin.mq.event.CouponTemplateDelayEvent;
-import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.spring.core.RocketMQListener;
-import org.springframework.stereotype.Component;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * 优惠券推送延迟执行-变更记录发送状态消费者
+ * 优惠券推送任务执行事件
  * <p>
  * 作者：马丁
  * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-08-21
+ * 开发时间：2024-07-23
  */
-@Component
-@RequiredArgsConstructor
-@RocketMQMessageListener(
-        topic = "one-coupon_merchant-admin-service_coupon-template-delay_topic${unique-name:}",
-        consumerGroup = "one-coupon_merchant-admin-service_coupon-template-delay-status_cg${unique-name:}"
-)
-@Slf4j(topic = "CouponTemplateDelayExecuteStatusConsumer")
-public class CouponTemplateDelayExecuteStatusConsumer implements RocketMQListener<MessageWrapper<CouponTemplateDelayEvent>> {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CouponTaskExecuteEvent {
 
-    private final CouponTemplateService couponTemplateService;
-
-    @Override
-    public void onMessage(MessageWrapper<CouponTemplateDelayEvent> messageWrapper) {
-        // 开头打印日志，平常可 Debug 看任务参数，线上可报平安（比如消息是否消费，重新投递时获取参数等）
-        log.info("[消费者] 优惠券模板定时执行@变更模板表状态 - 执行消费逻辑，消息体：{}", JSON.toJSONString(messageWrapper));
-
-        // 修改指定优惠券模板状态为已结束
-        CouponTemplateDelayEvent message = messageWrapper.getMessage();
-        LambdaUpdateWrapper<CouponTemplateDO> updateWrapper = Wrappers.lambdaUpdate(CouponTemplateDO.class)
-                .eq(CouponTemplateDO::getShopNumber, message.getShopNumber())
-                .eq(CouponTemplateDO::getId, message.getCouponTemplateId())
-                .set(CouponTemplateDO::getStatus, CouponTemplateStatusEnum.ENDED.getStatus());
-        couponTemplateService.update(updateWrapper);
-    }
+    /**
+     * 推送任务id
+     */
+    private Long couponTaskId;
 }

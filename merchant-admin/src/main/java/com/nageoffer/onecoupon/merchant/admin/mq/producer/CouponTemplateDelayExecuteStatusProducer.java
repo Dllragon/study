@@ -32,51 +32,56 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.merchant.admin.mq.consumer;
+package com.nageoffer.onecoupon.merchant.admin.mq.producer;
 
-import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.nageoffer.onecoupon.merchant.admin.common.enums.CouponTemplateStatusEnum;
-import com.nageoffer.onecoupon.merchant.admin.dao.entity.CouponTemplateDO;
+import cn.hutool.core.util.StrUtil;
+import com.nageoffer.onecoupon.merchant.admin.mq.base.BaseSendExtendDTO;
 import com.nageoffer.onecoupon.merchant.admin.mq.base.MessageWrapper;
 import com.nageoffer.onecoupon.merchant.admin.mq.event.CouponTemplateDelayEvent;
-import com.nageoffer.onecoupon.merchant.admin.service.CouponTemplateService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.apache.rocketmq.common.message.MessageConst;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 /**
- * 优惠券推送延迟执行-变更记录发送状态消费者
+ * 优惠券模板关闭定时执行生产者
  * <p>
  * 作者：马丁
- * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-08-21
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-08-23
  */
 @Component
-@RequiredArgsConstructor
-@RocketMQMessageListener(
-        topic = "one-coupon_merchant-admin-service_coupon-template-delay_topic${unique-name:}",
-        consumerGroup = "one-coupon_merchant-admin-service_coupon-template-delay-status_cg${unique-name:}"
-)
-@Slf4j(topic = "CouponTemplateDelayExecuteStatusConsumer")
-public class CouponTemplateDelayExecuteStatusConsumer implements RocketMQListener<MessageWrapper<CouponTemplateDelayEvent>> {
+public class CouponTemplateDelayExecuteStatusProducer extends AbstractCommonSendProduceTemplate<CouponTemplateDelayEvent> {
 
-    private final CouponTemplateService couponTemplateService;
+    private final ConfigurableEnvironment environment;
+
+    public CouponTemplateDelayExecuteStatusProducer(@Autowired RocketMQTemplate rocketMQTemplate, @Autowired ConfigurableEnvironment environment) {
+        super(rocketMQTemplate);
+        this.environment = environment;
+    }
 
     @Override
-    public void onMessage(MessageWrapper<CouponTemplateDelayEvent> messageWrapper) {
-        // 开头打印日志，平常可 Debug 看任务参数，线上可报平安（比如消息是否消费，重新投递时获取参数等）
-        log.info("[消费者] 优惠券模板定时执行@变更模板表状态 - 执行消费逻辑，消息体：{}", JSON.toJSONString(messageWrapper));
+    protected BaseSendExtendDTO buildBaseSendExtendParam(CouponTemplateDelayEvent messageSendEvent) {
+        return BaseSendExtendDTO.builder()
+                .eventName("优惠券模板关闭定时执行")
+                .keys(String.valueOf(messageSendEvent.getCouponTemplateId()))
+                .topic(environment.resolvePlaceholders("one-coupon_merchant-admin-service_coupon-template-delay_topic${unique-name:}"))
+                .delayTime(messageSendEvent.getDelayTime())
+                .build();
+    }
 
-        // 修改指定优惠券模板状态为已结束
-        CouponTemplateDelayEvent message = messageWrapper.getMessage();
-        LambdaUpdateWrapper<CouponTemplateDO> updateWrapper = Wrappers.lambdaUpdate(CouponTemplateDO.class)
-                .eq(CouponTemplateDO::getShopNumber, message.getShopNumber())
-                .eq(CouponTemplateDO::getId, message.getCouponTemplateId())
-                .set(CouponTemplateDO::getStatus, CouponTemplateStatusEnum.ENDED.getStatus());
-        couponTemplateService.update(updateWrapper);
+    @Override
+    protected Message<?> buildMessage(CouponTemplateDelayEvent messageSendEvent, BaseSendExtendDTO requestParam) {
+        String keys = StrUtil.isEmpty(requestParam.getKeys()) ? UUID.randomUUID().toString() : requestParam.getKeys();
+        return MessageBuilder
+                .withPayload(new MessageWrapper(keys, messageSendEvent))
+                .setHeader(MessageConst.PROPERTY_KEYS, keys)
+                .setHeader(MessageConst.PROPERTY_TAGS, requestParam.getTag())
+                .build();
     }
 }
