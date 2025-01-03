@@ -32,24 +32,24 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine;
-
-import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+package com.nageoffer.onecoupon.engine.common.constant;
 
 /**
- * 引擎服务｜负责优惠券单个查看、列表查看、锁定以及核销等功能
+ * 分布式 Redis 缓存引擎层常量类
  * <p>
  * 作者：马丁
- * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-08
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-14
  */
-@SpringBootApplication
-@MapperScan("com.nageoffer.onecoupon.engine.dao.mapper")
-public class EngineApplication {
+public final class EngineRedisConstant {
 
-    public static void main(String[] args) {
-        SpringApplication.run(EngineApplication.class, args);
-    }
+    /**
+     * 优惠券模板缓存 Key
+     */
+    public static final String COUPON_TEMPLATE_KEY = "one-coupon_engine:template:%s";
+
+    /**
+     * 优惠券模板缓存分布式锁 Key
+     */
+    public static final String LOCK_COUPON_TEMPLATE_KEY = "one-coupon_engine:lock:template:%s";
 }

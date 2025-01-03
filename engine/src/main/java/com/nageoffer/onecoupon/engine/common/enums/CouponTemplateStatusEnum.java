@@ -32,24 +32,31 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.engine;
+package com.nageoffer.onecoupon.engine.common.enums;
 
-import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
- * 引擎服务｜负责优惠券单个查看、列表查看、锁定以及核销等功能
+ * 优惠券模板状态枚举
  * <p>
  * 作者：马丁
- * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-08
+ * 加项目群：早加入就是优势！500人内部项目群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-09
  */
-@SpringBootApplication
-@MapperScan("com.nageoffer.onecoupon.engine.dao.mapper")
-public class EngineApplication {
+@RequiredArgsConstructor
+public enum CouponTemplateStatusEnum {
 
-    public static void main(String[] args) {
-        SpringApplication.run(EngineApplication.class, args);
-    }
+    /**
+     * 0: 表示优惠券处于生效中的状态。
+     */
+    ACTIVE(0),
+
+    /**
+     * 1: 表示优惠券已经结束，不可再使用。
+     */
+    ENDED(1);
+
+    @Getter
+    private final int status;
 }
