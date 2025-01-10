@@ -32,24 +32,27 @@
  * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
  */
 
-package com.nageoffer.onecoupon.distribution;
+package com.nageoffer.onecoupon.distribution.service.handler.excel;
 
-import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import com.alibaba.excel.annotation.ExcelProperty;
+import lombok.Data;
 
 /**
- * 分发模块｜负责按批次分发用户优惠券，可提供应用弹框推送、站内信或短信通知等
+ * 优惠券推送任务 Excel 元数据实体
  * <p>
  * 作者：马丁
- * 加星球群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
- * 开发时间：2024-07-08
+ * 加项目群：早加入就是优势！500人内部沟通群，分享的知识总有你需要的 <a href="https://t.zsxq.com/cw7b9" />
+ * 开发时间：2024-07-14
  */
-@SpringBootApplication
-@MapperScan("com.nageoffer.onecoupon.distribution.dao.mapper")
-public class DistributionApplication {
+@Data
+public class CouponTaskExcelObject {
 
-    public static void main(String[] args) {
-        SpringApplication.run(DistributionApplication.class, args);
-    }
+    @ExcelProperty("用户ID")
+    private String userId;
+
+    @ExcelProperty("手机号")
+    private String phone;
+
+    @ExcelProperty("邮箱")
+    private String mail;
 }
